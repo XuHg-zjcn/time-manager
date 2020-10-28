@@ -85,13 +85,13 @@ class My_str:
         """
         sub_i = None
         index_range = None
-        for sub_i,asub in enumerate(subs):
-            index = self.find_onlyone(asub)
+        for ni,sub in enumerate(subs):
+            index = self.find_onlyone(sub)
             if index != -1:
                 if sub_i is None:
-                    sub_i = ni+1
-                    index_range = (index, index+len(asub))
-                    set_used(*index_range)
+                    sub_i = ni
+                    index_range = (index, index+len(sub))
+                    self.set_used(*index_range)
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
         return sub_i, index_range
@@ -116,6 +116,8 @@ class Time_str(My_str):
     def english_month_day(self):
         month, _ = self.find_strs(month_short, 'english month')
         day  , _ = self.find_strs(day_short, 'english day')
+        month += 1
+        day += 1
         return month, day
     
     def search(self, pattern, start=0, end=-1, isRaise=True):
@@ -163,8 +165,9 @@ class Time_str(My_str):
         return (left, midd, right, subs)
 
 if __name__ == '__main__':
-    test_str = ' 12:34:56.123 '#input('请输入测试字符串:')
+    test_str = 'Wed 28/Oct/2020 12:34:56.123 '#input('请输入测试字符串:')
     tstr = Time_str(test_str)
     T4 = tstr.time_lmrs()
+    ta = tstr.english_month_day()
     print('test time_lmrs:')
-    print(T4)
+    print(T4, ta)
