@@ -119,7 +119,6 @@ class Time_str(My_str):
         return month, day
     
     def search(self, pattern, start=0, end=-1, isRaise=True):
-        print(self.in_str[start:end])
         found = re.search(pattern, self.in_str[start:end])
         if found is None:
             if isRaise:
@@ -152,28 +151,16 @@ class Time_str(My_str):
         return Left:Midd:Right.subsec
         if not found Midd or subsec, return None
         """
-        #self.search('(\d+:)(\d+:)*(\d+)(\.\d+)*')
-        c = self.findall(':')
-        if len(c) == 0:
-            return None
-        elif len(c) == 1:
-            mLeft = self.search('\d+$', end = c[0])
-            mMidd = None
-            mRight= self.search('^\d+', start= c[0]+1)
-        elif len(c) == 2:
-            mLeft = self.search('\d+$', end = c[0])
-            mMidd = self.search('^\d+$',c[0]+1, c[1])
-            mRight= self.search('^\d+', start= c[1]+1)
-        else:
-            raise ValueError('found more than 2 colon')
-        #dot after second
-        i = c[-1]+1+mRight.end()
-        if len(self.in_str)>i and self.in_str[i]=='.':
-            self.set_used(i)
-            subsec = self.search('^\d+', start = i+1)
-        else:
-            subsec = None
-        return mLeft.group(0), mMidd.group(0), mRight.group(0), subsec.group(0)
+        match = self.search('(\d+):(\d+:)*(\d+)(\.\d+)*')
+        left = int(match.group(1))
+        midd = match.group(2)
+        right = int(match.group(3))
+        subs = match.group(4)
+        if midd is not None:
+            midd = int(midd[:-1])
+        if subs is not None:
+            subs = float(subs)
+        return (left, midd, right, subs)
 
 if __name__ == '__main__':
     test_str = ' 12:34:56.123 '#input('请输入测试字符串:')
