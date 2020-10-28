@@ -41,7 +41,8 @@ class My_str:
             end = start + 1
         for i in range(start, end):
             if self.used[i] == True:
-                raise ValueError('in_str[{}] is already used\n{}'.format(i, self.mark(i)))
+                raise ValueError('in_str[{}] is already used\n{}'
+                                 .format(i, self.mark(i)))
             self.used[i] = True
         
     def mark(self, index):
@@ -120,19 +121,20 @@ class Time_str(My_str):
         day += 1
         return month, day
     
-    def search(self, pattern, start=0, end=-1, isRaise=True):
+    def search(self, pattern, start=0, end=-1, isRaise=True, isCheck=True):
         found = re.search(pattern, self.in_str[start:end])
         if found is None:
             if isRaise:
-                raise ValueError('search re pattern"{}" not found'.format(pattern))
+                raise ValueError('search re pattern"{}" not found'
+                                 .format(pattern))
             else:
                 return None
         fsta = start+found.start()
         fend = start+found.end()
         self.set_used(fsta, fend)
-        if pattern[0] != '^':
+        if isCheck and pattern[0] != '^':
             self.check_spilt(fsta-1)
-        if pattern[-1]!= '$':
+        if isCheck and pattern[-1]!= '$':
             self.check_spilt(fend)
         return found
     
@@ -157,17 +159,23 @@ class Time_str(My_str):
         left = int(match.group(1))
         midd = match.group(2)
         right = int(match.group(3))
-        subs = match.group(4)
+        ssec = match.group(4)
         if midd is not None:
             midd = int(midd[:-1])
-        if subs is not None:
-            subs = float(subs)
-        return (left, midd, right, subs)
+        if ssec is not None:
+            ssec = float(ssec)
+        return (left, midd, right, ssec)
+    
+    def date(self):
+        month, day = self.english_month_day()
+        yyyy = re.search('\D(\d{4})\D', self.in_str)
+        self.set_used(yyyy.start(1), yyyy.end(1))
+        return yyyy.group(1), month, day
 
 if __name__ == '__main__':
     test_str = 'Wed 28/Oct/2020 12:34:56.123 '#input('请输入测试字符串:')
     tstr = Time_str(test_str)
     T4 = tstr.time_lmrs()
-    ta = tstr.english_month_day()
+    date = tstr.date()
     print('test time_lmrs:')
-    print(T4, ta)
+    print(T4, date)
