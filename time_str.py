@@ -1,5 +1,6 @@
 import datetime
 import re
+from enum import Enum
 
 day_full=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 day_short=['Mon','Tue','Wed','Thur','Fri','Sat','Sun']
@@ -11,9 +12,27 @@ month_short=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Spet','Oct','Nov',
 #type 3: other
 
 class Part():
-    def __init__(self, match, stype):
+    IsUsed = Enum('IsUsed', 'unused partused allused')
+    def __init__(self, match, mstr, stype):
         self.match = match
+        self.mstr = mstr
         self.stype = stype
+        N_used = 0
+        for i in range(*match.span()):
+            if mstr.used[i]:
+                N_used += 1
+        if N_used == 0:
+            self.isUsed = Part.IsUsed.unused
+        elif N_used == match.end() - match.start():
+            self.isUsed = Part.IsUsed.allused
+        else:
+            #self.isUsed = Part.IsUsed.partused
+            raise ValueError('match part used')
+    
+    def __str__(self):
+        ret = '{}, isUsed={}, stype={}'\
+        .format(self.match, self.isUsed, self.stype)
+        return ret
     
     def __lt__(self, other):
         return self.match.start() < other.match.start()
@@ -24,17 +43,20 @@ class My_str:
         self.used = [False]*len(in_str)
 
     #unused
-    def get_atype(self, re_comp, stype):
+    def get_atype(self, re_comp, stype, filter_used=True):
         """
         find all use re, atype of sub
         @para re_comp: re.compile object
         @para stype: type_id for Part object
         """
-        found = re_comp.finditer(self.in_str)
-        found = map(lambda x:Part(x, stype), found)
-        print(found)
-        found = list(found)
-        return found
+        founds = re_comp.finditer(self.in_str)
+        filted = []
+        for i in founds:
+            part = Part(i, self, stype)
+            if not filter_used or part.isUsed == Part.IsUsed.unused:
+                filted.append(part)
+        return filted
+        
     
     def set_used(self, start, end=None):
         if end == None:
@@ -104,15 +126,17 @@ class Time_str(My_str):
     re_norm = re.compile('[-:,/ ]+')
     def __init__(self, in_str):
         super().__init__(in_str)
-        #self.get_parts()
+        self.T4 = self.time_lmrs()
+        self.date = self.date()
+        self.get_parts()
     
     #unused
     def get_parts(self):
         self.num_parts = self.get_atype(Time_str.re_num, 0)
         self.eng_parts = self.get_atype(Time_str.re_eng, 1)
         self.norm_parts= self.get_atype(Time_str.re_norm,2)
-        parts = self.num_parts + self.eng_parts + self.norm_parts
-        self.parts = parts.sort()
+        self.parts = self.num_parts + self.eng_parts + self.norm_parts
+        #self.parts = parts.sort()
     
     def english_month_day(self):
         month, _ = self.find_strs(month_short, 'english month')
@@ -170,12 +194,13 @@ class Time_str(My_str):
         month, day = self.english_month_day()
         yyyy = re.search('\D(\d{4})\D', self.in_str)
         self.set_used(yyyy.start(1), yyyy.end(1))
-        return yyyy.group(1), month, day
+        yyyy = int(yyyy.group(1))
+        return yyyy, month, day
 
 if __name__ == '__main__':
     test_str = 'Wed 28/Oct/2020 12:34:56.123 '#input('请输入测试字符串:')
     tstr = Time_str(test_str)
-    T4 = tstr.time_lmrs()
-    date = tstr.date()
     print('test time_lmrs:')
-    print(T4, date)
+    print(tstr.T4, tstr.date)
+    for i in tstr.parts:
+        print(i)
