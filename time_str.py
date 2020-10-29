@@ -116,11 +116,11 @@ class My_str:
                 bpart.append(part)
         return bpart
     
-    def get_parts(self, re, stype):
+    def get_parts(self, re, stype, names):
         mtype = BigPart.ABType.subs
-        ret = []
-        for re_i,stype_i in zip(re, stype):
-            ret.append(self.get_atype(re_i, mtype, stype_i))
+        ret = {}
+        for re_i,stype_i,n_i in zip(re, stype, names):
+            ret[n_i] = self.get_atype(re_i, mtype, stype_i)
         return ret
     
     def set_used(self, stype, start, end=None):
@@ -189,11 +189,12 @@ class Time_str(My_str):
     re_eng = re.compile('[a-zA-Z]+')
     re_norm = re.compile('[-:,/ ]+')
     re3 = [re_num, re_eng, re_norm]
+    sType = ['num', 'eng', 'norm', 'other']
     def __init__(self, in_str):
         super().__init__(in_str)
         self.T4 = self.time_lmrs()
         self.date = self.date()
-        self.parts = self.get_parts(Time_str.re3, Part.sType)
+        self.parts = self.get_parts(Time_str.re3, Part.sType, Time_str.sType)
         self.date_parts = BigPart(BigPart.ABType.date)
         self.time_parts = BigPart(BigPart.ABType.time)
     
@@ -271,5 +272,6 @@ if __name__ == '__main__':
     tstr = Time_str(test_str)
     print('test time_lmrs:')
     print(tstr.T4, tstr.date)
-    for i in tstr.parts:
-        print(i)
+    print('num:', tstr.parts['num'])
+    print('eng:', tstr.parts['eng'])
+    print('norm:', tstr.parts['norm'])
