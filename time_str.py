@@ -9,6 +9,17 @@ month_full=['January','February','March','April','May','June',
             'July','August','Spetember','October','November','December']
 month_short=['Jan','Feb','Mar','Apr','May','Jun',
              'Jul','Aug','Spet','Oct','Nov','Dec']
+
+
+re_num = re.compile('\d+')
+re_eng = re.compile('[a-zA-Z]+')
+re_norm = re.compile('[-:,/ ]+')
+re3 = [re_num, re_eng, re_norm]
+sName = ['num', 'eng', 'norm', 'other']
+
+sType = Enum('sType', 'num eng norm')
+ABType = Enum('ABType', 'date time subs')
+iType = Enum('iType', 'year month date day hours minute second subsec ampm')
 #type 0: number  [0-9]
 #type 1: english [A-Za-z]
 #type 2: chara   -:,/  <space>
@@ -16,14 +27,14 @@ month_short=['Jan','Feb','Mar','Apr','May','Jun',
 
 class Part():
     IsUsed = Enum('IsUsed', 'unused partused allused')
-    sType = Enum('sType', 'num eng norm')
-    aType = Enum('aType', 'year month date day')
-    bType = Enum('bType', 'hours minute second subsec ampm')
     def __init__(self, mstr, span:tuple, stype):
         self.span = span
         self.mstr = mstr
         self.stype = stype
         self.check_used()
+        
+    def match(self):
+        return self.mstr.in_str[self.span[0]:self.span[1]]
     
     def __str__(self):
         ret = 'span={} str="{}", isUsed={}, stype={}'\
@@ -46,17 +57,19 @@ class Part():
         else:
             #self.isUsed = Part.IsUsed.partused
             raise ValueError('match part used')
+    
+    def __len__(self):
+        return self.span[1] - self.span[0]
 
 #part date or time, can include sub part
 class BigPart(list):
-    ABType = Enum('ABType', 'date time subs')
     def __init__(self, mtype, inc=True, cont=False, used=Part.IsUsed.unused):
         '''
         @para inc: all sub parts increase, next part head after prev end.
         @para cont: all sub parts continuous, next part head close prev end.
         @para used: None not any, True is unused, False is allused
         '''
-        assert mtype in BigPart.ABType
+        assert mtype in ABType
         super().__init__()
         self.mtype = mtype
         self.inc = inc
@@ -117,7 +130,7 @@ class My_str:
         return bpart
     
     def get_parts(self, re, stype, names):
-        mtype = BigPart.ABType.subs
+        mtype = ABType.subs
         ret = {}
         for re_i,stype_i,n_i in zip(re, stype, names):
             ret[n_i] = self.get_atype(re_i, mtype, stype_i)
@@ -178,25 +191,21 @@ class My_str:
             if index != -1:
                 if sub_i is None:
                     sub_i = ni
-                    self.set_used(Part.sType.eng, index, index+len(sub))
+                    self.set_used(sType.eng, index, index+len(sub))
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
         return sub_i, (index, index+len(sub))
-
+        
 #smart time str to datetime struct
 class Time_str(My_str):
-    re_num = re.compile('\d+')
-    re_eng = re.compile('[a-zA-Z]+')
-    re_norm = re.compile('[-:,/ ]+')
-    re3 = [re_num, re_eng, re_norm]
-    sType = ['num', 'eng', 'norm', 'other']
     def __init__(self, in_str):
         super().__init__(in_str)
         self.T4 = self.time_lmrs()
         self.date = self.date()
-        self.parts = self.get_parts(Time_str.re3, Part.sType, Time_str.sType)
-        self.date_parts = BigPart(BigPart.ABType.date)
-        self.time_parts = BigPart(BigPart.ABType.time)
+        self.parts = self.get_parts(re3, sType, sName)
+        self.date_parts = BigPart(ABType.date)
+        self.time_parts = BigPart(ABType.time)
+        self.process_num()
     
     def english_month_day(self):
         month, _ = self.find_strs(month_short, 'english month')
@@ -232,19 +241,21 @@ class Time_str(My_str):
         else:
             return None
     
-    def find_yyyy(self):
-        s = None
-        for i in ['\D(\d{4})\D', '^(\d{4})\D', '\D(\d{4})$']:
-            s = self.search(i, isCheck=False, isRaise=False)
-            if s is not None:
-                break
-        if s is not None:
-            yyyy, _ = s
-            yyyy = int(yyyy.group(1))
-        else:
-            yyyy = None
-        return yyyy
-    
+    def process_num(self):
+        for i in self.parts['num']:
+            match = i.match()
+            inti = int(match)
+            if len(i) == 4:
+                if 1970<=inti<2050:
+                    self.year = inti
+                elif 101<=inti<=1231:
+                    self.mon_num = inti//100
+                    self.date = inti%100
+            elif len(i) == 6:
+                self.year = inti//10000
+                self.mon_num 
+            
+        
     def time_lmrs(self):
         """
         get time HH:MM:SS.subsec , MM:SS.subsec or HH:MM:SS
@@ -264,8 +275,7 @@ class Time_str(My_str):
     
     def date(self):
         month, day = self.english_month_day()
-        yyyy = self.find_yyyy()
-        return yyyy, month, day
+        return month, day
 
 if __name__ == '__main__':
     test_str = '2020 Wed 28/Oct 12:34:56.123 '#input('请输入测试字符串:')
