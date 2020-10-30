@@ -28,6 +28,7 @@ sType = Enum('sType', 'num eng norm')
 
 class Part():
     StrUsed = Enum('IsUsed', 'unused partused allused')
+    objs = []
     def __init__(self, mstr, stype, span:tuple, isUse=True):
         self.span = span
         self.mstr = mstr
@@ -35,6 +36,9 @@ class Part():
         #TODO: self.stype_check()
         self.str_used = self.check_str_used()
         if isUse:
+            for i in Part.objs:
+                if i == self:
+                    raise ValueError('Part {} is already create'.format(span))
             if self.str_used == Part.StrUsed.unused:
                 self.set_str_used()
             else:
@@ -43,8 +47,8 @@ but str is {}, not all unused\n\
 {}\n{}'.format(self.str_used, self.mstr.in_str, 
 ' '*span[0]+'^'*(span[1]-span[0])))
         self.isUse = isUse
-            
-        
+        self.objs.append(self)
+    
     def match(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
     
@@ -59,6 +63,10 @@ but str is {}, not all unused\n\
     
     def __gt__(self, other):
         return self.span[1] > other.span[0]
+    
+    def __eq__(self, other):
+        return self.mstr == other.mstr and \
+               self.span == other.span
     
     def check_str_used(self):
         N_used = 0
