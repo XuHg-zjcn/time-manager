@@ -87,7 +87,8 @@ class BigPart(dict):
             assert key in AType or key is sType.norm
         if self.mtype == ABType.time:
             assert key in BType or key is sType.norm
-        super().__setitem__(key, value)
+        if self.mtype != ABType.subs:
+            super().__setitem__(key, value)
         self.aslist.append(value)
         self.x_len += 1
         if self.used is not None and self.used != value.isUsed:
@@ -204,14 +205,7 @@ class My_str:
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
         return sub_i, (index, index+len(sub))
-
-class info:
-    #TODO: remove
-    def __init__(self, itype, from_stype, value):
-        self.itype = itype
-        self.from_stype = from_stype
-        self.value = value
-        
+    
 #smart time str to datetime struct
 class Time_str(My_str):
     def __init__(self, in_str):
@@ -221,7 +215,7 @@ class Time_str(My_str):
         self.T4 = self.time_lmrs()
         self.date = self.date()
         self.parts = self.get_parts(re3, sType, sName)
-        self.process_num()
+        self.nums = self.process_num()
     
     def english_month_day(self):
         month, _ = self.find_strs(month_short, 'english month')
@@ -258,28 +252,25 @@ class Time_str(My_str):
             return None
     
     def process_num(self):
-        #TODO remove info, use date_p
-        ret = []
-        for key in self.parts['num']:
-            part = self.parts['num'][key]
+        ret = BigPart(ABType.date)
+        for part in self.parts['num'].aslist:
+            print('part:', part)
+            print('')
+            s = part.span[0]
+            e = part.span[1]
             match = part.match()
             inti = int(match)
             if len(match) == 8:
-                year = inti[:4]
-                month = inti[4:6]
-                date = inti[6:]
-                ret.append(info(AType.year, sType.num, year))
-                ret.append(info(AType.month,sType.num, month))
-                ret.append(info(AType.date, sType.num, date))
+                ret[AType.year] = Part(self, (s,   s+4))
+                ret[AType.month]= Part(self, (s+4, s+6))
+                ret[AType.date] = Part(self, (s+6, e))
             elif len(match) == 4:
                 if 1970<=inti<2050:
-                    year = inti
-                    ret.append(info(AType.year, sType.num, year))
+                    ret[AType.year] = Part(self, (s, e))
                 elif 101<=inti<=1231:
-                    month = int(inti[:2])
-                    date = int(inti[2:])
-                    ret.append(info(AType.month, sType.num, month))
-                    ret.append(info(AType.date,  sType.num, date))
+                    ret[AType.month]= Part(self, (s, s+2))
+                    ret[AType.date] = Part(self, (s+2, e))
+        return ret
     
     def time_lmrs(self):
         """
@@ -313,7 +304,7 @@ class Time_str(My_str):
         return month, day
 
 if __name__ == '__main__':
-    test_str = '2020 Wed 28/Oct 12:34:56.123 '#input('请输入测试字符串:')
+    test_str = '20200426 Wed 28/Oct 12:34:56.123 '#input('请输入测试字符串:')
     tstr = Time_str(test_str)
     print('test time_lmrs:')
     print(tstr.T4, tstr.date)
@@ -321,3 +312,4 @@ if __name__ == '__main__':
     print('num:', tstr.parts['num'])
     print('eng:', tstr.parts['eng'])
     print('norm:', tstr.parts['norm'])
+    print('date:', tstr.nums)
