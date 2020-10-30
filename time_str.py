@@ -17,9 +17,11 @@ re_norm = re.compile('[-:,/ ]+')
 re3 = [re_num, re_eng, re_norm]
 sName = ['num', 'eng', 'norm', 'other']
 
-sType = Enum('sType', 'num eng norm')
 ABType = Enum('ABType', 'date time subs')
-iType = Enum('iType', 'year month date day hours minute second subsec ampm')
+AType = Enum('AType', 'year month date day')
+BType = Enum('BType', 'hours minute second subsec ampm')
+bType = Enum('bType', 'left midd right')
+sType = Enum('sType', 'num eng norm')
 #type 0: number  [0-9]
 #type 1: english [A-Za-z]
 #type 2: chara   -:,/  <space>
@@ -27,7 +29,7 @@ iType = Enum('iType', 'year month date day hours minute second subsec ampm')
 
 class Part():
     IsUsed = Enum('IsUsed', 'unused partused allused')
-    def __init__(self, mstr, span:tuple, stype):
+    def __init__(self, mstr, stype, span:tuple):
         self.span = span
         self.mstr = mstr
         self.stype = stype
@@ -63,6 +65,7 @@ class Part():
 
 #part date or time, can include sub part
 class BigPart(list):
+    #TODO: add repart detec
     def __init__(self, mtype, inc=True, cont=False, used=Part.IsUsed.unused):
         '''
         @para inc: all sub parts increase, next part head after prev end.
@@ -124,7 +127,7 @@ class My_str:
         founds = re_comp.finditer(self.in_str)
         bpart = BigPart(mtype)
         for i in founds:
-            part = Part(self, i.span(), mtype)
+            part = Part(self, mtype, i.span())
             if not filter_used or part.isUsed == Part.IsUsed.unused:
                 bpart.append(part)
         return bpart
@@ -144,7 +147,7 @@ class My_str:
                 raise ValueError('in_str[{}] is already used\n{}'
                                  .format(i, self.mark(i)))
             self.used[i] = True
-        self.used_parts.append(Part(self, (start, end), stype))
+        self.used_parts.append(Part(self, stype, (start, end)))
         
     def mark(self, index):
         return "{}\n{}^".format(self.in_str, ' '*index)
@@ -197,6 +200,7 @@ class My_str:
         return sub_i, (index, index+len(sub))
 
 class info:
+    #TODO: remove
     def __init__(self, itype, from_stype, value):
         self.itype = itype
         self.from_stype = from_stype
@@ -206,11 +210,11 @@ class info:
 class Time_str(My_str):
     def __init__(self, in_str):
         super().__init__(in_str)
+        self.date_p = BigPart(ABType.date)
+        self.time_p = BigPart(ABType.time, used=None)
         self.T4 = self.time_lmrs()
         self.date = self.date()
         self.parts = self.get_parts(re3, sType, sName)
-        self.date_parts = BigPart(ABType.date)
-        self.time_parts = BigPart(ABType.time)
         self.process_num()
     
     def english_month_day(self):
@@ -248,6 +252,7 @@ class Time_str(My_str):
             return None
     
     def process_num(self):
+        #TODO remove info, use date_p
         ret = []
         for i in self.parts['num']:
             match = i.match()
@@ -256,18 +261,18 @@ class Time_str(My_str):
                 year = inti[:4]
                 month = inti[4:6]
                 date = inti[6:]
-                ret.append(info(iType.year, sType.num, year))
-                ret.append(info(iType.month, sType.num, month))
-                ret.append(info(iType.date, sType.num, date))
+                ret.append(info(AType.year, sType.num, year))
+                ret.append(info(AType.month,sType.num, month))
+                ret.append(info(AType.date, sType.num, date))
             elif len(match) == 4:
                 if 1970<=inti<2050:
                     year = inti
-                    ret.append(info(iType.year, sType.num, year))
+                    ret.append(info(AType.year, sType.num, year))
                 elif 101<=inti<=1231:
                     month = int(inti[:2])
                     date = int(inti[2:])
-                    ret.append(info(iType.month, sType.num, month))
-                    ret.append(info(iType.date,  sType.num, date))
+                    ret.append(info(AType.month, sType.num, month))
+                    ret.append(info(AType.date,  sType.num, date))
     
     def time_lmrs(self):
         """
@@ -275,11 +280,21 @@ class Time_str(My_str):
         return Left:Midd:Right.subsec
         if not found Midd or subsec, return None
         """
-        match, _ = self.search('((\d+):(\d+:)*(\d+)(\.\d+)*)')
-        left = int(match.group(2))
-        midd = match.group(3)
-        right = int(match.group(4))
-        ssec = match.group(4)
+        m, _ = self.search('((\d+):(\d+:)*(\d+)(\.\d+)*)')
+        #append Parts to self.time_parts
+        self.time_p.append(Part(self, bType.left, m.span(2)))
+        self.time_p.append(Part(self, sType.norm, (m.end(2), m.start(3))))
+        if m.group(3) is not None:
+            self.time_p.append(Part(self, bType.midd, (m.start(3),m.end(3)-1)))
+            self.time_p.append(Part(self, sType.norm, (m.end(3)-1, m.end(3))))
+        self.time_p.append(Part(self, bType.right, m.span(4)))
+        if m.group(5) is not None:
+            self.time_p.append(Part(self, BType.subsec, m.span(5)))
+        #get left, midd, right, subsec
+        left = int(m.group(2))
+        midd = m.group(3)
+        right = int(m.group(4))
+        ssec = m.group(5)
         if midd is not None:
             midd = int(midd[:-1])
         if ssec is not None:
