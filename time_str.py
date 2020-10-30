@@ -195,6 +195,12 @@ class My_str:
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
         return sub_i, (index, index+len(sub))
+
+class info:
+    def __init__(self, itype, from_stype, value):
+        self.itype = itype
+        self.from_stype = from_stype
+        self.value = value
         
 #smart time str to datetime struct
 class Time_str(My_str):
@@ -242,20 +248,27 @@ class Time_str(My_str):
             return None
     
     def process_num(self):
+        ret = []
         for i in self.parts['num']:
             match = i.match()
             inti = int(match)
-            if len(i) == 4:
+            if len(match) == 8:
+                year = inti[:4]
+                month = inti[4:6]
+                date = inti[6:]
+                ret.append(info(iType.year, sType.num, year))
+                ret.append(info(iType.month, sType.num, month))
+                ret.append(info(iType.date, sType.num, date))
+            elif len(match) == 4:
                 if 1970<=inti<2050:
-                    self.year = inti
+                    year = inti
+                    ret.append(info(iType.year, sType.num, year))
                 elif 101<=inti<=1231:
-                    self.mon_num = inti//100
-                    self.date = inti%100
-            elif len(i) == 6:
-                self.year = inti//10000
-                self.mon_num 
-            
-        
+                    month = int(inti[:2])
+                    date = int(inti[2:])
+                    ret.append(info(iType.month, sType.num, month))
+                    ret.append(info(iType.date,  sType.num, date))
+    
     def time_lmrs(self):
         """
         get time HH:MM:SS.subsec , MM:SS.subsec or HH:MM:SS
