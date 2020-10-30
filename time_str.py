@@ -19,8 +19,7 @@ sName = ['num', 'eng', 'norm', 'other']
 
 ABType = Enum('ABType', 'date time subs')
 AType = Enum('AType', 'year month date day')
-BType = Enum('BType', 'hours minute second subsec ampm')
-bType = Enum('bType', 'left midd right')
+BType = Enum('BType', 'hours minute second subsec ampm left midd right')
 sType = Enum('sType', 'num eng norm')
 #type 0: number  [0-9]
 #type 1: english [A-Za-z]
@@ -29,23 +28,25 @@ sType = Enum('sType', 'num eng norm')
 
 class Part():
     IsUsed = Enum('IsUsed', 'unused partused allused')
-    def __init__(self, mstr, stype, span:tuple):
+    def __init__(self, mstr, span:tuple):
         self.span = span
         self.mstr = mstr
-        self.stype = stype
         self.check_used()
         
     def match(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
     
     def __str__(self):
-        ret = 'span={} str="{}", isUsed={}, stype={}'\
+        ret = 'span={} str="{}", isUsed={}'\
         .format(self.span, self.mstr.in_str[self.span[0]:self.span[1]], 
-                self.isUsed, self.stype)
+                self.isUsed)
         return ret
     
     def __lt__(self, other):
-        return self.span[0] < other.span[0]
+        return self.span[1] < other.span[0]
+    
+    def __gt__(self, other):
+        return self.span[1] > other.span[0]
     
     def check_used(self):
         N_used = 0
@@ -64,7 +65,7 @@ class Part():
         return self.span[1] - self.span[0]
 
 #part date or time, can include sub part
-class BigPart(list):
+class BigPart(dict):
     #TODO: add repart detec
     def __init__(self, mtype, inc=True, cont=False, used=None):
         '''
@@ -78,16 +79,37 @@ class BigPart(list):
         self.inc = inc
         self.cont = cont
         self.used = used
+        self.x_len = 0
+        self.aslist = []
         
-    def append(self, obj):
-        super().append(obj)
-        if self.used is not None and self.used != obj.isUsed:
+    def __setitem__(self, key, value):
+        if self.mtype == ABType.date:
+            assert key in AType or key is sType.norm
+        if self.mtype == ABType.time:
+            assert key in BType or key is sType.norm
+        super().__setitem__(key, value)
+        self.aslist.append(value)
+        self.x_len += 1
+        if self.used is not None and self.used != value.isUsed:
             raise ValueError('used reqire is not same')
-        if len(self)>=2:
-            if self.inc and self[-2] > self[-1]:
-                raise ValueError('sub part not increase')
-            if self.cont and self[-2] != self[-1]:
-                raise ValueError('sub part not continue')
+        if self.x_len >= 2:
+            if self.inc and self.aslist[-2] > self.aslist[-1]:
+                raise ValueError('sub part not increase:\n{}'.format(self))
+            if self.cont and self.aslist[-2] != self.aslist[-1]:
+                raise ValueError('sub part not continue:\n{}'.format(self))
+    
+    def __getitem__(self, key):
+        if key in self:
+            value = super().__getitem__(key)
+        else:
+            if isinstance(key, int):
+                if key>=0:
+                    value = self.aslist[self.x_len+key]
+                elif key<0:
+                    value = self.aslist[key]
+                else:
+                    raise KeyError("{} isn't valid key or index".format(key))
+        return value
     
     def check_used(self):
         for i in self:
@@ -107,8 +129,8 @@ class BigPart(list):
 
     
     def __str__(self):
-        ret = ''
-        for i in self:
+        ret = 'BigPart:\n'
+        for i in self.aslist:
             ret += str(i)+'\n'
         return ret
     
@@ -116,7 +138,7 @@ class My_str:
     def __init__(self, in_str):
         self.in_str = in_str
         self.used = [False]*len(in_str)
-        self.used_parts = []
+        self.used_parts = BigPart(ABType.subs, inc=False)
 
     def get_atype(self, re_comp, mtype, stype, filter_used=Part.IsUsed.unused):
         """
@@ -128,9 +150,9 @@ class My_str:
         founds = re_comp.finditer(self.in_str)
         bpart = BigPart(mtype)
         for i in founds:
-            part = Part(self, mtype, i.span())
+            part = Part(self, i.span())
             if filter_used is None or part.isUsed == filter_used:
-                bpart.append(part)
+                bpart[mtype] = part
         return bpart
     
     def get_parts(self, re, stype, names):
@@ -148,27 +170,10 @@ class My_str:
                 raise ValueError('in_str[{}] is already used\n{}'
                                  .format(i, self.mark(i)))
             self.used[i] = True
-        self.used_parts.append(Part(self, stype, (start, end)))
+        self.used_parts[stype] = Part(self, (start, end))
         
     def mark(self, index):
         return "{}\n{}^".format(self.in_str, ' '*index)
-    
-    def findall(self, sub):
-        """
-        find all sub str.
-        @para sub: the sub str
-        @return: list of found indexs
-        """
-        start = 0
-        ret = []
-        while True:
-            index = self.in_str.find(sub, start)
-            if index != -1:
-                ret.append(index)
-                self.set_used(index, index+len(sub))
-                start = index + len(sub)
-            else:
-                return ret
     
     def find_onlyone(self, sub):
         """
@@ -255,8 +260,9 @@ class Time_str(My_str):
     def process_num(self):
         #TODO remove info, use date_p
         ret = []
-        for i in self.parts['num']:
-            match = i.match()
+        for key in self.parts['num']:
+            part = self.parts['num'][key]
+            match = part.match()
             inti = int(match)
             if len(match) == 8:
                 year = inti[:4]
@@ -283,14 +289,14 @@ class Time_str(My_str):
         """
         m, _ = self.search('((\d+):(\d+:)*(\d+)(\.\d+)*)')
         #append Parts to self.time_parts
-        self.time_p.append(Part(self, bType.left, m.span(2)))
-        self.time_p.append(Part(self, sType.norm, (m.end(2), m.start(3))))
+        self.time_p[BType.left] = Part(self, m.span(2))
+        self.time_p[sType.norm] = Part(self, (m.end(2), m.start(3)))
         if m.group(3) is not None:
-            self.time_p.append(Part(self, bType.midd, (m.start(3),m.end(3)-1)))
-            self.time_p.append(Part(self, sType.norm, (m.end(3)-1, m.end(3))))
-        self.time_p.append(Part(self, bType.right, m.span(4)))
+            self.time_p[BType.midd] = Part(self, (m.start(3),m.end(3)-1))
+            self.time_p[sType.norm] = Part(self, (m.end(3)-1, m.end(3)))
+        self.time_p[BType.right] = Part(self, m.span(4))
         if m.group(5) is not None:
-            self.time_p.append(Part(self, BType.subsec, m.span(5)))
+            self.time_p[BType.subsec] = Part(self, m.span(5))
         #get left, midd, right, subsec
         left = int(m.group(2))
         midd = m.group(3)
@@ -311,6 +317,7 @@ if __name__ == '__main__':
     tstr = Time_str(test_str)
     print('test time_lmrs:')
     print(tstr.T4, tstr.date)
+    print()
     print('num:', tstr.parts['num'])
     print('eng:', tstr.parts['eng'])
     print('norm:', tstr.parts['norm'])
