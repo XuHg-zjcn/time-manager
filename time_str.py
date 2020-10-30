@@ -35,19 +35,11 @@ class Part():
         self.mstr = mstr
         self.stype = stype
         #TODO: self.stype_check()
-        self.str_used = self.check_str_used()
+        self.check_str_used()
         if isUse:
-            for i in Part.objs:
-                if i == self:
-                    raise ValueError('Part {} is already create\n{}'
-                    .format(span, mstr.mark(i.span)))
-            if self.str_used == Part.StrUsed.unused:
-                self.set_str_used()
-            else:
-                raise ValueError('Part init require isUse, \
-but str is {}, not all unused\n{}'.format(self.str_used, mstr.mark(i.span)))
+            self.check_no_repeat()
+            self.set_used()
         self.isUse = isUse
-        self.objs.append(self)
     
     def match(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
@@ -68,22 +60,32 @@ but str is {}, not all unused\n{}'.format(self.str_used, mstr.mark(i.span)))
         return self.mstr == other.mstr and \
                self.span == other.span
     
+    def check_no_repeat(self):
+        for i in Part.objs:
+            if i == self:
+                raise ValueError('Part {} is already create\n{}'
+                .format(self.span, self.mstr.mark(self.span)))
+    
     def check_str_used(self):
         N_used = 0
         for i in range(*self.span):
             if self.mstr.used[i]:
                 N_used += 1
         if N_used == 0:
-            isUsed = Part.StrUsed.unused
+            str_used = Part.StrUsed.unused
         elif N_used == self.span[1] - self.span[0]:
-            isUsed = Part.StrUsed.allused
+            str_used = Part.StrUsed.allused
         else:
             #self.isUsed = Part.IsUsed.partused
             raise ValueError('match part used')
-        return isUsed
+        self.str_used = str_used
     
-    def set_str_used(self):
-        assert self.str_used == Part.StrUsed.unused
+    def set_used(self):
+        self.check_str_used()
+        if self.str_used != Part.StrUsed.unused:
+            raise ValueError('want the part of str unused, but str is {},\
+not all unused\n{}'.format(self.str_used, self.mstr.mark(self.span)))
+        self.objs.append(self)
         for i in range(*self.span):
             self.mstr.used[i] = True
         self.str_used = Part.StrUsed.allused
@@ -93,7 +95,7 @@ but str is {}, not all unused\n{}'.format(self.str_used, mstr.mark(i.span)))
 
 #part date or time, can include sub part
 class BigPart(dict):
-    def __init__(self, mtype, inc=True, cont=False, used=None):
+    def __init__(self, mtype, inc=False, cont=False, used=None):
         '''
         @para inc: all sub parts increase, next part head after prev end.
         @para cont: all sub parts continuous, next part head close prev end.
@@ -162,8 +164,16 @@ class BigPart(dict):
         d2 = {'h':BType.month, 'm':BType.minute, 's':BType.second}
         dx = {ABType.date:d1, ABType.time:d2}[self.mtype]
         for key in dx:
-               if key in req:
-                   assert dx[key] in self
+            if key in req and dx[key] not in self:
+                return False
+        return True
+       
+    def n_unused(self):
+        n = 0
+        for i in self.aslist:
+            if i.check_str_used() == Part.StrUsed.unused:
+                n += 1
+        return n
     
     def __str__(self):
         ret = 'BigPart:\n'
@@ -223,23 +233,24 @@ class My_str:
                raise ValueError('found multipy {} in str'.format(sub))
         return index
     
-    def find_strs(self, subs, stype, err):
+    def find_strs(self, subs, err):
         """
         find which sub in in_str, only one sub can find, else raise ValueError
         @para subs: list of subs
-        @err: show when find multipy subs
+        @para err: show when find multipy subs
+        @ret sub_i: the index of sub, when found the Part
+        @ret ret_Part: found Part
         """
-        sub_i = None
+        ret = None
         for ni,sub in enumerate(subs):
             index = self.find_onlyone(sub)
             if index != -1:
                 span = (index, index+len(sub))
-                if sub_i is None:
-                    sub_i = ni
-                    self.used_parts[None] = Part(self, stype, span)
+                if ret is None:
+                    ret = Part(self, sType.eng, span)
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
-        return sub_i, (index, index+len(sub))
+        return ret
     
 #smart time str to datetime struct
 class Time_str(My_str):
@@ -247,17 +258,14 @@ class Time_str(My_str):
         super().__init__(in_str)
         self.date_p = BigPart(ABType.date)
         self.time_p = BigPart(ABType.time, used=None)
-        self.T4 = self.time_lmrs()
-        self.date = self.date()
+        self.time_lmrs()
+        self.english_month_day()
         self.parts = self.get_parts(re3, sType, sName)
         self.process_num()
     
     def english_month_day(self):
-        month, _ = self.find_strs(month_short, sType.eng, 'english month')
-        day  , _ = self.find_strs(day_short,   sType.eng, 'english day')
-        month += 1
-        day += 1
-        return month, day
+        self.date_p[AType.month] = self.find_strs(month_short, 'english month')
+        self.date_p[AType.day] = self.find_strs(day_short, 'english day')
     
     def search(self, pattern, start=0, end=-1, isRaise=True, isCheck=True):
         found = re.search(pattern, self.in_str[start:end])
@@ -304,6 +312,7 @@ class Time_str(My_str):
                     self.date_p[AType.month]= Part(self, sType.num, (s, s+2))
                     self.date_p[AType.date] = Part(self, sType.num, (s+2, e))
                     part.isUsed = Part.IsUsed.allused
+        
     
     def time_lmrs(self):
         """
@@ -330,18 +339,22 @@ class Time_str(My_str):
             midd = int(midd[:-1])
         if ssec is not None:
             ssec = float(ssec)
-        return (left, midd, right, ssec)
     
-    def date(self):
-        month, day = self.english_month_day()
-        return month, day
-
+    def datetime_process(self):
+        if self.date_p.check_finally():
+            self.time_p[BType.hours] = self.time_p[BType.left]
+            if BType.midd in self.time_p:
+                self.time_p[BType.minute] = self.time_p[BType.midd]
+                self.time_p[BType.second] = self.time_p[BType.right]
+            else:
+                assert BType.subsec not in self.time_p
+                self.time_p[BType.minute] = self.time_p[BType.right]
+        if self.time_p.check_finally():
+             pass
+         
 if __name__ == '__main__':
-    test_str = '20200426 Wed 28/Oct 12:34:56.123 '#input('请输入测试字符串:')
+    test_str = 'Wed 28/Oct 12:34:56.123 '#input('请输入测试字符串:')
     tstr = Time_str(test_str)
-    print('test time_lmrs:')
-    print(tstr.T4)
-    print()
     print('num:', tstr.parts['num'])
     print('eng:', tstr.parts['eng'])
     print('norm:', tstr.parts['norm'])
