@@ -157,6 +157,13 @@ class BigPart(dict):
         end = last.span[1]
         self.span = (start, end)
 
+    def check_finally(self, req='MD hm'):
+        d1 = {'Y':AType.year, 'M':AType.month, 'D':AType.date}
+        d2 = {'h':BType.month, 'm':BType.minute, 's':BType.second}
+        dx = {ABType.date:d1, ABType.time:d2}[self.mtype]
+        for key in dx:
+               if key in req:
+                   assert dx[key] in self
     
     def __str__(self):
         ret = 'BigPart:\n'
@@ -243,7 +250,7 @@ class Time_str(My_str):
         self.T4 = self.time_lmrs()
         self.date = self.date()
         self.parts = self.get_parts(re3, sType, sName)
-        self.nums = self.process_num()
+        self.process_num()
     
     def english_month_day(self):
         month, _ = self.find_strs(month_short, sType.eng, 'english month')
@@ -279,26 +286,24 @@ class Time_str(My_str):
             return None
     
     def process_num(self):
-        ret = BigPart(ABType.date)
         for part in self.parts['num'].aslist:
             s = part.span[0]
             e = part.span[1]
             match = part.match()
             inti = int(match)
             if len(match) == 8:
-                ret[AType.year] = Part(self, sType.num, (s,   s+4))
-                ret[AType.month]= Part(self, sType.num, (s+4, s+6))
-                ret[AType.date] = Part(self, sType.num, (s+6, e))
+                self.date_p[AType.year] = Part(self, sType.num, (s,   s+4))
+                self.date_p[AType.month]= Part(self, sType.num, (s+4, s+6))
+                self.date_p[AType.date] = Part(self, sType.num, (s+6, e))
                 part.isUsed = Part.StrUsed.allused
             elif len(match) == 4:
                 if 1970<=inti<2050:
-                    ret[AType.year] = Part(self, sType.num, (s, e))
+                    self.date_p[AType.year] = Part(self, sType.num, (s, e))
                     part.isUsed = Part.IsUsed.allused
                 elif 101<=inti<=1231:
-                    ret[AType.month]= Part(self, sType.num, (s, s+2))
-                    ret[AType.date] = Part(self, sType.num, (s+2, e))
+                    self.date_p[AType.month]= Part(self, sType.num, (s, s+2))
+                    self.date_p[AType.date] = Part(self, sType.num, (s+2, e))
                     part.isUsed = Part.IsUsed.allused
-        return ret
     
     def time_lmrs(self):
         """
@@ -340,4 +345,6 @@ if __name__ == '__main__':
     print('num:', tstr.parts['num'])
     print('eng:', tstr.parts['eng'])
     print('norm:', tstr.parts['norm'])
-    print('date:', tstr.nums)
+    print()
+    print('date:', tstr.date_p)
+    print('time:', tstr.time_p)
