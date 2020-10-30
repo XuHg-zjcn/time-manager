@@ -34,13 +34,13 @@ class Part():
         self.str_used = self.check_str_used()
         if isUse:
             if self.str_used == Part.StrUsed.unused:
-                self.isUse = True
                 self.set_str_used()
             else:
-                raise ValueError('Part init require isUse, but str is {},\
-                                  not all unused'.format(self.str_used))
-        else:
-            self.isUse = False
+                raise ValueError('Part init require isUse, \
+but str is {}, not all unused\n\
+{}\n{}'.format(self.str_used, self.mstr.in_str, 
+' '*span[0]+'^'*(span[1]-span[0])))
+        self.isUse = isUse
             
         
     def match(self):
@@ -76,6 +76,7 @@ class Part():
         assert self.str_used == Part.StrUsed.unused
         for i in range(*self.span):
             self.mstr.used[i] = True
+        self.str_used = Part.StrUsed.allused
     
     def __len__(self):
         return self.span[1] - self.span[0]
@@ -179,16 +180,6 @@ class My_str:
         for re_i,stype_i,n_i in zip(re, stype, names):
             ret[n_i] = self.get_atype(re_i, mtype, stype_i)
         return ret
-    
-    def set_used(self, stype, start, end=None):
-        if end == None:
-            end = start + 1
-        for i in range(start, end):
-            if self.used[i] == True:
-                raise ValueError('in_str[{}] is already used\n{}'
-                                 .format(i, self.mark(i)))
-            self.used[i] = True
-        self.used_parts[stype] = Part(self, (start, end), isUse=True)
         
     def mark(self, index):
         return "{}\n{}^".format(self.in_str, ' '*index)
@@ -206,7 +197,7 @@ class My_str:
                raise ValueError('found multipy {} in str'.format(sub))
         return index
     
-    def find_strs(self, subs, err):
+    def find_strs(self, subs, stype, err):
         """
         find which sub in in_str, only one sub can find, else raise ValueError
         @para subs: list of subs
@@ -216,9 +207,10 @@ class My_str:
         for ni,sub in enumerate(subs):
             index = self.find_onlyone(sub)
             if index != -1:
+                span = (index, index+len(sub))
                 if sub_i is None:
                     sub_i = ni
-                    self.set_used(sType.eng, index, index+len(sub))
+                    self.used_parts[stype] = Part(self, span)
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
         return sub_i, (index, index+len(sub))
@@ -230,13 +222,13 @@ class Time_str(My_str):
         self.date_p = BigPart(ABType.date)
         self.time_p = BigPart(ABType.time, used=None)
         self.T4 = self.time_lmrs()
-        #self.date = self.date()
+        self.date = self.date()
         self.parts = self.get_parts(re3, sType, sName)
         self.nums = self.process_num()
     
     def english_month_day(self):
-        month, _ = self.find_strs(month_short, 'english month')
-        day  , _ = self.find_strs(day_short, 'english day')
+        month, _ = self.find_strs(month_short, sType.eng, 'english month')
+        day  , _ = self.find_strs(day_short, sType.eng, 'english day')
         month += 1
         day += 1
         return month, day
