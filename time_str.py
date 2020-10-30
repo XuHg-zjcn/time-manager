@@ -66,7 +66,7 @@ class Part():
 #part date or time, can include sub part
 class BigPart(list):
     #TODO: add repart detec
-    def __init__(self, mtype, inc=True, cont=False, used=Part.IsUsed.unused):
+    def __init__(self, mtype, inc=True, cont=False, used=None):
         '''
         @para inc: all sub parts increase, next part head after prev end.
         @para cont: all sub parts continuous, next part head close prev end.
@@ -104,6 +104,7 @@ class BigPart(list):
             last = i
         end = last.span[1]
         self.span = (start, end)
+
     
     def __str__(self):
         ret = ''
@@ -117,7 +118,7 @@ class My_str:
         self.used = [False]*len(in_str)
         self.used_parts = []
 
-    def get_atype(self, re_comp, mtype, stype, filter_used=True):
+    def get_atype(self, re_comp, mtype, stype, filter_used=Part.IsUsed.unused):
         """
         find all use re, atype of sub
         @para re_comp: re.compile object
@@ -128,7 +129,7 @@ class My_str:
         bpart = BigPart(mtype)
         for i in founds:
             part = Part(self, mtype, i.span())
-            if not filter_used or part.isUsed == Part.IsUsed.unused:
+            if filter_used is None or part.isUsed == filter_used:
                 bpart.append(part)
         return bpart
     
