@@ -1,6 +1,7 @@
 import datetime
 import re
 from enum import Enum
+from collections import Iterable
 
 day_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -38,14 +39,13 @@ class Part():
         if isUse:
             for i in Part.objs:
                 if i == self:
-                    raise ValueError('Part {} is already create'.format(span))
+                    raise ValueError('Part {} is already create\n{}'
+                    .format(span, mstr.mark(i.span)))
             if self.str_used == Part.StrUsed.unused:
                 self.set_str_used()
             else:
                 raise ValueError('Part init require isUse, \
-but str is {}, not all unused\n\
-{}\n{}'.format(self.str_used, self.mstr.in_str, 
-' '*span[0]+'^'*(span[1]-span[0])))
+but str is {}, not all unused\n{}'.format(self.str_used, mstr.mark(i.span)))
         self.isUse = isUse
         self.objs.append(self)
     
@@ -193,8 +193,15 @@ class My_str:
             ret[n_i] = self.get_atype(re_i, mtype, stype_i)
         return ret
         
-    def mark(self, index):
-        return "{}\n{}^".format(self.in_str, ' '*index)
+    def mark(self, index, num=1):
+        if isinstance(index, Iterable) and len(index) == 2:
+            num = index[1] - index[0]
+            index = index[0]
+        elif isinstance(index, int):
+            pass
+        else:
+            raise ValueError('index must len=2 or int')
+        return "{}\n{}".format(self.in_str, ' '*index+'^'*num)
     
     def find_onlyone(self, sub):
         """
