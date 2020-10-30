@@ -27,19 +27,29 @@ sType = Enum('sType', 'num eng norm')
 #type 3: other
 
 class Part():
-    IsUsed = Enum('IsUsed', 'unused partused allused')
-    def __init__(self, mstr, span:tuple):
+    StrUsed = Enum('IsUsed', 'unused partused allused')
+    def __init__(self, mstr, span:tuple, isUse=True):
         self.span = span
         self.mstr = mstr
-        self.check_used()
+        self.str_used = self.check_str_used()
+        if isUse:
+            if self.str_used == Part.StrUsed.unused:
+                self.isUse = True
+                self.set_str_used()
+            else:
+                raise ValueError('Part init require isUse, but str is {},\
+                                  not all unused'.format(self.str_used))
+        else:
+            self.isUse = False
+            
         
     def match(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
     
     def __str__(self):
-        ret = 'span={} str="{}", isUsed={}'\
+        ret = 'span={} str="{}", str_used={}, isUse={}'\
         .format(self.span, self.mstr.in_str[self.span[0]:self.span[1]], 
-                self.isUsed)
+                self.str_used, self.isUse)
         return ret
     
     def __lt__(self, other):
@@ -48,18 +58,24 @@ class Part():
     def __gt__(self, other):
         return self.span[1] > other.span[0]
     
-    def check_used(self):
+    def check_str_used(self):
         N_used = 0
         for i in range(*self.span):
             if self.mstr.used[i]:
                 N_used += 1
         if N_used == 0:
-            self.isUsed = Part.IsUsed.unused
+            isUsed = Part.StrUsed.unused
         elif N_used == self.span[1] - self.span[0]:
-            self.isUsed = Part.IsUsed.allused
+            isUsed = Part.StrUsed.allused
         else:
             #self.isUsed = Part.IsUsed.partused
             raise ValueError('match part used')
+        return isUsed
+    
+    def set_str_used(self):
+        assert self.str_used == Part.StrUsed.unused
+        for i in range(*self.span):
+            self.mstr.used[i] = True
     
     def __len__(self):
         return self.span[1] - self.span[0]
@@ -141,7 +157,8 @@ class My_str:
         self.used = [False]*len(in_str)
         self.used_parts = BigPart(ABType.subs, inc=False)
 
-    def get_atype(self, re_comp, mtype, stype, filter_used=Part.IsUsed.unused):
+    def get_atype(self, re_comp, mtype, stype,
+                  filter_used=Part.StrUsed.unused):
         """
         find all use re, atype of sub
         @para re_comp: re.compile object
@@ -151,8 +168,8 @@ class My_str:
         founds = re_comp.finditer(self.in_str)
         bpart = BigPart(mtype)
         for i in founds:
-            part = Part(self, i.span())
-            if filter_used is None or part.isUsed == filter_used:
+            part = Part(self, i.span(), isUse=False)
+            if filter_used is None or part.str_used == filter_used:
                 bpart[mtype] = part
         return bpart
     
@@ -171,7 +188,7 @@ class My_str:
                 raise ValueError('in_str[{}] is already used\n{}'
                                  .format(i, self.mark(i)))
             self.used[i] = True
-        self.used_parts[stype] = Part(self, (start, end))
+        self.used_parts[stype] = Part(self, (start, end), isUse=True)
         
     def mark(self, index):
         return "{}\n{}^".format(self.in_str, ' '*index)
@@ -213,7 +230,7 @@ class Time_str(My_str):
         self.date_p = BigPart(ABType.date)
         self.time_p = BigPart(ABType.time, used=None)
         self.T4 = self.time_lmrs()
-        self.date = self.date()
+        #self.date = self.date()
         self.parts = self.get_parts(re3, sType, sName)
         self.nums = self.process_num()
     
@@ -234,7 +251,6 @@ class Time_str(My_str):
                 return None
         fsta = start+found.start(1)
         fend = start+found.end(1)
-        self.set_used(3, fsta, fend)
         if isCheck and pattern[0] != '^':
             self.check_spilt(fsta-1)
         if isCheck and pattern[-1]!= '$':
@@ -254,8 +270,6 @@ class Time_str(My_str):
     def process_num(self):
         ret = BigPart(ABType.date)
         for part in self.parts['num'].aslist:
-            print('part:', part)
-            print('')
             s = part.span[0]
             e = part.span[1]
             match = part.match()
@@ -264,12 +278,15 @@ class Time_str(My_str):
                 ret[AType.year] = Part(self, (s,   s+4))
                 ret[AType.month]= Part(self, (s+4, s+6))
                 ret[AType.date] = Part(self, (s+6, e))
+                part.isUsed = Part.StrUsed.allused
             elif len(match) == 4:
                 if 1970<=inti<2050:
                     ret[AType.year] = Part(self, (s, e))
+                    part.isUsed = Part.IsUsed.allused
                 elif 101<=inti<=1231:
                     ret[AType.month]= Part(self, (s, s+2))
                     ret[AType.date] = Part(self, (s+2, e))
+                    part.isUsed = Part.IsUsed.allused
         return ret
     
     def time_lmrs(self):
@@ -307,7 +324,7 @@ if __name__ == '__main__':
     test_str = '20200426 Wed 28/Oct 12:34:56.123 '#input('请输入测试字符串:')
     tstr = Time_str(test_str)
     print('test time_lmrs:')
-    print(tstr.T4, tstr.date)
+    print(tstr.T4)
     print()
     print('num:', tstr.parts['num'])
     print('eng:', tstr.parts['eng'])
