@@ -197,7 +197,7 @@ class My_str:
                raise ValueError('found multipy {} in str'.format(sub))
         return index
     
-    def find_strs(self, subs, stype, err):
+    def find_strs(self, subs, err):
         """
         find which sub in in_str, only one sub can find, else raise ValueError
         @para subs: list of subs
@@ -210,7 +210,7 @@ class My_str:
                 span = (index, index+len(sub))
                 if sub_i is None:
                     sub_i = ni
-                    self.used_parts[stype] = Part(self, span)
+                    self.used_parts[None] = Part(self, span)
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
         return sub_i, (index, index+len(sub))
@@ -227,8 +227,8 @@ class Time_str(My_str):
         self.nums = self.process_num()
     
     def english_month_day(self):
-        month, _ = self.find_strs(month_short, sType.eng, 'english month')
-        day  , _ = self.find_strs(day_short, sType.eng, 'english day')
+        month, _ = self.find_strs(month_short, 'english month')
+        day  , _ = self.find_strs(day_short, 'english day')
         month += 1
         day += 1
         return month, day
