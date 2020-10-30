@@ -28,9 +28,11 @@ sType = Enum('sType', 'num eng norm')
 
 class Part():
     StrUsed = Enum('IsUsed', 'unused partused allused')
-    def __init__(self, mstr, span:tuple, isUse=True):
+    def __init__(self, mstr, stype, span:tuple, isUse=True):
         self.span = span
         self.mstr = mstr
+        self.stype = stype
+        #TODO: self.stype_check()
         self.str_used = self.check_str_used()
         if isUse:
             if self.str_used == Part.StrUsed.unused:
@@ -83,7 +85,6 @@ but str is {}, not all unused\n\
 
 #part date or time, can include sub part
 class BigPart(dict):
-    #TODO: add repart detec
     def __init__(self, mtype, inc=True, cont=False, used=None):
         '''
         @para inc: all sub parts increase, next part head after prev end.
@@ -100,11 +101,14 @@ class BigPart(dict):
         self.aslist = []
         
     def __setitem__(self, key, value):
-        if self.mtype == ABType.date:
-            assert key in AType or key is sType.norm
-        if self.mtype == ABType.time:
-            assert key in BType or key is sType.norm
-        if self.mtype != ABType.subs:
+        if key != sType.norm:
+            if self.mtype == ABType.date:
+                assert key in AType
+            if self.mtype == ABType.time:
+                assert key in BType
+            if self.mtype != ABType.subs and key in self:
+                raise KeyError('key {} is already in BigPart {} dict'
+                               .format(key, self.mtype))
             super().__setitem__(key, value)
         self.aslist.append(value)
         self.x_len += 1
@@ -169,9 +173,9 @@ class My_str:
         founds = re_comp.finditer(self.in_str)
         bpart = BigPart(mtype)
         for i in founds:
-            part = Part(self, i.span(), isUse=False)
+            part = Part(self, stype, i.span(), isUse=False)
             if filter_used is None or part.str_used == filter_used:
-                bpart[mtype] = part
+                bpart[sType.norm] = part
         return bpart
     
     def get_parts(self, re, stype, names):
@@ -197,7 +201,7 @@ class My_str:
                raise ValueError('found multipy {} in str'.format(sub))
         return index
     
-    def find_strs(self, subs, err):
+    def find_strs(self, subs, stype, err):
         """
         find which sub in in_str, only one sub can find, else raise ValueError
         @para subs: list of subs
@@ -210,7 +214,7 @@ class My_str:
                 span = (index, index+len(sub))
                 if sub_i is None:
                     sub_i = ni
-                    self.used_parts[None] = Part(self, span)
+                    self.used_parts[None] = Part(self, stype, span)
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
         return sub_i, (index, index+len(sub))
@@ -227,8 +231,8 @@ class Time_str(My_str):
         self.nums = self.process_num()
     
     def english_month_day(self):
-        month, _ = self.find_strs(month_short, 'english month')
-        day  , _ = self.find_strs(day_short, 'english day')
+        month, _ = self.find_strs(month_short, sType.eng, 'english month')
+        day  , _ = self.find_strs(day_short,   sType.eng, 'english day')
         month += 1
         day += 1
         return month, day
@@ -267,17 +271,17 @@ class Time_str(My_str):
             match = part.match()
             inti = int(match)
             if len(match) == 8:
-                ret[AType.year] = Part(self, (s,   s+4))
-                ret[AType.month]= Part(self, (s+4, s+6))
-                ret[AType.date] = Part(self, (s+6, e))
+                ret[AType.year] = Part(self, sType.num, (s,   s+4))
+                ret[AType.month]= Part(self, sType.num, (s+4, s+6))
+                ret[AType.date] = Part(self, sType.num, (s+6, e))
                 part.isUsed = Part.StrUsed.allused
             elif len(match) == 4:
                 if 1970<=inti<2050:
-                    ret[AType.year] = Part(self, (s, e))
+                    ret[AType.year] = Part(self, sType.num, (s, e))
                     part.isUsed = Part.IsUsed.allused
                 elif 101<=inti<=1231:
-                    ret[AType.month]= Part(self, (s, s+2))
-                    ret[AType.date] = Part(self, (s+2, e))
+                    ret[AType.month]= Part(self, sType.num, (s, s+2))
+                    ret[AType.date] = Part(self, sType.num, (s+2, e))
                     part.isUsed = Part.IsUsed.allused
         return ret
     
@@ -289,14 +293,14 @@ class Time_str(My_str):
         """
         m, _ = self.search('((\d+):(\d+:)*(\d+)(\.\d+)*)')
         #append Parts to self.time_parts
-        self.time_p[BType.left] = Part(self, m.span(2))
-        self.time_p[sType.norm] = Part(self, (m.end(2), m.start(3)))
+        self.time_p[BType.left] = Part(self, sType.num, m.span(2))
+        self.time_p[sType.norm] = Part(self, sType.num, (m.end(2), m.start(3)))
         if m.group(3) is not None:
-            self.time_p[BType.midd] = Part(self, (m.start(3),m.end(3)-1))
-            self.time_p[sType.norm] = Part(self, (m.end(3)-1, m.end(3)))
-        self.time_p[BType.right] = Part(self, m.span(4))
+            self.time_p[BType.midd] = Part(self, sType.num, (m.start(3),m.end(3)-1))
+            self.time_p[sType.norm] = Part(self, sType.num, (m.end(3)-1, m.end(3)))
+        self.time_p[BType.right] = Part(self, sType.num, m.span(4))
         if m.group(5) is not None:
-            self.time_p[BType.subsec] = Part(self, m.span(5))
+            self.time_p[BType.subsec] = Part(self, sType.num, m.span(5))
         #get left, midd, right, subsec
         left = int(m.group(2))
         midd = m.group(3)
