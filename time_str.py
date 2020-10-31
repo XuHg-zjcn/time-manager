@@ -36,16 +36,16 @@ norms= '-:.,/\ '
 ABType = Enum('ABType', 'date time subs')
 AType = Enum('AType', 'year month date day')
 class BType(Enum):
-    hours = 0
-    minute = 1
-    second = 2
-    subsec = 3
-    ampm = 4
-    H = 0
-    M = 1
-    S = 2
-    SS = 3
-    ap = 4
+    ampm = 0
+    hours = 1
+    minute = 2
+    second = 3
+    subsec = 4
+    ap = 0
+    H = 1
+    M = 2
+    S = 3
+    SS = 4
     left = 5
     midd = 6
     right = 7
@@ -200,9 +200,10 @@ class BigPart(dict):
                 raise KeyError('key {} is already in BigPart {} dict'
                                .format(key, self.mtype))
             super().__setitem__(key, value)
-        self.aslist.append(value)
+        if value not in self.aslist:  #no repeating Parts in self.aslist
+            self.aslist.append(value)
         self.x_len += 1
-        if self.used is not None and self.used != value.isUsed:
+        if self.used is not None and self.used != value.isUse:
             raise ValueError('used reqire is not same')
         if self.x_len >= 2:
             if self.inc and self.aslist[-2] > self.aslist[-1]:
@@ -248,6 +249,25 @@ class BigPart(dict):
             if key in req and dx[key] not in self:
                 return False
         return True
+    
+    def check_OK(self):
+        #TODO: raise show last+1
+        '''
+        check is middle broken, 
+        such as found HH::SS without minute, YYYY//DD without month
+        return True is not broken, False have probem
+        '''
+        keys = list(self.keys())
+        key_v = list(map(lambda x:x.value, keys))
+        key_v.sort()
+        if len(key_v) >= 2:
+            last = key_v[0]
+            for i in key_v[1:]:
+                if i != last+1:
+                    key_n = list(map(lambda x:x.name, keys))
+                    raise ValueError('found keys:{}, but not {}'
+                                     .format(key_n, last+1))
+                last = i
        
     def unuseds(self):
         n = []
@@ -403,7 +423,7 @@ class Time_str(My_str):
             elif len(match) == 4:
                 if 1970<=inti<2050:
                     self.date_p[AType.year] = Part(self, (s, e), sType.num)
-                    part.str_used = Part.IsUsed.allused
+                    part.str_used = Part.StrUsed.allused
                 elif 101<=inti<=1231:
                     self.date_p[AType.month]= Part(self, (s, s+2), sType.num)
                     self.date_p[AType.date] = Part(self, (s+2, e), sType.num)
@@ -440,6 +460,7 @@ class Time_str(My_str):
         @para n2v: if found ll:rr, such as 12:34,
                    'hours' for HH:MM, 'second' for MM:SS, None raise ValueError
         '''
+        assert 'set_time_p' not in self.flags
         B = BType
         #            src_keys              dst_keys
         dict_rule = {(B.l, B.m, B.r)      :(B.H, B.M, B.S      ),
@@ -448,8 +469,8 @@ class Time_str(My_str):
                      (B.l,      B.r, B.SS):(     B.M, B.S, None)}
         #get src_keys
         src_keys = []
-        for key in self.time_p:
-            if key in (B.l, B.m, B.r, B.ss):
+        for key in (B.l, B.m, B.r, B.SS):
+            if key in self.time_p:
                 src_keys.append(key)
         src_keys = tuple(src_keys)
         #use dict_rule
@@ -471,19 +492,18 @@ class Time_str(My_str):
         assert len(src_keys) == len(dst_keys)
         for s_k,d_k in zip(src_keys, dst_keys):
             if d_k is not None:
-                self.time_p[d_k] = self.time_p[s_k]
+                self.time_p[d_k] = self.time_p.pop(s_k)
         self.flags.append('set_time_p')
     
     def datetime_process(self):
-        date_finally = self.date_p.check_finally('MD')
         time_found = 'time_found' in self.flags
-        if date_finally:
-            self.set_time_p('hours')
+        self.set_time_p('hours')
         if time_found:
             #found the time, and only a last number unused, the number is date
             oouu = self.parts['num'].onlyone_unused()
             if oouu is not None: #found onlyone unused
                 self.date_p[AType.date] = oouu
+        self.date_p.check_OK()
          
 if __name__ == '__main__':
     test_strs = ['Wed 28/Oct 12:34:56.123',
