@@ -35,6 +35,7 @@ class Part():
         self.mstr = mstr
         self.stype = stype
         #TODO: self.stype_check()
+        #TODO: add value
         self.check_str_used()
         if isUse:
             self.check_no_repeat()
@@ -76,8 +77,7 @@ class Part():
         elif N_used == self.span[1] - self.span[0]:
             str_used = Part.StrUsed.allused
         else:
-            #self.isUsed = Part.StrUsed.partused
-            raise ValueError('match part used')
+            str_used = Part.StrUsed.partused
         self.str_used = str_used
     
     def set_used(self):
@@ -272,7 +272,7 @@ class Time_str(My_str):
         if day is not None:
             self.date_p[AType.day] = day
     
-    def search(self, pattern, start=0, end=-1, isRaise=True, isCheck=True):
+    def search(self, pattern, start=0, end=None, isRaise=True, isCheck=True):
         found = re.search(pattern, self.in_str[start:end])
         if found is None:
             if isRaise:
@@ -338,14 +338,6 @@ class Time_str(My_str):
         if m.group(5) is not None:
             self.time_p[BType.subsec] = Part(self, sType.num, m.span(5))
         #get left, midd, right, subsec
-        left = int(m.group(2))
-        midd = m.group(3)
-        right = int(m.group(4))
-        ssec = m.group(5)
-        if midd is not None:
-            midd = int(midd[:-1])
-        if ssec is not None:
-            ssec = float(ssec)
     
     def datetime_process(self):
         if self.date_p.check_finally():
@@ -360,7 +352,7 @@ class Time_str(My_str):
              pass
          
 if __name__ == '__main__':
-    test_strs = ['Wed 28/Oct 12:34:56.123 ', '20201030', '1030', '10:30 ']
+    test_strs = ['Wed 28/Oct 12:34:56.123', '20201030', '1030', '10:30']
     for i in test_strs:
         print(i)
         tstr = Time_str(i)
