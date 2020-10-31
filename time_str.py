@@ -1,7 +1,6 @@
 import datetime
 import re
 from enum import Enum
-from collections import Iterable
 
 day_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -102,9 +101,17 @@ class Part():
         return value
     
     def __str__(self):
-        ret = 'span={} str="{}", str_used={}, isUse={}, value={}'\
-        .format(self.span, self.mstr.in_str[self.span[0]:self.span[1]], 
-                self.str_used, self.isUse, self.value)
+        if isinstance(self.value, (int, float)):
+            str_value = str(self.value)
+        elif isinstance(self.value, tuple):
+            str_value = '{}_{},{}'.format(self.value[0][0].name,
+                                         self.value[0][1].name,
+                                         self.value[1])
+        else:
+            raise ValueError("self.value isn't int, float or tuple")
+        ret = 'span={:>7}, str="{}", str_used={}, isUse={}, value={}'\
+        .format(str(self.span), self.mstr.in_str[self.span[0]:self.span[1]],
+                self.str_used.name, self.isUse, str_value)
         return ret
     
     def __lt__(self, other):
@@ -235,7 +242,7 @@ class BigPart(dict):
     def __str__(self):
         ret = 'BigPart:\n'
         for i in self:
-            ret += '{}\n'.format(self[i])
+            ret += '{:<12}:{}\n'.format(i, self[i])
         return ret
     
 class My_str:
@@ -270,7 +277,7 @@ class My_str:
         return ret
         
     def mark(self, index, num=1):
-        if isinstance(index, Iterable) and len(index) == 2:
+        if isinstance(index, tuple) and len(index) == 2:
             num = index[1] - index[0]
             index = index[0]
         elif isinstance(index, int):
