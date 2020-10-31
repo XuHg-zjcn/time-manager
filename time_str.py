@@ -120,9 +120,10 @@ class Part():
         if isinstance(self.value, (int, float)):
             str_value = str(self.value)
         elif isinstance(self.value, tuple):
-            str_value = '{}_{},{}'.format(self.value[0][0].name,
-                                         self.value[0][1].name,
-                                         self.value[1])
+            s1=self.value[0][0].name
+            s2=self.value[0][1].name if self.value[0][1] is not None else ''
+            s3=self.value[1]
+            str_value = '{}_{},{}'.format(s1, s2, s3)
         else:
             raise ValueError("self.value isn't int, float or tuple")
         ret = 'span={:>7}, str="{}", str_used={}, isUse={}, value={}'\
@@ -417,9 +418,9 @@ class Time_str(My_str):
         self.time_lmrs()
         self.english_month_day()
         self.parts = self.get_allsType_parts(sType2re_c, sName)
-        self.process_num8()
+        self.date_num8()
         if 'time_found' in self.flags:
-            self.process_num4()
+            self.date_num4()
             if len(self.date_p) > 0:
                 self.set_time_p('hours')
             self.onlyone_unused_num_as_date()
@@ -428,12 +429,15 @@ class Time_str(My_str):
     def english_month_day(self):
         month = self.find_strs(month_short, 'english month')
         day = self.find_strs(day_short, 'english day')
+        apm = self.find_strs(ampm, 'AMPM')
         if month is not None:
             self.date_p[AType.month] = month
         if day is not None:
             self.date_p[AType.day] = day
+        if apm is not None:
+            self.time_p[BType.ampm] = apm
     
-    def process_num8(self):
+    def date_num8(self):
         for part in self.parts['num'].aslist:
             s = part.span[0]
             e = part.span[1]
@@ -444,7 +448,7 @@ class Time_str(My_str):
                 self.date_p[AType.date] = Part(self, (s+6, e),   sType.num)
                 part.str_used = Part.StrUsed.allused
     
-    def process_num4(self):
+    def date_num4(self):
         for part in self.parts['num'].aslist:
             s = part.span[0]
             e = part.span[1]
@@ -535,7 +539,8 @@ if __name__ == '__main__':
                  '20201030',
                  '1030',
                  '10:30',
-                 '31 10:30']
+                 '31 10:30',
+                 '20:22 PM']
     for i in test_strs:
         print(i)
         tstr = Time_str(i)
