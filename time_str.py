@@ -18,10 +18,17 @@ re_norm = re.compile('[-:,/ ]+')
 re3 = [re_num, re_eng, re_norm]
 sName = ['num', 'eng', 'norm', 'other']
 
+nums = '0123456789'
+engs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+norms= '-:.,/\ '
+
 ABType = Enum('ABType', 'date time subs')
 AType = Enum('AType', 'year month date day')
 BType = Enum('BType', 'hours minute second subsec ampm left midd right')
-sType = Enum('sType', 'num eng norm')
+sType = Enum('sType', 'num eng norm other')
+
+sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
+sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
 #type 0: number  [0-9]
 #type 1: english [A-Za-z]
 #type 2: chara   -:,/  <space>
@@ -33,8 +40,7 @@ class Part():
     def __init__(self, mstr, stype, span:tuple, isUse=True):
         self.span = span
         self.mstr = mstr
-        self.stype = stype
-        #TODO: self.stype_check()
+        self.check_stype(stype)
         #TODO: add value
         self.check_str_used()
         if isUse:
@@ -42,8 +48,24 @@ class Part():
             self.set_used()
         self.isUse = isUse
     
-    def match(self):
+    def match_str(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
+    
+    def check_stype(self, stype):
+        s = self.match_str()
+        gstype = None
+        for key in sType2exam:
+            if s[0] in sType2exam[key]:
+                gstype = key
+                break
+        if len(s)>=2 and s[0] == '.' and s[1] in nums: #detct float number
+            gstype = sType.num
+        assert gstype is not None
+        if stype != gstype:
+            raise ValueError('stype:{} != gstype:{}\n{}'
+                             .format(stype, gstype, self.mstr.mark(self.span)))
+        self.stype = stype
+        
     
     def __str__(self):
         ret = 'span={} str="{}", str_used={}, isUse={}'\
@@ -204,10 +226,12 @@ class My_str:
                 bpart[sType.norm] = part
         return bpart
     
-    def get_parts(self, re, stype, names):
+    def get_allsType_parts(self, sType2X_dict, names):
         mtype = ABType.subs
         ret = {}
-        for re_i,stype_i,n_i in zip(re, stype, names):
+        for key,n_i in zip(sType2X_dict, names):
+            stype_i = key
+            re_i = sType2X_dict[key]
             ret[n_i] = self.get_atype(re_i, mtype, stype_i)
         return ret
         
@@ -261,7 +285,7 @@ class Time_str(My_str):
         self.time_p = BigPart(ABType.time, used=None)
         self.time_lmrs()
         self.english_month_day()
-        self.parts = self.get_parts(re3, sType, sName)
+        self.parts = self.get_allsType_parts(sType2re_c, sName)
         self.process_num()
     
     def english_month_day(self):
@@ -302,7 +326,7 @@ class Time_str(My_str):
         for part in self.parts['num'].aslist:
             s = part.span[0]
             e = part.span[1]
-            match = part.match()
+            match = part.match_str()
             inti = int(match)
             if len(match) == 8:
                 self.date_p[AType.year] = Part(self, sType.num, (s,   s+4))
@@ -330,10 +354,10 @@ class Time_str(My_str):
             return None
         #append Parts to self.time_parts
         self.time_p[BType.left] = Part(self, sType.num, m.span(2))
-        self.time_p[sType.norm] = Part(self, sType.num, (m.end(2), m.start(3)))
+        self.time_p[sType.norm] = Part(self, sType.norm, (m.end(2), m.start(3)))
         if m.group(3) is not None:
             self.time_p[BType.midd] = Part(self, sType.num, (m.start(3),m.end(3)-1))
-            self.time_p[sType.norm] = Part(self, sType.num, (m.end(3)-1, m.end(3)))
+            self.time_p[sType.norm] = Part(self, sType.norm, (m.end(3)-1, m.end(3)))
         self.time_p[BType.right] = Part(self, sType.num, m.span(4))
         if m.group(5) is not None:
             self.time_p[BType.subsec] = Part(self, sType.num, m.span(5))
