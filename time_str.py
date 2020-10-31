@@ -76,7 +76,7 @@ class Part():
         elif N_used == self.span[1] - self.span[0]:
             str_used = Part.StrUsed.allused
         else:
-            #self.isUsed = Part.IsUsed.partused
+            #self.isUsed = Part.StrUsed.partused
             raise ValueError('match part used')
         self.str_used = str_used
     
@@ -111,6 +111,7 @@ class BigPart(dict):
         self.aslist = []
         
     def __setitem__(self, key, value):
+        assert isinstance(value, Part)
         if key != sType.norm:
             if self.mtype == ABType.date:
                 assert key in AType
@@ -177,8 +178,8 @@ class BigPart(dict):
     
     def __str__(self):
         ret = 'BigPart:\n'
-        for i in self.aslist:
-            ret += str(i)+'\n'
+        for i in self:
+            ret += '{}\n'.format(self[i])
         return ret
     
 class My_str:
@@ -264,8 +265,12 @@ class Time_str(My_str):
         self.process_num()
     
     def english_month_day(self):
-        self.date_p[AType.month] = self.find_strs(month_short, 'english month')
-        self.date_p[AType.day] = self.find_strs(day_short, 'english day')
+        month = self.find_strs(month_short, 'english month')
+        day = self.find_strs(day_short, 'english day')
+        if month is not None:
+            self.date_p[AType.month] = month
+        if day is not None:
+            self.date_p[AType.day] = day
     
     def search(self, pattern, start=0, end=-1, isRaise=True, isCheck=True):
         found = re.search(pattern, self.in_str[start:end])
@@ -281,7 +286,7 @@ class Time_str(My_str):
             self.check_spilt(fsta-1)
         if isCheck and pattern[-1]!= '$':
             self.check_spilt(fend)
-        return found, (fsta, fend)
+        return found
     
     def check_spilt(self, index, allow=[' ', '|', '.'], isRaise=True):
         if 0<=index<len(self.in_str):
@@ -303,15 +308,15 @@ class Time_str(My_str):
                 self.date_p[AType.year] = Part(self, sType.num, (s,   s+4))
                 self.date_p[AType.month]= Part(self, sType.num, (s+4, s+6))
                 self.date_p[AType.date] = Part(self, sType.num, (s+6, e))
-                part.isUsed = Part.StrUsed.allused
+                part.str_used = Part.StrUsed.allused
             elif len(match) == 4:
                 if 1970<=inti<2050:
                     self.date_p[AType.year] = Part(self, sType.num, (s, e))
-                    part.isUsed = Part.IsUsed.allused
+                    part.str_used = Part.IsUsed.allused
                 elif 101<=inti<=1231:
                     self.date_p[AType.month]= Part(self, sType.num, (s, s+2))
                     self.date_p[AType.date] = Part(self, sType.num, (s+2, e))
-                    part.isUsed = Part.IsUsed.allused
+                    part.str_used = Part.StrUsed.allused
         
     
     def time_lmrs(self):
@@ -320,7 +325,9 @@ class Time_str(My_str):
         return Left:Midd:Right.subsec
         if not found Midd or subsec, return None
         """
-        m, _ = self.search('((\d+):(\d+:)*(\d+)(\.\d+)*)')
+        m = self.search('((\d+):(\d+:)*(\d+)(\.\d+)*)', isRaise=False)
+        if m is None:
+            return None
         #append Parts to self.time_parts
         self.time_p[BType.left] = Part(self, sType.num, m.span(2))
         self.time_p[sType.norm] = Part(self, sType.num, (m.end(2), m.start(3)))
@@ -353,11 +360,10 @@ class Time_str(My_str):
              pass
          
 if __name__ == '__main__':
-    test_str = 'Wed 28/Oct 12:34:56.123 '#input('请输入测试字符串:')
-    tstr = Time_str(test_str)
-    print('num:', tstr.parts['num'])
-    print('eng:', tstr.parts['eng'])
-    print('norm:', tstr.parts['norm'])
-    print()
-    print('date:', tstr.date_p)
-    print('time:', tstr.time_p)
+    test_strs = ['Wed 28/Oct 12:34:56.123 ', '20201030', '1030', '10:30 ']
+    for i in test_strs:
+        print(i)
+        tstr = Time_str(i)
+        print('date:', tstr.date_p)
+        print('time:', tstr.time_p)
+        print()
