@@ -33,7 +33,7 @@ nums = '0123456789'
 engs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 norms= '-:.,/\ '
 
-ABType = Enum('ABType', 'date time subs')
+ABType = Enum('ABType', 'date time')
 AType = Enum('AType', 'year month date day')
 class BType(Enum):
     ampm = 0
@@ -70,10 +70,10 @@ class Part():
         self.stype = self.check_stype(stype)
         self.value = self.get_value(value)
         self.str_used = self.is_str_used()
+        self.isUse = False
         if isUse:
             self.check_no_repeat()
             self.set_used()
-        self.isUse = isUse
     
     def match_str(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
@@ -168,6 +168,7 @@ not all unused\n{}'.format(self.str_used, self.mstr.mark(self.span)))
         for i in range(*self.span):
             self.mstr.used[i] = True
         self.str_used = Part.StrUsed.allused
+        self.isUse = True
     
     def __len__(self):
         return self.span[1] - self.span[0]
@@ -196,7 +197,7 @@ class BigPart(dict):
                 assert key in AType
             if self.mtype == ABType.time:
                 assert key in BType
-            if self.mtype != ABType.subs and key in self:
+            if key in self:
                 raise KeyError('key {} is already in BigPart {} dict'
                                .format(key, self.mtype))
             super().__setitem__(key, value)
@@ -268,10 +269,20 @@ class BigPart(dict):
                     raise ValueError('found keys:{}, but not {}'
                                      .format(key_n, last+1))
                 last = i
-       
+    
+    def __str__(self):
+        ret = 'BigPart:\n'
+        for i in self:
+            ret += '{:<12}:{}\n'.format(i, self[i])
+        return ret
+
+class UnusedParts(list):
+    def __init__(self):
+        super().__init__()
+    
     def unuseds(self):
         n = []
-        for i in self.aslist:
+        for i in self:
             if i.is_str_used() == Part.StrUsed.unused:
                 n.append(i)
         return n
@@ -282,20 +293,13 @@ class BigPart(dict):
             return unused_list[0]
         else:
             return None
-    
-    def __str__(self):
-        ret = 'BigPart:\n'
-        for i in self:
-            ret += '{:<12}:{}\n'.format(i, self[i])
-        return ret
-    
+
 class My_str:
     def __init__(self, in_str):
         self.in_str = in_str
         self.used = [False]*len(in_str)
-        self.used_parts = BigPart(ABType.subs, inc=False)
 
-    def get_atype(self, re_comp, mtype, stype,
+    def get_atype(self, re_comp, stype,
                   filter_used=Part.StrUsed.unused):
         """
         find all use re, atype of sub
@@ -304,20 +308,19 @@ class My_str:
         @para filter_used: only output unused
         """
         founds = re_comp.finditer(self.in_str)
-        bpart = BigPart(mtype)
+        bpart = UnusedParts()
         for i in founds:
             part = Part(self, i.span(), stype, isUse=False)
             if filter_used is None or part.str_used == filter_used:
-                bpart[sType.norm] = part
+                bpart.append(part)
         return bpart
     
     def get_allsType_parts(self, sType2X_dict, names):
-        mtype = ABType.subs
         ret = {}
         for key,n_i in zip(sType2X_dict, names):
             stype_i = key
             re_i = sType2X_dict[key]
-            ret[n_i] = self.get_atype(re_i, mtype, stype_i)
+            ret[n_i] = self.get_atype(re_i, stype_i)
         return ret
         
     def mark(self, index, num=1):
@@ -385,7 +388,6 @@ class My_str:
                 raise ValueError("'{}' not in avabile spilt character{}\n{}"\
                 .format(char, allow, self.mark(index)))
             return char
-        else:
             return None
     
 #smart time str to datetime struct
@@ -448,7 +450,7 @@ class Time_str(My_str):
             self.time_p[BType.ampm] = apm
     
     def date_num8(self):
-        for part in self.parts['num'].aslist:
+        for part in self.parts['num']:
             s = part.span[0]
             e = part.span[1]
             match = part.match_str()
@@ -459,7 +461,7 @@ class Time_str(My_str):
                 part.str_used = Part.StrUsed.allused
     
     def date_num4(self):
-        for part in self.parts['num'].aslist:
+        for part in self.parts['num']:
             s = part.span[0]
             e = part.span[1]
             match = part.match_str()
@@ -541,8 +543,9 @@ class Time_str(My_str):
     
     def onlyone_unused_num_as_date(self):
         oouu = self.parts['num'].onlyone_unused()
-        if oouu is not None: #found onlyone unused
+        if oouu is not None:
             self.date_p[AType.date] = oouu
+            oouu.set_used()
          
 if __name__ == '__main__':
     test_strs = ['Wed 28/Oct 12:34:56.123',
