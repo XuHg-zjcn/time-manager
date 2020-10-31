@@ -68,7 +68,6 @@ class Part():
         self.span = span
         self.mstr = mstr
         self.stype = self.check_stype(stype)
-        #TODO: add value
         self.value = self.get_value(value)
         self.str_used = self.is_str_used()
         if isUse:
@@ -395,13 +394,13 @@ class Time_str(My_str):
     pseudo-code:
     find ll:mm:rr.ss, english
     find YYYYMMDD
-    if time_found or flag.OK:
+    if time_found or flags.find_date42:
         find YYYY, MMDD
         find DD, if onlyone num
-        if any about date found:
-            set_time_p(n2v='hours')
-        else:
-            set_time_p(n2v=flag.n2v)
+    if any about date found:
+        set_time_p(n2v='hours')
+    else:
+        set_time_p(n2v=default_n2v)
     
     part add rule:
         BigPart no breakpoint,           exam: YYYY//DD without month
@@ -410,20 +409,23 @@ class Time_str(My_str):
         two BigPart not overlapped,      exam: YYYY/MM hh:DD:mm:ss
         a Part can only add to a BigPart
     '''
-    def __init__(self, in_str):
+    def __init__(self, in_str, find_date42=True, default_n2v='hours'):
         super().__init__(in_str)
         self.flags = [] #'time_found'
+        self.para = {'fd42':find_date42, 'dn2v':default_n2v}
         self.date_p = BigPart(ABType.date)
         self.time_p = BigPart(ABType.time, used=None)
         self.time_lmrs()
         self.english_month_day()
         self.parts = self.get_allsType_parts(sType2re_c, sName)
-        self.date_num8()
-        if 'time_found' in self.flags:
-            self.date_num4()
-            if len(self.date_p) > 0:
-                self.set_time_p('hours')
+        self.date_num8()         #find YYYYMMDD
+        if 'time_found' in self.flags or self.para['fd42']:
+            self.date_num4()     #find YYYY, MMDD
             self.onlyone_unused_num_as_date()
+        if len(self.date_p) > 0:
+            self.set_time_p('hours')  #date found
+        else:
+            self.set_time_p(self.para['dn2v'])
         self.date_p.check_breakpoint()
     
     def english_month_day(self):
