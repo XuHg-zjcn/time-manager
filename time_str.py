@@ -10,7 +10,19 @@ month_full=['January','February','March','April','May','June',
             'July','August','Spetember','October','November','December']
 month_short=['Jan','Feb','Mar','Apr','May','Jun',
              'Jul','Aug','Spet','Oct','Nov','Dec']
+ampm = ['AM', 'PM']
 
+eType = Enum('eType', 'day month ampm')
+fType = Enum('fType', 'full short')
+eng_strs = {(eType.day, fType.full):day_full,
+            (eType.day, fType.short):day_short,
+            (eType.month, fType.full):month_full,
+            (eType.month, fType.short):month_short,
+            (eType.ampm, None):ampm}
+def upper_d(k):
+    v = eng_strs[k]
+    return k, list(map(lambda x:(x.upper()), v))
+ENG_STRS = dict(map(upper_d, eng_strs))
 
 re_num = re.compile('\d+')
 re_eng = re.compile('[a-zA-Z]+')
@@ -37,12 +49,13 @@ sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
 class Part():
     StrUsed = Enum('IsUsed', 'unused partused allused')
     objs = []
-    def __init__(self, mstr, stype, span:tuple, isUse=True):
+    def __init__(self, mstr, span:tuple, stype=None, value=None, isUse=True):
         self.span = span
         self.mstr = mstr
-        self.check_stype(stype)
+        self.stype = self.check_stype(stype)
         #TODO: add value
-        self.check_str_used()
+        self.value = self.get_value(value)
+        self.str_used = self.is_str_used()
         if isUse:
             self.check_no_repeat()
             self.set_used()
@@ -61,16 +74,37 @@ class Part():
         if len(s)>=2 and s[0] == '.' and s[1] in nums: #detct float number
             gstype = sType.num
         assert gstype is not None
-        if stype != gstype:
+        if stype is not None and stype != gstype:
             raise ValueError('stype:{} != gstype:{}\n{}'
                              .format(stype, gstype, self.mstr.mark(self.span)))
-        self.stype = stype
-        
+        return gstype
+    
+    def get_value(self, v=None):
+        s = self.match_str()
+        value = None
+        if self.stype == sType.num:
+            if s[0] == '.':
+                value = float(s)
+            else:
+                value = int(s)
+        elif self.stype == sType.eng:
+            S = s.upper()
+            for key in ENG_STRS:
+                ENG_STRS_Vi = ENG_STRS[key]
+                if S in ENG_STRS_Vi:
+                    v_index = ENG_STRS_Vi.index(S)
+                    v_key = key
+                    value = (v_key, v_index)
+        else:
+            value = v
+        if v is not None:
+            assert value == v
+        return value
     
     def __str__(self):
-        ret = 'span={} str="{}", str_used={}, isUse={}'\
+        ret = 'span={} str="{}", str_used={}, isUse={}, value={}'\
         .format(self.span, self.mstr.in_str[self.span[0]:self.span[1]], 
-                self.str_used, self.isUse)
+                self.str_used, self.isUse, self.value)
         return ret
     
     def __lt__(self, other):
@@ -89,7 +123,7 @@ class Part():
                 raise ValueError('Part {} is already create\n{}'
                 .format(self.span, self.mstr.mark(self.span)))
     
-    def check_str_used(self):
+    def is_str_used(self):
         N_used = 0
         for i in range(*self.span):
             if self.mstr.used[i]:
@@ -100,10 +134,10 @@ class Part():
             str_used = Part.StrUsed.allused
         else:
             str_used = Part.StrUsed.partused
-        self.str_used = str_used
+        return str_used
     
     def set_used(self):
-        self.check_str_used()
+        self.str_used = self.is_str_used()
         if self.str_used != Part.StrUsed.unused:
             raise ValueError('want the part of str unused, but str is {},\
 not all unused\n{}'.format(self.str_used, self.mstr.mark(self.span)))
@@ -221,7 +255,7 @@ class My_str:
         founds = re_comp.finditer(self.in_str)
         bpart = BigPart(mtype)
         for i in founds:
-            part = Part(self, stype, i.span(), isUse=False)
+            part = Part(self, i.span(), stype, isUse=False)
             if filter_used is None or part.str_used == filter_used:
                 bpart[sType.norm] = part
         return bpart
@@ -272,7 +306,7 @@ class My_str:
             if index != -1:
                 span = (index, index+len(sub))
                 if ret is None:
-                    ret = Part(self, sType.eng, span)
+                    ret = Part(self, span, sType.eng)
                 else:
                     raise ValueError('found multipy {} in str'.format(err))
         return ret
@@ -329,17 +363,17 @@ class Time_str(My_str):
             match = part.match_str()
             inti = int(match)
             if len(match) == 8:
-                self.date_p[AType.year] = Part(self, sType.num, (s,   s+4))
-                self.date_p[AType.month]= Part(self, sType.num, (s+4, s+6))
-                self.date_p[AType.date] = Part(self, sType.num, (s+6, e))
+                self.date_p[AType.year] = Part(self, (s,   s+4), sType.num)
+                self.date_p[AType.month]= Part(self, (s+4, s+6), sType.num)
+                self.date_p[AType.date] = Part(self, (s+6, e),   sType.num)
                 part.str_used = Part.StrUsed.allused
             elif len(match) == 4:
                 if 1970<=inti<2050:
-                    self.date_p[AType.year] = Part(self, sType.num, (s, e))
+                    self.date_p[AType.year] = Part(self, (s, e), sType.num)
                     part.str_used = Part.IsUsed.allused
                 elif 101<=inti<=1231:
-                    self.date_p[AType.month]= Part(self, sType.num, (s, s+2))
-                    self.date_p[AType.date] = Part(self, sType.num, (s+2, e))
+                    self.date_p[AType.month]= Part(self, (s, s+2), sType.num)
+                    self.date_p[AType.date] = Part(self, (s+2, e), sType.num)
                     part.str_used = Part.StrUsed.allused
         
     
@@ -353,14 +387,14 @@ class Time_str(My_str):
         if m is None:
             return None
         #append Parts to self.time_parts
-        self.time_p[BType.left] = Part(self, sType.num, m.span(2))
-        self.time_p[sType.norm] = Part(self, sType.norm, (m.end(2), m.start(3)))
+        self.time_p[BType.left] = Part(self, m.span(2), sType.num)
+        self.time_p[sType.norm] = Part(self, (m.end(2), m.start(3)), sType.norm)
         if m.group(3) is not None:
-            self.time_p[BType.midd] = Part(self, sType.num, (m.start(3),m.end(3)-1))
-            self.time_p[sType.norm] = Part(self, sType.norm, (m.end(3)-1, m.end(3)))
-        self.time_p[BType.right] = Part(self, sType.num, m.span(4))
+            self.time_p[BType.midd] = Part(self, (m.start(3),m.end(3)-1), sType.num)
+            self.time_p[sType.norm] = Part(self, (m.end(3)-1, m.end(3)), sType.norm)
+        self.time_p[BType.right] = Part(self, m.span(4), sType.num)
         if m.group(5) is not None:
-            self.time_p[BType.subsec] = Part(self, sType.num, m.span(5))
+            self.time_p[BType.subsec] = Part(self, m.span(5), sType.num)
         #get left, midd, right, subsec
     
     def datetime_process(self):
