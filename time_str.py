@@ -362,6 +362,32 @@ class My_str:
                     raise ValueError('found multipy {} in str'.format(err))
         return ret
     
+    def search(self, pattern, start=0, end=None, isRaise=True, isCheck=True):
+        found = re.search(pattern, self.in_str[start:end])
+        if found is None:
+            if isRaise:
+                raise ValueError('search re pattern"{}" not found'
+                                 .format(pattern))
+            else:
+                return None
+        fsta = start+found.start(1)
+        fend = start+found.end(1)
+        if isCheck and pattern[0] != '^':
+            self.check_spilt(fsta-1)
+        if isCheck and pattern[-1]!= '$':
+            self.check_spilt(fend)
+        return found
+    
+    def check_spilt(self, index, allow=[' ', '|', '.'], isRaise=True):
+        if 0<=index<len(self.in_str):
+            char = self.in_str[index]
+            if char not in allow and isRaise:
+                raise ValueError("'{}' not in avabile spilt character{}\n{}"\
+                .format(char, allow, self.mark(index)))
+            return char
+        else:
+            return None
+    
 #smart time str to datetime struct
 class Time_str(My_str):
     '''
@@ -391,8 +417,13 @@ class Time_str(My_str):
         self.time_lmrs()
         self.english_month_day()
         self.parts = self.get_allsType_parts(sType2re_c, sName)
-        self.process_num()
-        self.datetime_process()
+        self.process_num8()
+        if 'time_found' in self.flags:
+            self.process_num4()
+            if len(self.date_p) > 0:
+                self.set_time_p('hours')
+            self.onlyone_unused_num_as_date()
+        self.date_p.check_breakpoint()
     
     def english_month_day(self):
         month = self.find_strs(month_short, 'english month')
@@ -402,44 +433,24 @@ class Time_str(My_str):
         if day is not None:
             self.date_p[AType.day] = day
     
-    def search(self, pattern, start=0, end=None, isRaise=True, isCheck=True):
-        found = re.search(pattern, self.in_str[start:end])
-        if found is None:
-            if isRaise:
-                raise ValueError('search re pattern"{}" not found'
-                                 .format(pattern))
-            else:
-                return None
-        fsta = start+found.start(1)
-        fend = start+found.end(1)
-        if isCheck and pattern[0] != '^':
-            self.check_spilt(fsta-1)
-        if isCheck and pattern[-1]!= '$':
-            self.check_spilt(fend)
-        return found
-    
-    def check_spilt(self, index, allow=[' ', '|', '.'], isRaise=True):
-        if 0<=index<len(self.in_str):
-            char = self.in_str[index]
-            if char not in allow and isRaise:
-                raise ValueError("'{}' not in avabile spilt character{}\n{}"\
-                .format(char, allow, self.mark(index)))
-            return char
-        else:
-            return None
-    
-    def process_num(self):
+    def process_num8(self):
         for part in self.parts['num'].aslist:
             s = part.span[0]
             e = part.span[1]
             match = part.match_str()
-            inti = int(match)
             if len(match) == 8:
                 self.date_p[AType.year] = Part(self, (s,   s+4), sType.num)
                 self.date_p[AType.month]= Part(self, (s+4, s+6), sType.num)
                 self.date_p[AType.date] = Part(self, (s+6, e),   sType.num)
                 part.str_used = Part.StrUsed.allused
-            elif len(match) == 4:
+    
+    def process_num4(self):
+        for part in self.parts['num'].aslist:
+            s = part.span[0]
+            e = part.span[1]
+            match = part.match_str()
+            inti = int(match)
+            if len(match) == 4:
                 if 1970<=inti<2050:
                     self.date_p[AType.year] = Part(self, (s, e), sType.num)
                     part.str_used = Part.StrUsed.allused
@@ -447,7 +458,7 @@ class Time_str(My_str):
                     self.date_p[AType.month]= Part(self, (s, s+2), sType.num)
                     self.date_p[AType.date] = Part(self, (s+2, e), sType.num)
                     part.str_used = Part.StrUsed.allused
-        
+         
     def time_lmrs(self):
         """
         get time HH:MM:SS.subsec , MM:SS.subsec or HH:MM:SS
@@ -514,15 +525,10 @@ class Time_str(My_str):
                 self.time_p[d_k] = self.time_p.pop(s_k)
         self.flags.append('set_time_p')
     
-    def datetime_process(self):
-        time_found = 'time_found' in self.flags
-        self.set_time_p('hours')
-        if time_found:
-            #found the time, and only a last number unused, the number is date
-            oouu = self.parts['num'].onlyone_unused()
-            if oouu is not None: #found onlyone unused
-                self.date_p[AType.date] = oouu
-        self.date_p.check_breakpoint()
+    def onlyone_unused_num_as_date(self):
+        oouu = self.parts['num'].onlyone_unused()
+        if oouu is not None: #found onlyone unused
+            self.date_p[AType.date] = oouu
          
 if __name__ == '__main__':
     test_strs = ['Wed 28/Oct 12:34:56.123',
