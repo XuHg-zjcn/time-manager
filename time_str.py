@@ -35,7 +35,23 @@ norms= '-:.,/\ '
 
 ABType = Enum('ABType', 'date time subs')
 AType = Enum('AType', 'year month date day')
-BType = Enum('BType', 'hours minute second subsec ampm left midd right')
+class BType(Enum):
+    hours = 0
+    minute = 1
+    second = 2
+    subsec = 3
+    ampm = 4
+    H = 0
+    M = 1
+    S = 2
+    SS = 3
+    ap = 4
+    left = 5
+    midd = 6
+    right = 7
+    l = 5
+    m = 6
+    r = 7
 sType = Enum('sType', 'num eng norm other')
 
 sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
@@ -197,19 +213,20 @@ class BigPart(dict):
     def __getitem__(self, key):
         if key in self:
             value = super().__getitem__(key)
+        elif isinstance(key, int):
+            if key>=0:
+                value = self.aslist[self.x_len+key]
+            elif key<0:
+                value = self.aslist[key]
+            else:
+                raise KeyError("{} isn't valid key or index".format(key))
         else:
-            if isinstance(key, int):
-                if key>=0:
-                    value = self.aslist[self.x_len+key]
-                elif key<0:
-                    value = self.aslist[key]
-                else:
-                    raise KeyError("{} isn't valid key or index".format(key))
+            raise KeyError("{} isn't valid key or index".format(key))
         return value
     
     def check_used(self):
         for i in self:
-            i.check_used()
+            self[i].check_used()
     
     def check_spans(self, inc=True, cont=False):
         last = self[0]
@@ -225,19 +242,26 @@ class BigPart(dict):
 
     def check_finally(self, req='MD hm'):
         d1 = {'Y':AType.year, 'M':AType.month, 'D':AType.date}
-        d2 = {'h':BType.month, 'm':BType.minute, 's':BType.second}
+        d2 = {'h':BType.hours, 'm':BType.minute, 's':BType.second}
         dx = {ABType.date:d1, ABType.time:d2}[self.mtype]
         for key in dx:
             if key in req and dx[key] not in self:
                 return False
         return True
        
-    def n_unused(self):
-        n = 0
+    def unuseds(self):
+        n = []
         for i in self.aslist:
-            if i.check_str_used() == Part.StrUsed.unused:
-                n += 1
+            if i.is_str_used() == Part.StrUsed.unused:
+                n.append(i)
         return n
+    
+    def onlyone_unused(self):
+        unused_list = self.unuseds()
+        if len(unused_list) == 1:
+            return unused_list[0]
+        else:
+            return None
     
     def __str__(self):
         ret = 'BigPart:\n'
@@ -322,12 +346,14 @@ class My_str:
 class Time_str(My_str):
     def __init__(self, in_str):
         super().__init__(in_str)
+        self.flags = [] #'time_found'
         self.date_p = BigPart(ABType.date)
         self.time_p = BigPart(ABType.time, used=None)
         self.time_lmrs()
         self.english_month_day()
         self.parts = self.get_allsType_parts(sType2re_c, sName)
         self.process_num()
+        self.datetime_process()
     
     def english_month_day(self):
         month = self.find_strs(month_short, 'english month')
@@ -383,7 +409,6 @@ class Time_str(My_str):
                     self.date_p[AType.date] = Part(self, (s+2, e), sType.num)
                     part.str_used = Part.StrUsed.allused
         
-    
     def time_lmrs(self):
         """
         get time HH:MM:SS.subsec , MM:SS.subsec or HH:MM:SS
@@ -393,6 +418,7 @@ class Time_str(My_str):
         m = self.search('((\d+):(\d+:)*(\d+)(\.\d+)*)', isRaise=False)
         if m is None:
             return None
+        self.flags.append('time_found')
         #append Parts to self.time_parts
         self.time_p[BType.left] = Part(self, m.span(2), sType.num)
         self.time_p[sType.norm] = Part(self, (m.end(2), m.start(3)), sType.norm)
@@ -404,20 +430,67 @@ class Time_str(My_str):
             self.time_p[BType.subsec] = Part(self, m.span(5), sType.num)
         #get left, midd, right, subsec
     
-    def datetime_process(self):
-        if self.date_p.check_finally():
-            self.time_p[BType.hours] = self.time_p[BType.left]
-            if BType.midd in self.time_p:
-                self.time_p[BType.minute] = self.time_p[BType.midd]
-                self.time_p[BType.second] = self.time_p[BType.right]
+    def set_time_p(self, n2v=None):
+        '''
+        ll:mm:rr        -> HH:MM:SS
+        ll:mm:rr.sss... -> HH:MM:SS.subsec
+              rr.sss... ->       SS.subsec
+        ll :  rr.sss... ->    MM:SS.subsec
+        ll :  rr          ?-> HH:MM or MM:SS
+        @para n2v: if found ll:rr, such as 12:34,
+                   'hours' for HH:MM, 'second' for MM:SS, None raise ValueError
+        '''
+        B = BType
+        #            src_keys              dst_keys
+        dict_rule = {(B.l, B.m, B.r)      :(B.H, B.M, B.S      ),
+                     (B.l, B.m, B.r, B.SS):(B.H, B.M, B.S, None),
+                     (          B.r, B.SS):(          B.S, None),
+                     (B.l,      B.r, B.SS):(     B.M, B.S, None)}
+        #get src_keys
+        src_keys = []
+        for key in self.time_p:
+            if key in (B.l, B.m, B.r, B.ss):
+                src_keys.append(key)
+        src_keys = tuple(src_keys)
+        #use dict_rule
+        if src_keys in dict_rule:
+            dst_keys = dict_rule[src_keys]
+        #use n2v
+        elif src_keys == (B.l, B.r):
+            if n2v == 'hours':
+                dst_keys = (B.H, B.M)
+            elif n2v == 'second':
+                dst_keys = (B.M, B.S)
             else:
-                assert BType.subsec not in self.time_p
-                self.time_p[BType.minute] = self.time_p[BType.right]
-        if self.time_p.check_finally():
-             pass
+                raise ValueError('n2v must be hours or second')
+        #no src_keys
+        elif src_keys == ():
+            return
+        else:
+            raise KeyError('src_keys {} not match'.format(src_keys))
+        assert len(src_keys) == len(dst_keys)
+        for s_k,d_k in zip(src_keys, dst_keys):
+            if d_k is not None:
+                self.time_p[d_k] = self.time_p[s_k]
+        self.flags.append('set_time_p')
+    
+    def datetime_process(self):
+        date_finally = self.date_p.check_finally('MD')
+        time_found = 'time_found' in self.flags
+        if date_finally:
+            self.set_time_p('hours')
+        if time_found:
+            #found the time, and only a last number unused, the number is date
+            oouu = self.parts['num'].onlyone_unused()
+            if oouu is not None: #found onlyone unused
+                self.date_p[AType.date] = oouu
          
 if __name__ == '__main__':
-    test_strs = ['Wed 28/Oct 12:34:56.123', '20201030', '1030', '10:30']
+    test_strs = ['Wed 28/Oct 12:34:56.123',
+                 '20201030',
+                 '1030',
+                 '10:30',
+                 '31 10:30']
     for i in test_strs:
         print(i)
         tstr = Time_str(i)
