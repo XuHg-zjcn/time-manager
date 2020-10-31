@@ -250,7 +250,7 @@ class BigPart(dict):
                 return False
         return True
     
-    def check_OK(self):
+    def check_breakpoint(self):
         #TODO: raise show last+1
         '''
         check is middle broken, 
@@ -364,6 +364,25 @@ class My_str:
     
 #smart time str to datetime struct
 class Time_str(My_str):
+    '''
+    pseudo-code:
+    find ll:mm:rr.ss, english
+    find YYYYMMDD
+    if time_found or flag.OK:
+        find YYYY, MMDD
+        find DD, if onlyone num
+        if any about date found:
+            set_time_p(n2v='hours')
+        else:
+            set_time_p(n2v=flag.n2v)
+    
+    part add rule:
+        BigPart no breakpoint,           exam: YYYY//DD without month
+        limted use spilt char,           ':' for time, '-.,/\ ' for date
+        Parts no overlapped on str,      each char of in_str has flag
+        two BigPart not overlapped,      exam: YYYY/MM hh:DD:mm:ss
+        a Part can only add to a BigPart
+    '''
     def __init__(self, in_str):
         super().__init__(in_str)
         self.flags = [] #'time_found'
@@ -503,7 +522,7 @@ class Time_str(My_str):
             oouu = self.parts['num'].onlyone_unused()
             if oouu is not None: #found onlyone unused
                 self.date_p[AType.date] = oouu
-        self.date_p.check_OK()
+        self.date_p.check_breakpoint()
          
 if __name__ == '__main__':
     test_strs = ['Wed 28/Oct 12:34:56.123',
