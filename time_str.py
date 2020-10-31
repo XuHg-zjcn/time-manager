@@ -401,6 +401,8 @@ class Time_str(My_str):
         set_time_p(n2v='hours')
     else:
         set_time_p(n2v=default_n2v)
+    check_result
+    as datetime object
     
     part add rule:
         BigPart no breakpoint,           exam: YYYY//DD without month
@@ -415,6 +417,10 @@ class Time_str(My_str):
         self.para = {'fd42':find_date42, 'dn2v':default_n2v}
         self.date_p = BigPart(ABType.date)
         self.time_p = BigPart(ABType.time, used=None)
+        self.process()
+        self.check()
+        
+    def process(self):
         self.time_lmrs()
         self.english_month_day()
         self.parts = self.get_allsType_parts(sType2re_c, sName)
@@ -426,8 +432,10 @@ class Time_str(My_str):
             self.set_time_p('hours')  #date found
         else:
             self.set_time_p(self.para['dn2v'])
-        self.date_p.check_breakpoint()
     
+    def check(self):
+        self.date_p.check_breakpoint()
+        
     def english_month_day(self):
         month = self.find_strs(month_short, 'english month')
         day = self.find_strs(day_short, 'english day')
