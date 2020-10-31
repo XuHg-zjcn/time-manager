@@ -87,6 +87,10 @@ class Part():
                 break
         if len(s)>=2 and s[0] == '.' and s[1] in nums: #detct float number
             gstype = sType.num
+        for c in s[1:]:
+            if c not in sType2exam[gstype]:
+                raise ValueError('check_stype faild {},\n{}'
+                                 .format(gstype, self.mstr.mark(self.span)))
         assert gstype is not None
         if stype is not None and stype != gstype:
             raise ValueError('stype:{} != gstype:{}\n{}'
@@ -487,7 +491,7 @@ class Time_str(My_str):
         self.flags.append('time_found')
         #append Parts to self.time_parts
         self.time_p[BType.left] = Part(self, m.span(2), sType.num)
-        self.time_p[sType.norm] = Part(self, (m.end(2), m.start(3)), sType.norm)
+        self.time_p[sType.norm] = Part(self, (m.end(2), m.end(2)+1), sType.norm)
         if m.group(3) is not None:
             self.time_p[BType.midd] = Part(self, (m.start(3),m.end(3)-1), sType.num)
             self.time_p[sType.norm] = Part(self, (m.end(3)-1, m.end(3)), sType.norm)
