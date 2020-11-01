@@ -296,10 +296,15 @@ class BigPart(dict):
                 last = i
     
     def __str__(self):
-        ret = 'BigPart:\n'
-        for i in self:
-            ret += '{:<12}:{}\n'.format(i, self[i])
-        return ret
+        if len(self) != 0:
+            ret = 'BigPart:---------------------------\n'
+            for i in self:
+                ret += '{:<12}:{}\n'.format(i, self[i])
+            ret = ret[:-1]
+            return ret
+        else:
+            return 'empty------------------------------'
+        
 
 class UnusedParts(list):
     def append(self, obj):
@@ -593,18 +598,31 @@ class Time_str(My_str):
             self.date_p[UType.day] = oouu
             oouu.set_used()
             oouu.delete()
-         
-if __name__ == '__main__':
-    test_strs = ['Wed 28/Oct 12:34:56.123',
-                 '20201030',
-                 '1030',
-                 '10:30',
-                 '31 10:30',
-                 '20:22 PM']
-    for i in test_strs:
-        print(i)
-        tstr = Time_str(i)
+
+def test_a_list_str(test_list, expect_err=False):
+    for i in test_list:
+        print('str:', i)
+        try:
+            tstr = Time_str(i)
+        except Exception as e:
+            print('error happend:\n', e)
+            err_happend = True
+        else:
+            print('no error')
+            err_happend = False
         print('date:', tstr.date_p)
         print('time:', tstr.time_p)
-        print('unused:', tstr.parts['num'])
+        print('unused:', tstr.parts)
+        if err_happend != expect_err:
+            print('error not expect, expect is {}, but result is {}'
+                  .format(expect_err, err_happend))
         print()
+#test codes
+if __name__ == '__main__':
+    test_ok = ['Wed 28/Oct 12:34:56.123',
+               '20201030','1030','10:30','31 10:30','10:22 PM']
+    test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12']
+    print('##########test_ok, should no error!!!!!!!!!!')
+    test_a_list_str(test_ok)
+    print('##########test_err, should happend error each item!!!!!!!!!!')
+    test_a_list_str(test_err)
