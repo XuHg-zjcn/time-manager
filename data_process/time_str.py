@@ -156,12 +156,6 @@ class Part():
                 self.str_used.name, self.isUse, str_value)
         return ret
     
-    def __lt__(self, other):
-        return self.span[1] < other.span[0]
-    
-    def __gt__(self, other):
-        return self.span[1] > other.span[0]
-    
     def __eq__(self, other):
         return self.mstr == other.mstr and \
                self.span == other.span
@@ -234,21 +228,6 @@ class BigPart(dict):
             self.span[0] = value.span[0]
         if value.span[1] > self.span[1]: #Part's right point over BigPart
             self.span[1] = value.span[1]
-        
-    
-    def __getitem__(self, key):
-        if key in self:
-            value = super().__getitem__(key)
-        elif isinstance(key, int):
-            if key>=0:
-                value = self.aslist[self.x_len+key]
-            elif key<0:
-                value = self.aslist[key]
-            else:
-                raise KeyError("{} isn't valid key or index".format(key))
-        else:
-            raise KeyError("{} isn't valid key or index".format(key))
-        return value
     
     def pop(self, key):
         value = super().pop(key)
