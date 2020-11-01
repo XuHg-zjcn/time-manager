@@ -84,9 +84,9 @@ sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
 #type 3: other
 class uStat(Enum):
     unused    = 0
-    simple    = 1 #re.finditer '\d+', '[a-zA-z]+'
+    simple    = 1 #re.finditer('\d+', '[a-zA-z]+'), add part_used_set
     lmrs      = 2 #lmrs time,  set_str_used
-    bigpart   = 3 #add to part_used_set
+    bigpart   = 3
 
 class uset(set):
     def add(self, ele):
@@ -205,10 +205,8 @@ class BigPart(dict):
                 raise KeyError('key {} is already in BigPart {} dict'
                                .format(key, self.mtype))
             super().__setitem__(key, value)
-        #check no repeating Parts
-        d = {ABType.date:UxType['Date'], ABType.time:UxType['Time']}
-        if key in d[self.mtype]:
-            self.mstr.part_used_set.add(value.get_tuple())
+        #add set
+        self.mstr.part_used_set.add(value.get_tuple())
         #check isUse require
         if self.used is not None and self.used != value.part_used:
             raise ValueError('used reqire is not same')
@@ -221,7 +219,7 @@ class BigPart(dict):
     def pop(self, key):
         value = super().pop(key)
         v_tuple = value.get_tuple()
-        if v_tuple in self:
+        if v_tuple in self.mstr.part_used_set:
             self.mstr.part_used_set.remove(v_tuple)
         return value
     
