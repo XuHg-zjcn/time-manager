@@ -283,6 +283,10 @@ class BigPart(dict):
 class UnusedParts(list):
     def __init__(self):
         super().__init__()
+        
+    def append(self, obj):
+        assert isinstance(obj, Part)
+        super().append(obj)
     
     def unuseds(self):
         n = []
