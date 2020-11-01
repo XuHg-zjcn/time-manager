@@ -443,15 +443,15 @@ class Time_str(My_str):
         set_time_p(n2v='hours')
     else:
         set_time_p(n2v=default_n2v)
-    check_result
-    as datetime object
+    TODO: check_result
+    TODO: as datetime object
     
     part add rule:
         BigPart no breakpoint,           exam: YYYY//DD without month
-        limted use spilt char,           ':' for time, '-.,/\ ' for date
+    TODO: limted use spilt char,           ':' for time, '-.,/\ ' for date
         Parts no overlapped on str,      each char of in_str has flag
-        two BigPart not overlapped,      exam: YYYY/MM hh:DD:mm:ss
-        a Part can only add to a BigPart
+    TODO: two BigPart not overlapped,      exam: YYYY/MM hh:DD:mm:ss
+    TODO: a Part can only add to a BigPart
     '''
     def __init__(self, in_str, find_date42=True, default_n2v='hours'):
         super().__init__(in_str)
