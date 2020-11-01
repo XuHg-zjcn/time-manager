@@ -92,7 +92,7 @@ class Part():
         self.mstr = mstr
         self.stype = self.check_stype(stype)
         self.value = self.get_value(value)
-        self.str_used = self.is_str_used()
+        self.str_used = mstr.is_str_used(span)
         self.isUse = False
         if isUse:
             self.check_no_repeat()
@@ -173,29 +173,11 @@ class Part():
                 raise ValueError('Part {} is already create\n{}'
                 .format(self.span, self.mstr.mark(self.span)))
     
-    def is_str_used(self):
-        N_used = 0
-        for i in range(*self.span):
-            if self.mstr.used[i]:
-                N_used += 1
-        if N_used == 0:
-            str_used = Part.StrUsed.unused
-        elif N_used == self.span[1] - self.span[0]:
-            str_used = Part.StrUsed.allused
-        else:
-            str_used = Part.StrUsed.partused
-        return str_used
-    
     def set_used(self):
-        self.str_used = self.is_str_used()
-        if self.str_used != Part.StrUsed.unused:
-            raise ValueError('want the part of str unused, but str is {},\
-not all unused\n{}'.format(self.str_used, self.mstr.mark(self.span)))
-        self.objs.append(self)
-        for i in range(*self.span):
-            self.mstr.used[i] = True
+        self.mstr.set_used(self.span)
         self.str_used = Part.StrUsed.allused
         self.isUse = True
+        self.objs.append(self)
     
     def __len__(self):
         return self.span[1] - self.span[0]
@@ -330,6 +312,10 @@ class BigPart(dict):
         
 
 class UnusedParts(list):
+    def __init__(self, mstr):
+        super().__init__()
+        self.mstr = mstr
+        
     def append(self, obj):
         assert isinstance(obj, Part)
         super().append(obj)
@@ -350,7 +336,7 @@ class UnusedParts(list):
     def onlyone_unused(self):
         ni_list = []
         for ni,obj in enumerate(self):
-            if obj.is_str_used() == Part.StrUsed.unused:
+            if self.mstr.is_str_used(obj.span) == Part.StrUsed.unused:
                 ni_list.append(ni)
         if len(ni_list) == 1:
             return self.__getitem_delable(ni_list[0])
@@ -371,7 +357,7 @@ class My_str:
         @para filter_used: only output unused
         """
         founds = re_comp.finditer(self.in_str)
-        bpart = UnusedParts()
+        bpart = UnusedParts(self)
         for i in founds:
             part = Part(self, i.span(), stype, isUse=False)
             if filter_used is None or part.str_used == filter_used:
@@ -452,6 +438,26 @@ class My_str:
                 .format(char, allow, self.mark(index)))
             return char
             return None
+    
+    def is_str_used(self, span):
+        N_used = 0
+        for i in range(*span):
+            if self.used[i]:
+                N_used += 1
+        if N_used == 0:
+            str_used = Part.StrUsed.unused
+        elif N_used == span[1] - span[0]:
+            str_used = Part.StrUsed.allused
+        else:
+            str_used = Part.StrUsed.partused
+        return str_used
+    
+    def set_used(self, span):
+        if self.is_str_used(span) != Part.StrUsed.unused:
+            raise ValueError('want the part of str unused, but str is {},\
+not all unused\n{}'.format(self.str_used, self.mark(span)))
+        for i in range(*span):
+            self.used[i] = True
     
 #smart time str to datetime struct
 class Time_str(My_str):
