@@ -92,7 +92,6 @@ class Part():
         self.mstr = mstr
         self.stype = self.check_stype(stype)
         self.value = self.get_value(value)
-        self.str_used = mstr.is_str_used(span)
         self.isUse = False
         if isUse:
             self.check_no_repeat()
@@ -359,8 +358,9 @@ class My_str:
         founds = re_comp.finditer(self.in_str)
         bpart = UnusedParts(self)
         for i in founds:
-            part = Part(self, i.span(), stype, isUse=False)
-            if filter_used is None or part.str_used == filter_used:
+            str_used = self.is_str_used(i.span())
+            if filter_used is None or str_used == filter_used:
+                part = Part(self, i.span(), stype, isUse=False)
                 bpart.append(part)
         return bpart
     
