@@ -202,7 +202,7 @@ not all unused\n{}'.format(self.str_used, self.mstr.mark(self.span)))
 
 #part date or time, can include sub part
 class BigPart(dict):
-    def __init__(self, mtype, inc=False, cont=False, used=None):
+    def __init__(self, mstr, mtype, inc=False, cont=False, used=None):
         '''
         @para inc: all sub parts increase, next part head after prev end.
         @para cont: all sub parts continuous, next part head close prev end.
@@ -215,6 +215,7 @@ class BigPart(dict):
         self.cont = cont
         self.used = used
         self.aslist = []
+        self.span = [len(mstr.in_str),0]
         
     def __setitem__(self, key, value):
         assert isinstance(value, Part)
@@ -247,6 +248,12 @@ class BigPart(dict):
                 raise ValueError('sub part not increase:\n{}'.format(self))
             if self.cont and self.aslist[-2] != self.aslist[-1]:
                 raise ValueError('sub part not continue:\n{}'.format(self))
+        #update self.span
+        if value.span[0] < self.span[0]: #Part's left point over BigPart
+            self.span[0] = value.span[0]
+        if value.span[1] > self.span[1]: #Part's right point over BigPart
+            self.span[1] = value.span[1]
+        
     
     def __getitem__(self, key):
         if key in self:
@@ -466,7 +473,7 @@ class Time_str(My_str):
         BigPart no breakpoint,           exam: YYYY//DD without month
   TODO: limted use spilt char,           ':' for time, '-.,/\ ' for date
         Parts no overlapped on str,      each char of in_str has flag
-  TODO: two BigPart not overlapped,      exam: YYYY/MM hh:DD:mm:ss
+        two BigPart not overlapped,      exam: YYYY/MM hh:mm:ss DD
   TODO: a Part can only add to a BigPart
         Parts in BigPart are not repeating
     '''
@@ -474,8 +481,8 @@ class Time_str(My_str):
         super().__init__(in_str)
         self.flags = [] #'time_found'
         self.para = {'fd42':find_date42, 'dn2v':default_n2v}
-        self.date_p = BigPart(ABType.date)
-        self.time_p = BigPart(ABType.time, used=None)
+        self.date_p = BigPart(self, ABType.date)
+        self.time_p = BigPart(self, ABType.time, used=None)
         self.process()
         self.check()
         
@@ -494,6 +501,7 @@ class Time_str(My_str):
     
     def check(self):
         self.date_p.check_breakpoint()
+        self.check_bigparts_not_overlapped()
         
     def english_month_weekday(self):
         month = self.find_strs(month_short, 'english month')
@@ -615,6 +623,12 @@ class Time_str(My_str):
             self.date_p[UType.day] = oouu
             oouu.set_used()
             oouu.delete()
+    
+    def check_bigparts_not_overlapped(self):
+        if len(self.date_p)>=1 and len(self.time_p)>=1:
+            date_time = self.date_p.span[1] <= self.time_p.span[0]
+            time_date = self.time_p.span[1] <= self.date_p.span[0]
+            assert date_time or time_date
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     for i in test_list:
@@ -643,7 +657,7 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
 if __name__ == '__main__':
     test_ok = ['Wed 28/Oct 12:34:56.123',
                '20201030','1030','10:30','31 10:30','10:22 PM']
-    test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12']
+    test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
     print('##########test_ok, should no error!!!!!!!!!!')
     test_a_list_str(test_ok, expect_err=False)
     print('##########test_err, should happend error each item!!!!!!!!!!')
