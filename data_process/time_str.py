@@ -84,7 +84,7 @@ sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
 #type 3: other
 class uStat(Enum):
     unused    = 0
-    simple    = 1 #re.finditer('\d+', '[a-zA-z]+'), add part_used_set
+    simple    = 1 #re.finditer('\d+', '[a-zA-z]+'), add part_set
     lmrs      = 2 #lmrs time,  set_str_used
     bigpart   = 3
 
@@ -105,8 +105,6 @@ class Part():
         self.ustat = ustat
         if ustat in [uStat.lmrs, uStat.bigpart]:
             self.mstr.set_str_used(self.span)
-        if ustat == uStat.bigpart:
-            self.mstr.part_used_set.add(self.get_tuple())
     
     def match_str(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
@@ -114,13 +112,13 @@ class Part():
     def check_stype(self, stype):
         s = self.match_str()
         gstype = None
-        for key in sType2exam:
+        for key in sType2exam:                         #detce first char
             if s[0] in sType2exam[key]:
                 gstype = key
                 break
         if len(s)>=2 and s[0] == '.' and s[1] in nums: #detct float number
             gstype = sType.num
-        for c in s[1:]:
+        for c in s[1:]:                                #check others char
             if c not in sType2exam[gstype]:
                 raise ValueError('check_stype faild {},\n{}'
                                  .format(gstype, self.mstr.mark(self.span)))
@@ -179,7 +177,7 @@ class Part():
 
 #part date or time, can include sub part
 class BigPart(dict):
-    def __init__(self, mstr, mtype, used=None):
+    def __init__(self, mstr, mtype):
         '''
         @para inc: all sub parts increase, next part head after prev end.
         @para cont: all sub parts continuous, next part head close prev end.
@@ -189,7 +187,6 @@ class BigPart(dict):
         super().__init__()
         self.mstr = mstr
         self.mtype= mtype
-        self.used = used
         self.span = [len(mstr.in_str),0]
         
     def __setitem__(self, key, value):
@@ -206,10 +203,10 @@ class BigPart(dict):
                                .format(key, self.mtype))
             super().__setitem__(key, value)
         #add set
-        self.mstr.part_used_set.add(value.get_tuple())
-        #check isUse require
-        if self.used is not None and self.used != value.part_used:
-            raise ValueError('used reqire is not same')
+        if hasattr(value, 'poped'):
+            delattr(value, 'poped')  #Part obj poped
+        else:
+            self.mstr.part_set.add(value.get_tuple())
         #update self.span
         if value.span[0] < self.span[0]: #Part's left point over BigPart
             self.span[0] = value.span[0]
@@ -218,9 +215,7 @@ class BigPart(dict):
     
     def pop(self, key):
         value = super().pop(key)
-        v_tuple = value.get_tuple()
-        if v_tuple in self.mstr.part_used_set:
-            self.mstr.part_used_set.remove(v_tuple)
+        value.poped = True
         return value
     
     def check_spans(self, inc=True, cont=False):
@@ -307,6 +302,15 @@ class UnusedParts(list):
         for i in self:
             ret += str(i)
         return ret
+    
+    def delete(self, index):
+        '''
+        delete for Part obj in UnusedParts to BigPart,
+        part can spilt some parts
+        '''
+        v = self.pop(index)
+        v_tuple = v.get_tuple()
+        self.mstr.part_set.remove(v_tuple)
 
 class My_str:
     def __init__(self, in_str):
@@ -454,9 +458,9 @@ class Time_str(My_str):
         super().__init__(in_str)
         self.flags = [] #'time_found'
         self.para = {'fd42':find_date42, 'dn2v':default_n2v}
-        self.part_used_set = uset()
+        self.part_set = uset()
         self.date_p = BigPart(self, ABType.date)
-        self.time_p = BigPart(self, ABType.time, used=None)
+        self.time_p = BigPart(self, ABType.time)
         self.process()
         self.check()
         
@@ -494,7 +498,7 @@ class Time_str(My_str):
             if func(part) == True:
                 if pop_i is None:
                     pop_i = ni
-                    self.parts['num'].pop(ni)
+                    self.parts['num'].delete(ni)
     
     def num8(self, part):
         s = part.span[0]
@@ -592,7 +596,7 @@ class Time_str(My_str):
         oouu = self.parts['num'].onlyone_unused()
         if oouu is not None:
             self.date_p[UType.day] = oouu
-            oouu.delete()
+            oouu.delete()    #delete in UnusedParts and part_set
     
     def check_bigparts_not_overlapped(self):
         if len(self.date_p)>=1 and len(self.time_p)>=1:
