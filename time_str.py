@@ -67,12 +67,17 @@ def dt(U):
     Time = {U.ap, U.h, U.m, U.s, U.ss}
     lmr  = {U.lt, U.md, U.rt}
     lmrT = set.union(Time, lmr)
-    return {'Date':Date, 'Time':Time, 'lmr':lmr, 'lmrTime':lmrT}
-UxType = dt(UType)
+    UxType = {'Date':Date, 'Time':Time, 'lmr':lmr, 'lmrTime':lmrT}
+    Char2UType = {'Y':U.Y, 'M':U.M, 'D':U.D, 'W':U.WD,
+                  'p':U.ap, 'h':U.h, 'm':U.m, 's':U.s, 'S':U.ss}
+    return UxType, Char2UType
+UxType, Char2UType = dt(UType)
+#UType2Char = {v:k for k,v in Char2UType.items()}
 sType = Enum('sType', 'num eng norm other')
 
 sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
 sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
+ABType2Ux  = {ABType.date:UxType['Date'], ABType.date:UxType['Time']}
 #type 0: number  [0-9]
 #type 1: english [A-Za-z]
 #type 2: chara   -:,/  <space>
@@ -247,10 +252,6 @@ class BigPart(dict):
             raise KeyError("{} isn't valid key or index".format(key))
         return value
     
-    def check_used(self):
-        for i in self:
-            self[i].check_used()
-    
     def check_spans(self, inc=True, cont=False):
         last = self[0]
         start = last.span[0]
@@ -264,11 +265,14 @@ class BigPart(dict):
         self.span = (start, end)
 
     def check_finally(self, req='MD hm'):
-        d1 = {'Y':UType.year, 'M':UType.month, 'D':UType.day   }
-        d2 = {'h':UType.hours,'m':UType.minute,'s':UType.second}
-        dx = {ABType.date:d1, ABType.time:d2}[self.mtype]
-        for key in dx:
-            if key in req and dx[key] not in self:
+        #time not contain lmr
+        mset = ABType2Ux[self.mtype] #vaild UType by mstype
+        req_char = set(req)          #set of chars in req
+        char_vaild = req_char.intersection(Char2UType) #chars can found in dict
+        req_UTypes = set(map(lambda x:Char2UType[x], char_vaild))
+        want_check = req_UTypes.intersection(mset) #UTypes in mstype and req
+        for ut in want_check:        #ut is a UType
+            if ut not in self:
                 return False
         return True
     
@@ -298,14 +302,11 @@ class BigPart(dict):
         return ret
 
 class UnusedParts(list):
-    def __init__(self):
-        super().__init__()
-        
     def append(self, obj):
         assert isinstance(obj, Part)
         super().append(obj)
         
-    def __getitem__(self, s):
+    def __getitem_delable(self, s):
         def delete():
             if v.deleted == True:
                 raise RuntimeError('UnusedParts item already delete')
@@ -324,7 +325,7 @@ class UnusedParts(list):
             if obj.is_str_used() == Part.StrUsed.unused:
                 ni_list.append(ni)
         if len(ni_list) == 1:
-            return self[ni_list[0]]
+            return self.__getitem_delable(ni_list[0])
         else:
             return None
 
@@ -487,10 +488,9 @@ class Time_str(My_str):
         pop_i = None
         for ni,part in enumerate(self.parts['num']):
             if func(part) == True:
-                if pop_i is not None:
+                if pop_i is None:
                     pop_i = ni
-        if pop_i is not None:
-            self.parts['num'].pop(pop_i)
+                    self.parts['num'].pop(ni)
     
     def num8(self, part):
         s = part.span[0]
