@@ -304,24 +304,27 @@ class UnusedParts(list):
     def append(self, obj):
         assert isinstance(obj, Part)
         super().append(obj)
+        
+    def __getitem__(self, s):
+        def delete():
+            if v.deleted == True:
+                raise RuntimeError('UnusedParts item already delete')
+            self.pop(v.s)
+            v.deleted = True
+        
+        v = super().__getitem__(s)
+        v.deleted = False
+        v.s = s
+        v.delete = delete
+        return v
     
     def onlyone_unused(self):
-        def delete():
-            assert obj.deleted == False
-            self.pop(obj.index_uu)
-            obj.deleted = True
-        
-        unused_list = []
+        ni_list = []
         for ni,obj in enumerate(self):
             if obj.is_str_used() == Part.StrUsed.unused:
-                unused_list.append((obj, ni))
-        
-        if len(unused_list) == 1:
-            oouu = unused_list[0][0]
-            oouu.index_uu = unused_list[0][1]
-            obj.deleted = False
-            oouu.delete = delete
-            return oouu
+                ni_list.append(ni)
+        if len(ni_list) == 1:
+            return self[ni_list[0]]
         else:
             return None
 
@@ -457,9 +460,9 @@ class Time_str(My_str):
         self.time_lmrs()
         self.english_month_weekday()
         self.parts = self.get_allsType_parts(sType2re_c, sName)
-        self.date_num8()         #find YYYYMMDD
+        self.find_date(self.num8)         #find YYYYMMDD
         if 'time_found' in self.flags or self.para['fd42']:
-            self.date_num4()     #find YYYY, MMDD
+            self.find_date(self.num4)     #find YYYY, MMDD
             self.onlyone_unused_num_as_date()
         if len(self.date_p) > 0:
             self.set_time_p('hours')  #date found
@@ -480,31 +483,43 @@ class Time_str(My_str):
         if apm is not None:
             self.time_p[UType.ampm] = apm
     
-    def date_num8(self):
-        for part in self.parts['num']:
-            s = part.span[0]
-            e = part.span[1]
-            match = part.match_str()
-            if len(match) == 8:
-                self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
-                self.date_p[UType.month] = Part(self, (s+4, s+6), sType.num)
-                self.date_p[UType.day  ] = Part(self, (s+6, e),   sType.num)
-                part.str_used = Part.StrUsed.allused
+    def find_date(self, func):
+        pop_i = None
+        for ni,part in enumerate(self.parts['num']):
+            if func(part) == True:
+                if pop_i is not None:
+                    pop_i = ni
+        if pop_i is not None:
+            self.parts['num'].pop(pop_i)
     
-    def date_num4(self):
-        for part in self.parts['num']:
-            s = part.span[0]
-            e = part.span[1]
-            match = part.match_str()
-            inti = int(match)
-            if len(match) == 4:
-                if 1970<=inti<2050:
-                    self.date_p[UType.year ] = Part(self, (s, e), sType.num)
-                    part.str_used = Part.StrUsed.allused
-                elif 101<=inti<=1231:
-                    self.date_p[UType.month]= Part(self, (s, s+2), sType.num)
-                    self.date_p[UType.day  ] = Part(self, (s+2, e), sType.num)
-                    part.str_used = Part.StrUsed.allused
+    def num8(self, part):
+        s = part.span[0]
+        e = part.span[1]
+        match = part.match_str()
+        if len(match) == 8:
+            self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
+            self.date_p[UType.month] = Part(self, (s+4, s+6), sType.num)
+            self.date_p[UType.day  ] = Part(self, (s+6, e),   sType.num)
+            part.str_used = Part.StrUsed.allused
+            return True
+        return False
+    
+    def num4(self, part):
+        s = part.span[0]
+        e = part.span[1]
+        match = part.match_str()
+        inti = int(match)
+        if len(match) == 4:
+            if 1970<=inti<2050:
+                self.date_p[UType.year ] = Part(self, (s, e), sType.num)
+                part.str_used = Part.StrUsed.allused
+                return True
+            elif 101<=inti<=1231:
+                self.date_p[UType.month]= Part(self, (s, s+2), sType.num)
+                self.date_p[UType.day  ] = Part(self, (s+2, e), sType.num)
+                part.str_used = Part.StrUsed.allused
+                return True
+        return False
          
     def time_lmrs(self):
         """
