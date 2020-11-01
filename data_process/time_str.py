@@ -1,6 +1,7 @@
 import datetime
 import re
 from enum import Enum
+import traceback
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -213,26 +214,35 @@ class BigPart(dict):
         self.inc = inc
         self.cont = cont
         self.used = used
-        self.x_len = 0
         self.aslist = []
         
     def __setitem__(self, key, value):
         assert isinstance(value, Part)
         if key != sType.norm:
+            #check key vaild for BigPartType
             if self.mtype == ABType.date:
                 assert key in UxType['Date']
             elif self.mtype == ABType.time:
                 assert key in UxType['lmrTime']
+            else:
+                raise KeyError('key {} is invalid for BigPart {}'
+                               .format(key, self.mtype))
+            #check key is not using
             if key in self:
                 raise KeyError('key {} is already in BigPart {} dict'
                                .format(key, self.mtype))
             super().__setitem__(key, value)
-        if value not in self.aslist:  #no repeating Parts in self.aslist
+        #check no repeating Parts
+        if value not in self.aslist:
             self.aslist.append(value)
-        self.x_len += 1
+        else:
+            raise RuntimeError('multiple add same value into BigPart {}\n{}:{}'
+                               .format(self.mtype, key, value))
+        #check isUse require
         if self.used is not None and self.used != value.isUse:
             raise ValueError('used reqire is not same')
-        if self.x_len >= 2:
+        #check increase and continuous if enable
+        if len(self.aslist) >= 2:
             if self.inc and self.aslist[-2] > self.aslist[-1]:
                 raise ValueError('sub part not increase:\n{}'.format(self))
             if self.cont and self.aslist[-2] != self.aslist[-1]:
@@ -252,6 +262,12 @@ class BigPart(dict):
             raise KeyError("{} isn't valid key or index".format(key))
         return value
     
+    def pop(self, key):
+        value = super().pop(key)
+        index = self.aslist.index(value)
+        self.aslist.pop(index)
+        return value
+    
     def check_spans(self, inc=True, cont=False):
         last = self[0]
         start = last.span[0]
@@ -262,7 +278,7 @@ class BigPart(dict):
                 raise ValueError('sub part not continue')
             last = i
         end = last.span[1]
-        self.span = (start, end)
+        return start, end
 
     def check_finally(self, req='MD hm'):
         #time not contain lmr
@@ -443,15 +459,16 @@ class Time_str(My_str):
         set_time_p(n2v='hours')
     else:
         set_time_p(n2v=default_n2v)
-    TODO: check_result
-    TODO: as datetime object
+  TODO: check_result
+  TODO: as datetime object
     
     part add rule:
         BigPart no breakpoint,           exam: YYYY//DD without month
-    TODO: limted use spilt char,           ':' for time, '-.,/\ ' for date
+  TODO: limted use spilt char,           ':' for time, '-.,/\ ' for date
         Parts no overlapped on str,      each char of in_str has flag
-    TODO: two BigPart not overlapped,      exam: YYYY/MM hh:DD:mm:ss
-    TODO: a Part can only add to a BigPart
+  TODO: two BigPart not overlapped,      exam: YYYY/MM hh:DD:mm:ss
+  TODO: a Part can only add to a BigPart
+        Parts in BigPart are not repeating
     '''
     def __init__(self, in_str, find_date42=True, default_n2v='hours'):
         super().__init__(in_str)
@@ -599,23 +616,28 @@ class Time_str(My_str):
             oouu.set_used()
             oouu.delete()
 
-def test_a_list_str(test_list, expect_err=False):
+def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     for i in test_list:
         print('str:', i)
         try:
             tstr = Time_str(i)
+            print('date:', tstr.date_p)
+            print('time:', tstr.time_p)
+            print('unused:', tstr.parts)
         except Exception as e:
-            print('error happend:\n', e)
+            if print_traceback:
+                traceback.print_exc()
+            else:
+                print('error happend:')
+                print(e)
             err_happend = True
         else:
             print('no error')
             err_happend = False
-        print('date:', tstr.date_p)
-        print('time:', tstr.time_p)
-        print('unused:', tstr.parts)
-        if err_happend != expect_err:
-            print('error not expect, expect is {}, but result is {}'
-                  .format(expect_err, err_happend))
+        finally:
+            if err_happend != expect_err:
+                print('error not expect, expect is {}, but result is {}'
+                      .format(expect_err, err_happend))
         print()
 #test codes
 if __name__ == '__main__':
@@ -623,6 +645,6 @@ if __name__ == '__main__':
                '20201030','1030','10:30','31 10:30','10:22 PM']
     test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12']
     print('##########test_ok, should no error!!!!!!!!!!')
-    test_a_list_str(test_ok)
+    test_a_list_str(test_ok, expect_err=False)
     print('##########test_err, should happend error each item!!!!!!!!!!')
-    test_a_list_str(test_err)
+    test_a_list_str(test_err, expect_err=True)
