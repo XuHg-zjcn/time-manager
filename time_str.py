@@ -2,19 +2,19 @@ import datetime
 import re
 from enum import Enum
 
-day_full=['Monday','Tuesday','Wednesday','Thursday',
+weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
-day_short=['Mon','Tue','Wed','Thur','Fri','Sat','Sun']
+weekday_short=['Mon','Tue','Wed','Thur','Fri','Sat','Sun']
 month_full=['January','February','March','April','May','June',
             'July','August','Spetember','October','November','December']
 month_short=['Jan','Feb','Mar','Apr','May','Jun',
              'Jul','Aug','Spet','Oct','Nov','Dec']
 ampm = ['AM', 'PM']
 
-eType = Enum('eType', 'day month ampm')
+eType = Enum('eType', 'weekday month ampm')
 fType = Enum('fType', 'full short')
-eng_strs = {(eType.day, fType.full):day_full,
-            (eType.day, fType.short):day_short,
+eng_strs = {(eType.weekday, fType.full):weekday_full,
+            (eType.weekday, fType.short):weekday_short,
             (eType.month, fType.full):month_full,
             (eType.month, fType.short):month_short,
             (eType.ampm, None):ampm}
@@ -34,24 +34,41 @@ engs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 norms= '-:.,/\ '
 
 ABType = Enum('ABType', 'date time')
-AType = Enum('AType', 'year month date day')
-class BType(Enum):
-    ampm = 0
-    hours = 1
-    minute = 2
-    second = 3
-    subsec = 4
-    ap = 0
-    H = 1
-    M = 2
-    S = 3
-    SS = 4
-    left = 5
-    midd = 6
-    right = 7
-    l = 5
+class UType(Enum):
+    #date
+    year = 0
+    month = 1
+    day = 2
+    weekday = 3
+    Y = 0
+    M = 1
+    D = 2
+    WD = 3
+    #time
+    ampm = 4
+    hours = 5
+    minute = 6
+    second = 7
+    subsec = 8
+    ap = 4
+    h = 5
     m = 6
-    r = 7
+    s = 7
+    ss = 8
+    #time lmr
+    left = 9
+    midd = 10
+    right = 11
+    lt = 9
+    md = 10
+    rt = 11
+def dt(U):
+    Date = {U.Y, U.M, U.D, U.WD}
+    Time = {U.ap, U.h, U.m, U.s, U.ss}
+    lmr  = {U.lt, U.md, U.rt}
+    lmrT = set.union(Time, lmr)
+    return {'Date':Date, 'Time':Time, 'lmr':lmr, 'lmrTime':lmrT}
+UxType = dt(UType)
 sType = Enum('sType', 'num eng norm other')
 
 sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
@@ -198,9 +215,9 @@ class BigPart(dict):
         assert isinstance(value, Part)
         if key != sType.norm:
             if self.mtype == ABType.date:
-                assert key in AType
-            if self.mtype == ABType.time:
-                assert key in BType
+                assert key in UxType['Date']
+            elif self.mtype == ABType.time:
+                assert key in UxType['lmrTime']
             if key in self:
                 raise KeyError('key {} is already in BigPart {} dict'
                                .format(key, self.mtype))
@@ -247,8 +264,8 @@ class BigPart(dict):
         self.span = (start, end)
 
     def check_finally(self, req='MD hm'):
-        d1 = {'Y':AType.year, 'M':AType.month, 'D':AType.date}
-        d2 = {'h':BType.hours, 'm':BType.minute, 's':BType.second}
+        d1 = {'Y':UType.year, 'M':UType.month, 'D':UType.day   }
+        d2 = {'h':UType.hours,'m':UType.minute,'s':UType.second}
         dx = {ABType.date:d1, ABType.time:d2}[self.mtype]
         for key in dx:
             if key in req and dx[key] not in self:
@@ -288,17 +305,23 @@ class UnusedParts(list):
         assert isinstance(obj, Part)
         super().append(obj)
     
-    def unuseds(self):
-        n = []
-        for i in self:
-            if i.is_str_used() == Part.StrUsed.unused:
-                n.append(i)
-        return n
-    
     def onlyone_unused(self):
-        unused_list = self.unuseds()
+        def delete():
+            assert obj.deleted == False
+            self.pop(obj.index_uu)
+            obj.deleted = True
+        
+        unused_list = []
+        for ni,obj in enumerate(self):
+            if obj.is_str_used() == Part.StrUsed.unused:
+                unused_list.append((obj, ni))
+        
         if len(unused_list) == 1:
-            return unused_list[0]
+            oouu = unused_list[0][0]
+            oouu.index_uu = unused_list[0][1]
+            obj.deleted = False
+            oouu.delete = delete
+            return oouu
         else:
             return None
 
@@ -432,7 +455,7 @@ class Time_str(My_str):
         
     def process(self):
         self.time_lmrs()
-        self.english_month_day()
+        self.english_month_weekday()
         self.parts = self.get_allsType_parts(sType2re_c, sName)
         self.date_num8()         #find YYYYMMDD
         if 'time_found' in self.flags or self.para['fd42']:
@@ -446,16 +469,16 @@ class Time_str(My_str):
     def check(self):
         self.date_p.check_breakpoint()
         
-    def english_month_day(self):
+    def english_month_weekday(self):
         month = self.find_strs(month_short, 'english month')
-        day = self.find_strs(day_short, 'english day')
+        weekday = self.find_strs(weekday_short, 'english weekday')
         apm = self.find_strs(ampm, 'AMPM')
         if month is not None:
-            self.date_p[AType.month] = month
-        if day is not None:
-            self.date_p[AType.day] = day
+            self.date_p[UType.month] = month
+        if weekday is not None:
+            self.date_p[UType.weekday] = weekday
         if apm is not None:
-            self.time_p[BType.ampm] = apm
+            self.time_p[UType.ampm] = apm
     
     def date_num8(self):
         for part in self.parts['num']:
@@ -463,9 +486,9 @@ class Time_str(My_str):
             e = part.span[1]
             match = part.match_str()
             if len(match) == 8:
-                self.date_p[AType.year] = Part(self, (s,   s+4), sType.num)
-                self.date_p[AType.month]= Part(self, (s+4, s+6), sType.num)
-                self.date_p[AType.date] = Part(self, (s+6, e),   sType.num)
+                self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
+                self.date_p[UType.month] = Part(self, (s+4, s+6), sType.num)
+                self.date_p[UType.day  ] = Part(self, (s+6, e),   sType.num)
                 part.str_used = Part.StrUsed.allused
     
     def date_num4(self):
@@ -476,11 +499,11 @@ class Time_str(My_str):
             inti = int(match)
             if len(match) == 4:
                 if 1970<=inti<2050:
-                    self.date_p[AType.year] = Part(self, (s, e), sType.num)
+                    self.date_p[UType.year ] = Part(self, (s, e), sType.num)
                     part.str_used = Part.StrUsed.allused
                 elif 101<=inti<=1231:
-                    self.date_p[AType.month]= Part(self, (s, s+2), sType.num)
-                    self.date_p[AType.date] = Part(self, (s+2, e), sType.num)
+                    self.date_p[UType.month]= Part(self, (s, s+2), sType.num)
+                    self.date_p[UType.day  ] = Part(self, (s+2, e), sType.num)
                     part.str_used = Part.StrUsed.allused
          
     def time_lmrs(self):
@@ -494,14 +517,14 @@ class Time_str(My_str):
             return None
         self.flags.append('time_found')
         #append Parts to self.time_parts
-        self.time_p[BType.left] = Part(self, m.span(2), sType.num)
+        self.time_p[UType.left] = Part(self, m.span(2), sType.num)
         self.time_p[sType.norm] = Part(self, (m.end(2), m.end(2)+1), sType.norm)
         if m.group(3) is not None:
-            self.time_p[BType.midd] = Part(self, (m.start(3),m.end(3)-1), sType.num)
+            self.time_p[UType.midd] = Part(self, (m.start(3),m.end(3)-1), sType.num)
             self.time_p[sType.norm] = Part(self, (m.end(3)-1, m.end(3)), sType.norm)
-        self.time_p[BType.right] = Part(self, m.span(4), sType.num)
+        self.time_p[UType.right] = Part(self, m.span(4), sType.num)
         if m.group(5) is not None:
-            self.time_p[BType.subsec] = Part(self, m.span(5), sType.num)
+            self.time_p[UType.subsec] = Part(self, m.span(5), sType.num)
         #get left, midd, right, subsec
     
     def set_time_p(self, n2v=None):
@@ -515,15 +538,15 @@ class Time_str(My_str):
                    'hours' for HH:MM, 'second' for MM:SS, None raise ValueError
         '''
         assert 'set_time_p' not in self.flags
-        B = BType
+        B = UType
         #            src_keys              dst_keys
-        dict_rule = {(B.l, B.m, B.r)      :(B.H, B.M, B.S      ),
-                     (B.l, B.m, B.r, B.SS):(B.H, B.M, B.S, None),
-                     (          B.r, B.SS):(          B.S, None),
-                     (B.l,      B.r, B.SS):(     B.M, B.S, None)}
+        dict_rule = {(B.lt, B.md, B.rt)      :(B.h, B.m, B.s      ),
+                     (B.lt, B.md, B.rt, B.ss):(B.h, B.m, B.s, None),
+                     (            B.rt, B.ss):(          B.s, None),
+                     (B.lt,       B.rt, B.ss):(     B.m, B.s, None)}
         #get src_keys
         src_keys = []
-        for key in (B.l, B.m, B.r, B.SS):
+        for key in (B.lt, B.md, B.rt, B.ss):
             if key in self.time_p:
                 src_keys.append(key)
         src_keys = tuple(src_keys)
@@ -531,11 +554,11 @@ class Time_str(My_str):
         if src_keys in dict_rule:
             dst_keys = dict_rule[src_keys]
         #use n2v
-        elif src_keys == (B.l, B.r):
+        elif src_keys == (B.lt, B.rt):
             if n2v == 'hours':
-                dst_keys = (B.H, B.M)
+                dst_keys = (B.h, B.m)
             elif n2v == 'second':
-                dst_keys = (B.M, B.S)
+                dst_keys = (B.m, B.s)
             else:
                 raise ValueError('n2v must be hours or second')
         #no src_keys
@@ -552,8 +575,9 @@ class Time_str(My_str):
     def onlyone_unused_num_as_date(self):
         oouu = self.parts['num'].onlyone_unused()
         if oouu is not None:
-            self.date_p[AType.date] = oouu
+            self.date_p[UType.day] = oouu
             oouu.set_used()
+            oouu.delete()
          
 if __name__ == '__main__':
     test_strs = ['Wed 28/Oct 12:34:56.123',
@@ -567,4 +591,5 @@ if __name__ == '__main__':
         tstr = Time_str(i)
         print('date:', tstr.date_p)
         print('time:', tstr.time_p)
+        print('unused:', tstr.parts['num'])
         print()
