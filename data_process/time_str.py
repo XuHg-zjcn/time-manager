@@ -78,24 +78,35 @@ sType = Enum('sType', 'num eng norm other')
 
 sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
 sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
-ABType2Ux  = {ABType.date:UxType['Date'], ABType.date:UxType['Time']}
 #type 0: number  [0-9]
 #type 1: english [A-Za-z]
 #type 2: chara   -:,/  <space>
 #type 3: other
+class uStat(Enum):
+    unused    = 0
+    simple    = 1 #re.finditer '\d+', '[a-zA-z]+'
+    lmrs      = 2 #lmrs time,  set_str_used
+    bigpart   = 3 #add to part_used_set
+
+class uset(set):
+    def add(self, ele):
+        if ele in self:
+            raise KeyError('element {} already in set:\n{}'.format(ele, self))
+        super().add(ele)
 
 class Part():
     StrUsed = Enum('IsUsed', 'unused partused allused')
-    objs = []
-    def __init__(self, mstr, span:tuple, stype=None, value=None, isUse=True):
+    def __init__(self, mstr, span:tuple,
+                 stype=None, value=None, ustat=uStat.lmrs):
         self.span = span
         self.mstr = mstr
         self.stype = self.check_stype(stype)
         self.value = self.get_value(value)
-        self.isUse = False
-        if isUse:
-            self.check_no_repeat()
-            self.set_used()
+        self.ustat = ustat
+        if ustat in [uStat.lmrs, uStat.bigpart]:
+            self.mstr.set_str_used(self.span)
+        if ustat == uStat.bigpart:
+            self.mstr.part_used_set.add(self.get_tuple())
     
     def match_str(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
@@ -151,33 +162,24 @@ class Part():
             str_value = '{}_{},{}'.format(s1, s2, s3)
         else:
             raise ValueError("self.value isn't int, float or tuple")
-        ret = 'span={:>7}, str="{}", str_used={}, isUse={}, value={}'\
+        ret = 'span={:>7}, str="{}", ustat={}, value={}'\
         .format(str(self.span), self.mstr.in_str[self.span[0]:self.span[1]],
-                self.str_used.name, self.isUse, str_value)
+                self.ustat.name, str_value)
         return ret
     
     def __eq__(self, other):
         return self.mstr == other.mstr and \
                self.span == other.span
     
-    def check_no_repeat(self):
-        for i in Part.objs:
-            if i == self:
-                raise ValueError('Part {} is already create\n{}'
-                .format(self.span, self.mstr.mark(self.span)))
-    
-    def set_used(self):
-        self.mstr.set_used(self.span)
-        self.str_used = Part.StrUsed.allused
-        self.isUse = True
-        self.objs.append(self)
-    
     def __len__(self):
         return self.span[1] - self.span[0]
+    
+    def get_tuple(self):
+        return tuple(self.span)
 
 #part date or time, can include sub part
 class BigPart(dict):
-    def __init__(self, mstr, mtype, inc=False, cont=False, used=None):
+    def __init__(self, mstr, mtype, used=None):
         '''
         @para inc: all sub parts increase, next part head after prev end.
         @para cont: all sub parts continuous, next part head close prev end.
@@ -185,22 +187,17 @@ class BigPart(dict):
         '''
         assert mtype in ABType
         super().__init__()
-        self.mtype = mtype
-        self.inc = inc
-        self.cont = cont
+        self.mstr = mstr
+        self.mtype= mtype
         self.used = used
-        self.aslist = []
         self.span = [len(mstr.in_str),0]
         
     def __setitem__(self, key, value):
         assert isinstance(value, Part)
         if key != sType.norm:
             #check key vaild for BigPartType
-            if self.mtype == ABType.date:
-                assert key in UxType['Date']
-            elif self.mtype == ABType.time:
-                assert key in UxType['lmrTime']
-            else:
+            d = {ABType.date:UxType['Date'], ABType.time:UxType['lmrTime']}
+            if key not in d[self.mtype]:
                 raise KeyError('key {} is invalid for BigPart {}'
                                .format(key, self.mtype))
             #check key is not using
@@ -209,20 +206,12 @@ class BigPart(dict):
                                .format(key, self.mtype))
             super().__setitem__(key, value)
         #check no repeating Parts
-        if value not in self.aslist:
-            self.aslist.append(value)
-        else:
-            raise RuntimeError('multiple add same value into BigPart {}\n{}:{}'
-                               .format(self.mtype, key, value))
+        d = {ABType.date:UxType['Date'], ABType.time:UxType['Time']}
+        if key in d[self.mtype]:
+            self.mstr.part_used_set.add(value.get_tuple())
         #check isUse require
-        if self.used is not None and self.used != value.isUse:
+        if self.used is not None and self.used != value.part_used:
             raise ValueError('used reqire is not same')
-        #check increase and continuous if enable
-        if len(self.aslist) >= 2:
-            if self.inc and self.aslist[-2] > self.aslist[-1]:
-                raise ValueError('sub part not increase:\n{}'.format(self))
-            if self.cont and self.aslist[-2] != self.aslist[-1]:
-                raise ValueError('sub part not continue:\n{}'.format(self))
         #update self.span
         if value.span[0] < self.span[0]: #Part's left point over BigPart
             self.span[0] = value.span[0]
@@ -231,8 +220,9 @@ class BigPart(dict):
     
     def pop(self, key):
         value = super().pop(key)
-        index = self.aslist.index(value)
-        self.aslist.pop(index)
+        v_tuple = value.get_tuple()
+        if v_tuple in self:
+            self.mstr.part_used_set.remove(v_tuple)
         return value
     
     def check_spans(self, inc=True, cont=False):
@@ -249,7 +239,8 @@ class BigPart(dict):
 
     def check_finally(self, req='MD hm'):
         #time not contain lmr
-        mset = ABType2Ux[self.mtype] #vaild UType by mstype
+        d = {ABType.date:UxType['Date'], ABType.time:UxType['Time']}
+        mset = d[self.mtype] #vaild UType by mstype
         req_char = set(req)          #set of chars in req
         char_vaild = req_char.intersection(Char2UType) #chars can found in dict
         req_UTypes = set(map(lambda x:Char2UType[x], char_vaild))
@@ -294,10 +285,6 @@ class UnusedParts(list):
         super().__init__()
         self.mstr = mstr
         
-    def append(self, obj):
-        assert isinstance(obj, Part)
-        super().append(obj)
-        
     def __getitem_delable(self, s):
         def delete():
             if v.deleted == True:
@@ -312,14 +299,16 @@ class UnusedParts(list):
         return v
     
     def onlyone_unused(self):
-        ni_list = []
-        for ni,obj in enumerate(self):
-            if self.mstr.is_str_used(obj.span) == Part.StrUsed.unused:
-                ni_list.append(ni)
-        if len(ni_list) == 1:
-            return self.__getitem_delable(ni_list[0])
+        if len(self) == 1:
+            return self.__getitem_delable(0)
         else:
             return None
+    
+    def __str__(self):
+        ret = 'UnusedParts:\n'
+        for i in self:
+            ret += str(i)
+        return ret
 
 class My_str:
     def __init__(self, in_str):
@@ -339,7 +328,7 @@ class My_str:
         for i in founds:
             str_used = self.is_str_used(i.span())
             if filter_used is None or str_used == filter_used:
-                part = Part(self, i.span(), stype, isUse=False)
+                part = Part(self, i.span(), stype, ustat=uStat.simple)
                 bpart.append(part)
         return bpart
     
@@ -431,10 +420,11 @@ class My_str:
             str_used = Part.StrUsed.partused
         return str_used
     
-    def set_used(self, span):
-        if self.is_str_used(span) != Part.StrUsed.unused:
+    def set_str_used(self, span):
+        str_used = self.is_str_used(span)
+        if str_used != Part.StrUsed.unused:
             raise ValueError('want the part of str unused, but str is {},\
-not all unused\n{}'.format(self.str_used, self.mark(span)))
+not all unused\n{}'.format(str_used.name, self.mark(span)))
         for i in range(*span):
             self.used[i] = True
     
@@ -466,6 +456,7 @@ class Time_str(My_str):
         super().__init__(in_str)
         self.flags = [] #'time_found'
         self.para = {'fd42':find_date42, 'dn2v':default_n2v}
+        self.part_used_set = uset()
         self.date_p = BigPart(self, ABType.date)
         self.time_p = BigPart(self, ABType.time, used=None)
         self.process()
@@ -515,7 +506,6 @@ class Time_str(My_str):
             self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
             self.date_p[UType.month] = Part(self, (s+4, s+6), sType.num)
             self.date_p[UType.day  ] = Part(self, (s+6, e),   sType.num)
-            part.str_used = Part.StrUsed.allused
             return True
         return False
     
@@ -527,12 +517,10 @@ class Time_str(My_str):
         if len(match) == 4:
             if 1970<=inti<2050:
                 self.date_p[UType.year ] = Part(self, (s, e), sType.num)
-                part.str_used = Part.StrUsed.allused
                 return True
             elif 101<=inti<=1231:
-                self.date_p[UType.month]= Part(self, (s, s+2), sType.num)
+                self.date_p[UType.month] = Part(self, (s, s+2), sType.num)
                 self.date_p[UType.day  ] = Part(self, (s+2, e), sType.num)
-                part.str_used = Part.StrUsed.allused
                 return True
         return False
          
@@ -547,14 +535,14 @@ class Time_str(My_str):
             return None
         self.flags.append('time_found')
         #append Parts to self.time_parts
-        self.time_p[UType.left] = Part(self, m.span(2), sType.num)
+        self.time_p[UType.left] = Part(self, m.span(2),              sType.num)
         self.time_p[sType.norm] = Part(self, (m.end(2), m.end(2)+1), sType.norm)
         if m.group(3) is not None:
             self.time_p[UType.midd] = Part(self, (m.start(3),m.end(3)-1), sType.num)
-            self.time_p[sType.norm] = Part(self, (m.end(3)-1, m.end(3)), sType.norm)
-        self.time_p[UType.right] = Part(self, m.span(4), sType.num)
+            self.time_p[sType.norm] = Part(self, (m.end(3)-1, m.end(3)),  sType.norm)
+        self.time_p[UType.right]    = Part(self, m.span(4), sType.num)
         if m.group(5) is not None:
-            self.time_p[UType.subsec] = Part(self, m.span(5), sType.num)
+            self.time_p[UType.subsec]=Part(self, m.span(5), sType.num)
         #get left, midd, right, subsec
     
     def set_time_p(self, n2v=None):
@@ -606,7 +594,6 @@ class Time_str(My_str):
         oouu = self.parts['num'].onlyone_unused()
         if oouu is not None:
             self.date_p[UType.day] = oouu
-            oouu.set_used()
             oouu.delete()
     
     def check_bigparts_not_overlapped(self):
