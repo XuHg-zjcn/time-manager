@@ -89,6 +89,8 @@ class uStat(Enum):
     bigpart   = 3
 
 class uset(set):
+    #TODO: add method remove, check
+    #TODO: use dict
     def add(self, ele):
         if ele in self:
             raise KeyError('element {} already in set:\n{}'.format(ele, self))
@@ -97,14 +99,11 @@ class uset(set):
 class Part():
     StrUsed = Enum('IsUsed', 'unused partused allused')
     def __init__(self, mstr, span:tuple,
-                 stype=None, value=None, ustat=uStat.lmrs):
+                 stype=None, value=None):
         self.span = span
         self.mstr = mstr
         self.stype = self.check_stype(stype)
         self.value = self.get_value(value)
-        self.ustat = ustat
-        if ustat in [uStat.lmrs, uStat.bigpart]:
-            self.mstr.set_str_used(self.span)
     
     def match_str(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
@@ -160,9 +159,9 @@ class Part():
             str_value = '{}_{},{}'.format(s1, s2, s3)
         else:
             raise ValueError("self.value isn't int, float or tuple")
-        ret = 'span={:>7}, str="{}", ustat={}, value={}'\
+        ret = 'span={:>7}, str="{}", value={}'\
         .format(str(self.span), self.mstr.in_str[self.span[0]:self.span[1]],
-                self.ustat.name, str_value)
+                str_value)
         return ret
     
     def __eq__(self, other):
@@ -174,6 +173,9 @@ class Part():
     
     def get_tuple(self):
         return tuple(self.span)
+    
+    def set_str_used(self):
+        self.mstr.set_str_used(self.span)
 
 #part date or time, can include sub part
 class BigPart(dict):
@@ -182,12 +184,16 @@ class BigPart(dict):
         @para inc: all sub parts increase, next part head after prev end.
         @para cont: all sub parts continuous, next part head close prev end.
         @para used: None not any, True is unused, False is allused
+        
+        dict's key: sType.norm or UType.xxx
+        dict's value: Part object
         '''
         assert mtype in ABType
         super().__init__()
         self.mstr = mstr
         self.mtype= mtype
         self.span = [len(mstr.in_str),0]
+        self.spilts = [] #each item is Part object
         
     def __setitem__(self, key, value):
         assert isinstance(value, Part)
@@ -202,11 +208,14 @@ class BigPart(dict):
                 raise KeyError('key {} is already in BigPart {} dict'
                                .format(key, self.mtype))
             super().__setitem__(key, value)
+        else:
+            self.spilts.append(value)
         #add set
         if hasattr(value, 'poped'):
             delattr(value, 'poped')  #Part obj poped
         else:
             self.mstr.part_set.add(value.get_tuple())
+            value.set_str_used()
         #update self.span
         if value.span[0] < self.span[0]: #Part's left point over BigPart
             self.span[0] = value.span[0]
@@ -262,6 +271,17 @@ class BigPart(dict):
                                      .format(key_n, last+1))
                 last = i
     
+    def check_unused_char(self):
+        '''
+        check chars in self.span but not flag in self.mstr.used[i]
+        raise error if invaild spilt or multipy continuous char
+        '''
+        allow_dict    = {ABType.date:'-./ ', ABType.time:' '}
+        disallow_dict = {ABType.date:'O',    ABType.time:'O'}
+        allow    = allow_dict[self.mtype]
+        disallow = disallow_dict[self.mtype]
+        self.mstr.check_unused_char(allow, disallow, self.span)
+    
     def __str__(self):
         if len(self) != 0:
             ret = 'BigPart:---------------------------\n'
@@ -277,12 +297,18 @@ class UnusedParts(list):
     def __init__(self, mstr):
         super().__init__()
         self.mstr = mstr
-        
+    
+    def append(self, part):
+        assert isinstance(part, Part)
+        p_tuple = part.get_tuple()
+        self.mstr.unused_part_set.add(p_tuple)
+        super().append(part)
+    
     def __getitem_delable(self, s):
         def delete():
             if v.deleted == True:
                 raise RuntimeError('UnusedParts item already delete')
-            self.pop(v.s)
+            self.delete(v.s)
             v.deleted = True
         
         v = super().__getitem__(s)
@@ -308,14 +334,16 @@ class UnusedParts(list):
         delete for Part obj in UnusedParts to BigPart,
         part can spilt some parts
         '''
-        v = self.pop(index)
-        v_tuple = v.get_tuple()
-        self.mstr.part_set.remove(v_tuple)
+        p = self.pop(index)
+        p_tuple = p.get_tuple()
+        self.mstr.unused_part_set.remove(p_tuple)
 
 class My_str:
     def __init__(self, in_str):
         self.in_str = in_str
+        #only modify in BigPart.__setitem__ through set_str_used
         self.used = [False]*len(in_str)
+        disallow_unused_chars = ''
 
     def get_atype(self, re_comp, stype,
                   filter_used=Part.StrUsed.unused):
@@ -330,7 +358,7 @@ class My_str:
         for i in founds:
             str_used = self.is_str_used(i.span())
             if filter_used is None or str_used == filter_used:
-                part = Part(self, i.span(), stype, ustat=uStat.simple)
+                part = Part(self, i.span(), stype)
                 bpart.append(part)
         return bpart
     
@@ -422,6 +450,8 @@ class My_str:
             str_used = Part.StrUsed.partused
         return str_used
     
+    #only can call in BigPart.__setitem__, pack by Part.set_str_used,
+    #and check_unused_char
     def set_str_used(self, span):
         str_used = self.is_str_used(span)
         if str_used != Part.StrUsed.unused:
@@ -430,11 +460,73 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
         for i in range(*span):
             self.used[i] = True
     
+    def check_unused_char(self, allow, disallow, search_span):
+        '''
+        if char'O' in allow or disallow, as the defalut other,
+        don't add other char if 'O' in str, is invaild
+        char not in both allow and disallow, add to disallow for later call.
+        '''
+        if search_span is None:
+            search_span = (0, len(self.in_str))
+        allow = set(allow)
+        disallow = set(disallow)
+        assert set.isdisjoint(allow, disallow)
+        other_allow    = 'O' in allow
+        other_disallow = 'O' in disallow
+        if other_allow:   #clear if 'O' in regular str
+            allow_char = set()
+        if other_disallow:
+            disallow_char = set()
+        
+        unused_span_list = []
+        last_span = [0,0]
+        last_use = self.used[0]
+        for i in range(search_span[0]+1, search_span[1]):
+            use_i = self.used[i]
+            if last_use and not use_i:  #last True, curr False
+                last_span[0] = i
+            if not last_use and use_i:  #last False, curr True
+                last_span[1] = i
+                unused_span_list.append(tuple(last_span))
+            last_use = use_i
+        
+        for span in unused_span_list:
+            if span[1] - span[0] != 1:
+                raise ValueError('multiply unused char continuous\n{}'
+                                 .format(self.mstr.mark(span)))
+            else:
+                i = span[0]
+                assert span[1] == i+1
+                c = self.in_str[i]
+                if c in allow:
+                    self.set_str_used(span)
+                elif c in disallow:
+                    raise ValueError('in call disallow unused char\n{}'
+                                 .format(self.mark(i)))
+                elif other_allow:
+                    self.set_str_used(span)
+                elif other_disallow:
+                    raise ValueError('in call other char is disallow\n{}'
+                                 .format(self.mark(i)))
+                elif c in self.disallow_unused_chars:
+                    raise ValueError('in My_str disallow unused char\n{}'
+                                 .format(self.mark(i)))
+                else:
+                    #disable for later call
+                    self.disallow_unused_chars += c
+    
+    def print_str_use_status(self):
+        marks = ''
+        for used_i in self.used:
+            marks += {False:' ', True:'^'}[used_i]
+        print('str use status\n{}\n{}'.format(self.in_str, marks))
+    
 #smart time str to datetime struct
 class Time_str(My_str):
     '''
     pseudo-code:
     find ll:mm:rr.ss, english
+    TODO: extend word
     find YYYYMMDD
     if time_found or flags.find_date42:
         find YYYY, MMDD
@@ -448,17 +540,18 @@ class Time_str(My_str):
     
     part add rule:
         BigPart no breakpoint,           exam: YYYY//DD without month
-  TODO: limted use spilt char,           ':' for time, '-.,/\ ' for date
+        limted use spilt char,           time':', date'-./\ ' BigPart',T'
         Parts no overlapped on str,      each char of in_str has flag
         two BigPart not overlapped,      exam: YYYY/MM hh:mm:ss DD
-  TODO: a Part can only add to a BigPart
+        a Part can only add to a BigPart
         Parts in BigPart are not repeating
     '''
     def __init__(self, in_str, find_date42=True, default_n2v='hours'):
         super().__init__(in_str)
         self.flags = [] #'time_found'
         self.para = {'fd42':find_date42, 'dn2v':default_n2v}
-        self.part_set = uset()
+        self.part_set = uset()        #only for two BigPart
+        self.unused_part_set = uset() #only for all UnusedParts obj
         self.date_p = BigPart(self, ABType.date)
         self.time_p = BigPart(self, ABType.time)
         self.process()
@@ -476,10 +569,15 @@ class Time_str(My_str):
             self.set_time_p('hours')  #date found
         else:
             self.set_time_p(self.para['dn2v'])
+        del self.parts
     
     def check(self):
         self.date_p.check_breakpoint()
+        #TODO: check time_p
         self.check_bigparts_not_overlapped()
+        self.date_p.check_unused_char()
+        self.time_p.check_unused_char()
+        self.check_unused_char(allow=' ', disallow=':-./', search_span=None)
         
     def english_month_weekday(self):
         month = self.find_strs(month_short, 'english month')
@@ -595,8 +693,9 @@ class Time_str(My_str):
     def onlyone_unused_num_as_date(self):
         oouu = self.parts['num'].onlyone_unused()
         if oouu is not None:
-            self.date_p[UType.day] = oouu
+            #TODO: use pop inserted delete, not remove in part_set
             oouu.delete()    #delete in UnusedParts and part_set
+            self.date_p[UType.day] = oouu
     
     def check_bigparts_not_overlapped(self):
         if len(self.date_p)>=1 and len(self.time_p)>=1:
@@ -609,9 +708,9 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
         print('str:', i)
         try:
             tstr = Time_str(i)
+            tstr.print_str_use_status()
             print('date:', tstr.date_p)
             print('time:', tstr.time_p)
-            print('unused:', tstr.parts)
         except Exception as e:
             if print_traceback:
                 traceback.print_exc()
