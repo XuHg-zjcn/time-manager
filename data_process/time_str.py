@@ -40,13 +40,13 @@ class UType(Enum):
     year = 0
     month = 1
     day = 2
-    weekday = 3
+    weekday = 3  #can skip in check_breakpoint
     Y = 0
     M = 1
     D = 2
     WD = 3
     #time
-    ampm = 4
+    ampm = 4  #can skip in check_breakpoint
     hours = 5
     minute = 6
     second = 7
@@ -343,7 +343,7 @@ class My_str:
         self.in_str = in_str
         #only modify in BigPart.__setitem__ through set_str_used
         self.used = [False]*len(in_str)
-        disallow_unused_chars = ''
+        self.disallow_unused_chars = ''
 
     def get_atype(self, re_comp, stype,
                   filter_used=Part.StrUsed.unused):
@@ -474,10 +474,10 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
         other_allow    = 'O' in allow
         other_disallow = 'O' in disallow
         if other_allow:   #clear if 'O' in regular str
-            allow_char = set()
+            allow = set()
         if other_disallow:
-            disallow_char = set()
-        
+            disallow = set()
+        #get unused_span_list: used flag of char is False spans
         unused_span_list = []
         last_span = [0,0]
         last_use = self.used[0]
@@ -489,7 +489,7 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
                 last_span[1] = i
                 unused_span_list.append(tuple(last_span))
             last_use = use_i
-        
+        #check and set_str_used
         for span in unused_span_list:
             if span[1] - span[0] != 1:
                 raise ValueError('multiply unused char continuous\n{}'
