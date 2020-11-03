@@ -665,7 +665,7 @@ class Time_str(My_str):
         #get src_keys
         src_keys = []
         for key in (B.lt, B.md, B.rt, B.ss):
-            if key in self.time_p:
+            if key in self.time_p.keys():
                 src_keys.append(key)
         src_keys = tuple(src_keys)
         #use dict_rule
@@ -702,12 +702,59 @@ class Time_str(My_str):
             date_time = self.date_p.span[1] <= self.time_p.span[0]
             time_date = self.time_p.span[1] <= self.date_p.span[0]
             assert date_time or time_date
+    
+    def as_datetime(self):
+        U = UType
+        dx = {U.Y:0, U.M:1, U.D:2, U.h:3, U.m:4, U.s:5}
+        l = [None]*7    #temp for datetime paras  YMD,hms,us
+        
+        today = datetime.date.today()
+        today = [today.year, today.month, today.day]
+        d = {}
+        for k in self.date_p.keys():
+            d[k] = self.date_p[k]
+        for k in self.time_p.keys():
+            d[k] = self.time_p[k]
+        for k in d:
+            if k in dx:
+                v = d[k].value
+                if isinstance(v, tuple): #v is english month
+                    v = v[1] + 1
+                l[dx[k]] = v
+        #subsec*1000000 to microsec int
+        if U.subsec in d:
+            l[6] = int(d[U.ss].value*1e6)
+        #check start of item 3, and fill now paras
+        i1 = 0
+        while l[i1] is None and i1 < 3:
+            l[i1] = today[i1]
+            i1 += 1
+        #check vaild item
+        i2 = i1
+        while l[i2] is not None and i2 < 6:
+            i2 += 1
+        if i2 - i1 < 2:
+            raise ValueError('vaild item less than 2')
+        #pop last items
+        while len(l) > i2:
+            l.pop()
+        if U.ampm in d:
+            if d[U.ampm].value[1] == 1:
+                l[3] += 12
+        #print(l)
+        dt_obj = datetime.datetime(*l)
+        if U.weekday in d and d[U.WD].value != dt_obj.weekday():
+            raise ValueError('weekday in str is {}, but infer by date is {}'
+                             .format(d[U.WD].match_str(), 
+                            dt_obj.strftime('%Y-%m-%d %A')))
+        return dt_obj
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     for i in test_list:
         print('str:', i)
         try:
             tstr = Time_str(i)
+            dt = tstr.as_datetime()
             tstr.print_str_use_status()
             print('date:', tstr.date_p)
             print('time:', tstr.time_p)
@@ -721,6 +768,7 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
         else:
             print('no error')
             err_happend = False
+            print(dt)
         finally:
             if err_happend != expect_err:
                 print('error not expect, expect is {}, but result is {}'
@@ -729,7 +777,7 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
 #test codes
 if __name__ == '__main__':
     test_ok = ['Wed 28/Oct 12:34:56.123',
-               '20201030','1030','10:30','31 10:30','10:22 PM']
+               '20201030','1030','10:30','30 10:30','10:22 PM']
     test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
     print('##########test_ok, should no error!!!!!!!!!!')
     test_a_list_str(test_ok, expect_err=False)
