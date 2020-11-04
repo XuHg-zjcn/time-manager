@@ -5,28 +5,28 @@ import datetime
 import numpy as np
 
 class TreeItem:
-    def __init__(self, pares=[], subs=[]):
-        if isinstance(pares, int):
-            pares = [pares]
-        if isinstance(subs, int):
-            subs = [subs]
-        #init by lists
-        if isinstance(pares, list) and isinstance(subs, list):
-            self.pares = np.array(pares)
-            self.subs  = np.array(subs)
-        #init by sqlite BLOB
-        elif isinstance(pares, bytes) and isinstance(subs, bytes):
-            assert len(pares)%8 == len(subs)%8 == 0
-            self.pares = np.frombuffer(pares, dtype=np.uint64)
-            self.subs  = np.frombuffer(subs,  dtype=np.uint64)
+    def __init__(self, pares=None, subs=None, reqs=None):
+        def process(x):   #convert x to numpy array
+            if x is None:
+                return np.array([], np.uint64)
+            if isinstance(x, int):
+                x = [x]
+            if isinstance(x, list):
+                return np.array(x)
+            elif isinstance(x, bytes):
+                return np.frombuffer(x, np.uint64)
+            else:
+                raise TypeError('input type must int, list or bytes')
+        in_datas = [pares, subs, reqs]
+        self.datas = []
+        for i in in_datas:
+            self.datas.append(process(i))
+    
     def db_BLOBs(self):
-        p = self.pares.tostring()
-        s = self.subs.tostring()
-        return p, s
+        return tuple(map(lambda x:x.tostring(), self.datas))
 
 class PlanTime:
-    def __init__(self, sta_time='now', end_time='now', use_time=0, sub_time=0,
-                 sta_err=0, end_err=0, use_err=0, sub_err=0):
+    def __init__(self, sta_time='now', end_time='now', use_time=0, sub_time=0):
         def now_process(x):
             now = ('now', 'n')
             if x in now:
@@ -39,26 +39,24 @@ class PlanTime:
         self.end_time = now_process(end_time)
         self.use_time = use_time
         self.sub_time = sub_time
-        self.sta_err = sta_err
-        self.end_err = end_err
-        self.use_err = use_err
-        self.sub_err = sub_err
     def db_nums(self):
-        return self.sta_time, self.end_time, self.use_time, self.sub_time,\
-               self.sta_err,  self.end_err,  self.use_err,  self.sub_err
+        return self.sta_time, self.end_time, self.use_time, self.sub_time
 
 class Plan:
-    def __init__(self, dbtype:int, name:str, tree_i, p_time, dbid=None):
+    def __init__(self, dbtype:int, name:str, tree_i, p_time, 
+                 finish=False, dbid=None):
         self.dbtype = dbtype
         self.name = name
         self.tree_i = tree_i
         self.p_time = p_time
         self.dbid = dbid
+        self.finish = finish
         
     def db_item(self):
         ret = [self.dbtype, self.name]
         ret += self.tree_i.db_BLOBs()
         ret += self.p_time.db_nums()
+        ret.append(self.finish)
         return ret
     
     def __str__(self):
@@ -85,9 +83,9 @@ class TODO_db:
         sql = '''CREATE TABLE todo(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             type     INT,   name     TEXT,
-            pares    BLOB,  subs     BLOB,
+            pares    BLOB,  subs     BLOB,  reqs     BLOB,
             sta_time REAL,  end_time REAL,  use_time REAL,  sub_time REAL,
-            sta_err  REAL,  end_err  REAL,  use_err  REAL,  sub_err  REAL);'''
+            finish   BOOL);'''
         self.c.execute(sql)
         self.conn.commit()
         self.conn.close()
@@ -95,17 +93,42 @@ class TODO_db:
     def add_aitem(self, plan):
         self.conn = sqlite3.connect(self.db_path)
         self.c = self.conn.cursor()
-        sql = "INSERT INTO todo VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?);"
+        sql = "INSERT INTO todo VALUES(NULL,?,?,?,?,?,?,?,?,?,?);"
         self.c.execute(sql, plan.db_item())
         self.conn.commit()
         self.conn.close()
         
-    def get_aitem(self, dbid):
-        res = self.c.execute("SELECT * FROM todo WHERE id=?", (dbid,))
-        assert len(res) == 13
-        return Plan(*res[:3], TreeItem(*res[3:5]), PlanTime(*res[5:]))
+    def get_aitem(self, cond_dict):
+        self.conn = sqlite3.connect(self.db_path)
+        self.c = self.conn.cursor()
+        sql = 'SELECT * FROM todo WHERE '
+        paras = []
+        allow_filed = {'id','type','name',
+                       'sta_time','end_time','use_time','sub_time','finish'}
+        assert len(cond_dict) > 0
+        for key in cond_dict.keys():
+            assert key in allow_filed
+            value = cond_dict[key]
+            if type(value) in [bool, int, float]:
+                sql += '{}=? and'.format(key)
+                paras.append(value)
+            elif isinstance(value, tuple) and len(value) == 2:
+                sql += '?<{0} and {0}<? and'.format(key)
+                paras.append(value[0])
+                paras.append(value[1])
+            else:
+                raise ValueError('key type invaild')
+        sql = sql[:-4]
+        res = self.c.execute(sql, paras)
+        for i in res:
+            print(i)
+        self.conn.commit()
+        self.conn.close()
+        #assert len(res) == 13
+        #return Plan(*res[:3], TreeItem(*res[3:5]), PlanTime(*res[5:]))
     
 #test code
 if __name__ == '__main__':
     tdb = TODO_db()
     tdb.add_aitem(Plan(1, 'plan1', TreeItem(0), PlanTime('n', ('n', 10), 5)))
+    tdb.get_aitem({'sta_time':(1604489926.0,1604489926.9)})
