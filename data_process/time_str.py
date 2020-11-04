@@ -2,6 +2,7 @@ import datetime
 import re
 from enum import Enum
 import traceback
+import time
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -750,15 +751,15 @@ class Time_str(My_str):
         return dt_obj
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
+    t_sum = 0
     for i in test_list:
         print('str:', i)
         try:
+            t0 = time.time()
             tstr = Time_str(i)
-            dt = tstr.as_datetime()
-            tstr.print_str_use_status()
-            print('date:', tstr.date_p)
-            print('time:', tstr.time_p)
+            datetime = tstr.as_datetime()
         except Exception as e:
+            t1 = time.time()
             if print_traceback:
                 traceback.print_exc()
             else:
@@ -766,20 +767,28 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
                 print(e)
             err_happend = True
         else:
+            t1 = time.time()
+            tstr.print_str_use_status()
+            print('date:', tstr.date_p)
+            print('time:', tstr.time_p)
             print('no error')
             err_happend = False
-            print(dt)
+            print(datetime)
         finally:
+            t_sum += t1 - t0
             if err_happend != expect_err:
                 print('error not expect, expect is {}, but result is {}'
                       .format(expect_err, err_happend))
         print()
+    return t_sum
 #test codes
 if __name__ == '__main__':
     test_ok = ['Wed 28/Oct 12:34:56.123',
                '20201030','1030','10:30','30 10:30','10:22 PM']
+    t_sum = 0
     test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
     print('##########test_ok, should no error!!!!!!!!!!')
-    test_a_list_str(test_ok, expect_err=False)
+    t_sum += test_a_list_str(test_ok, expect_err=False)
     print('##########test_err, should happend error each item!!!!!!!!!!')
-    test_a_list_str(test_err, expect_err=True)
+    t_sum += test_a_list_str(test_err, expect_err=True)
+    print(t_sum*1000, 'ms')
