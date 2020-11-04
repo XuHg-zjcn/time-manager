@@ -113,9 +113,14 @@ class TODO_db:
                 sql += '{}=? and'.format(key)
                 paras.append(value)
             elif isinstance(value, tuple) and len(value) == 2:
-                sql += '?<{0} and {0}<? and'.format(key)
-                paras.append(value[0])
-                paras.append(value[1])
+                if type(value[0]) in [int, float]:
+                    sql += '?<{0} and {0}<? and'.format(key)
+                    paras.append(value[0])
+                    paras.append(value[1])
+                elif value[0] in ['<', '>']:
+                    sql += '{}{} and'.format(key, value[0])
+                else:
+                    raise ValueError('tuple invaild')
             else:
                 raise ValueError('key type invaild')
         sql = sql[:-4]
