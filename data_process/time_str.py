@@ -28,6 +28,7 @@ ENG_STRS = dict(map(upper_d, eng_strs))
 re_num = re.compile('\d+')
 re_eng = re.compile('[a-zA-Z]+')
 re_norm = re.compile('[-:,/ ]+')
+re_lmrs = re.compile('((\d+):(\d+:)*(\d+)(\.\d+)*)')
 re3 = [re_num, re_eng, re_norm]
 sName = ['num', 'eng', 'norm', 'other']
 
@@ -413,19 +414,18 @@ class My_str:
                     raise ValueError('found multipy {} in str'.format(err))
         return ret
     
-    def search(self, pattern, start=0, end=None, isRaise=True, isCheck=True):
-        found = re.search(pattern, self.in_str[start:end])
+    def search(self, re_comp, start=0, end=None, isRaise=True, isCheck=True):
+        found = re_comp.search(self.in_str[start:end])
         if found is None:
             if isRaise:
-                raise ValueError('search re pattern"{}" not found'
-                                 .format(pattern))
+                raise ValueError('search re not found')
             else:
                 return None
         fsta = start+found.start(1)
         fend = start+found.end(1)
-        if isCheck and pattern[0] != '^':
+        if isCheck and re_comp.pattern[0] != '^':
             self.check_spilt(fsta-1)
-        if isCheck and pattern[-1]!= '$':
+        if isCheck and re_comp.pattern[-1] != '$':
             self.check_spilt(fend)
         return found
     
@@ -631,7 +631,7 @@ class Time_str(My_str):
         return Left:Midd:Right.subsec
         if not found Midd or subsec, return None
         """
-        m = self.search('((\d+):(\d+:)*(\d+)(\.\d+)*)', isRaise=False)
+        m = self.search(re_lmrs, isRaise=False)
         if m is None:
             return None
         self.flags.append('time_found')
