@@ -99,12 +99,16 @@ class Time_str(My_str):
         super().__init__(in_str)
         self.flags = [] #'time_found'
         self.para = {'fd42':find_date42, 'dn2v':default_n2v}
+    
+    def process_check(self):
+        assert 'process OK' not in self.flags
         self.part_set = uset()        #only for two BigPart
         self.unused_part_set = uset() #only for all UnusedParts obj
         self.date_p = BigPart(self, 'date', UxType['Date'])
         self.time_p = BigPart(self, 'time', UxType['lmrTime'])
         self.process()
         self.check()
+        self.flags.append('process OK')
         
     def process(self):
         self.time_lmrs()
@@ -126,7 +130,7 @@ class Time_str(My_str):
         self.check_bigparts_not_overlapped()
         self.date_p.check_unused_char('-./ ', 'O')
         self.time_p.check_unused_char(' ', 'O')
-        self.check_unused_char(allow=' ', disallow=':-./', search_span=None)
+        self.check_unused_char(' ', ':-./')
         
     def english_month_weekday(self):
         month = self.find_strs(month_short, puls1=True)
@@ -300,10 +304,10 @@ class Time_str(My_str):
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
     for i in test_list:
-        print('str:', i)
         try:
             t0 = time.time()
             tstr = Time_str(i)
+            tstr.process_check()
             datetime = tstr.as_datetime()
         except Exception as e:
             t1 = time.time()
@@ -315,23 +319,24 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
             err_happend = True
         else:
             t1 = time.time()
-            tstr.print_str_use_status()
+            tstr.print_str_use_status('v')
             print('date:', tstr.date_p)
             print('time:', tstr.time_p)
-            print('no error')
             err_happend = False
-            print(datetime)
+            print('datetime out:',datetime)
+            print('no error')
         finally:
             t_sum += t1 - t0
             if err_happend != expect_err:
                 print('error not expect, expect is {}, but result is {}'
                       .format(expect_err, err_happend))
+            print('process {:.3f}ms'.format((t1-t0)*1000))
         print()
     return t_sum
 #test codes
 if __name__ == '__main__':
     test_ok = ['Wed 28/Oct 12:34:56.123',
-               '20201030','1030','10:30','30 10:30','10:22 PM']
+               '20201030','1030','10:30 a','30 10:30','10:22 PM']
     t_sum = 0
     test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
     print('##########test_ok, should no error!!!!!!!!!!')

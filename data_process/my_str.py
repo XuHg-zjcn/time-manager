@@ -106,7 +106,7 @@ class BigPart(dict):
         super().__init__()
         self.mstr = mstr
         self.name= name
-        self.span = [len(mstr.in_str),0]
+        self.span = None
         self.part_objs = [] #each item is Part object
         self.key_allow = key_allow
         
@@ -131,27 +131,18 @@ class BigPart(dict):
             self.mstr.part_set.add(value.get_tuple())
             value.set_str_used()
         #update self.span
-        if value.span[0] < self.span[0]: #Part's left point over BigPart
-            self.span[0] = value.span[0]
-        if value.span[1] > self.span[1]: #Part's right point over BigPart
-            self.span[1] = value.span[1]
+        if self.span is None:
+            self.span = list(value.span)
+        else:
+            if value.span[0] < self.span[0]: #Part's left point over BigPart
+                self.span[0] = value.span[0]
+            if value.span[1] > self.span[1]: #Part's right point over BigPart
+                self.span[1] = value.span[1]
     
     def pop(self, key):
         value = super().pop(key)
         value.poped = True
         return value
-    
-    def check_spans(self, inc=True, cont=False):
-        last = self[0]
-        start = last.span[0]
-        for i in self[1:]:
-            if inc and last.span[1] > i.span[0]:
-                raise ValueError('sub part not increase')
-            if cont and last.span[1] != i.span[0]:
-                raise ValueError('sub part not continue')
-            last = i
-        end = last.span[1]
-        return start, end
     
     def check_breakpoint(self):
         #TODO: raise show last+1
@@ -173,13 +164,14 @@ class BigPart(dict):
                 last = i
     
     def check_unused_char(self, allow, disallow):
-        self.mstr.check_unused_char(allow, disallow, self.span)
+        if self.span is not None:
+            self.mstr.check_unused_char(allow, disallow, self.span)
     
     def __str__(self):
         if len(self) != 0:
-            ret = 'BigPart:---------------------------\n'
+            ret = '-----------------------------------\n'
             for i in self:
-                ret += '{:<12}:{}\n'.format(i, self[i])
+                ret += '{:<7}:{}\n'.format(i.name, self[i])
             ret = ret[:-1]
             return ret
         else:
@@ -352,27 +344,33 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
         for i in range(*span):
             self.used[i] = True
     
-    def check_unused_char(self, allow, disallow, search_span):
+    def check_unused_char(self, allow, disallow, search_span=None):
         '''
         if char'O' in allow or disallow, as the defalut other,
         don't add other char if 'O' in str, is invaild
         char not in both allow and disallow, add to disallow for later call.
         '''
+        class oset(set):
+            def __init__(self, set0):
+                super().__init__(set0)
+            def __contains__(self, x):
+                return not super().__contains__(x)
         if search_span is None:
             search_span = (0, len(self.in_str))
+        #get allow and disallow set
         allow = set(allow)
         disallow = set(disallow)
         assert set.isdisjoint(allow, disallow)
         other_allow    = 'O' in allow
         other_disallow = 'O' in disallow
         if other_allow:   #clear if 'O' in regular str
-            allow = set()
+            allow = oset(disallow)
         if other_disallow:
-            disallow = set()
+            disallow = oset(allow)
         #get unused_span_list: used flag of char is False spans
         unused_span_list = []
         last_span = [0,0]
-        last_use = self.used[0]
+        last_use = self.used[search_span[0]]
         for i in range(search_span[0]+1, search_span[1]):
             use_i = self.used[i]
             if last_use and not use_i:  #last True, curr False
@@ -395,11 +393,6 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
                 elif c in disallow:
                     raise ValueError('in call disallow unused char\n{}'
                                  .format(self.mark(i)))
-                elif other_allow:
-                    self.set_str_used(span)
-                elif other_disallow:
-                    raise ValueError('in call other char is disallow\n{}'
-                                 .format(self.mark(i)))
                 elif c in self.disallow_unused_chars:
                     raise ValueError('in My_str disallow unused char\n{}'
                                  .format(self.mark(i)))
@@ -407,8 +400,18 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
                     #disable for later call
                     self.disallow_unused_chars += c
     
-    def print_str_use_status(self):
+    def print_str_use_status(self, mark):
+        assert mark in {'^', 'v', '.'}
         marks = ''
+        n_used = 0
         for used_i in self.used:
-            marks += {False:' ', True:'^'}[used_i]
-        print('str use status\n{}\n{}'.format(self.in_str, marks))
+            marks += {False:' ', True:mark}[used_i]
+            n_used += 1
+        len_str = len(self.in_str)
+        unused = len_str - n_used
+        if mark == '^':
+            print('str:|{}|\n     {}'.format(self.in_str, marks))
+        else:
+            print('     {}\nstr:|{}|'.format(marks, self.in_str))
+        print('str use status: total={}, used={}, unused={}'
+              .format(len_str, n_used, unused))
