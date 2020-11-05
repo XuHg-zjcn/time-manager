@@ -313,22 +313,7 @@ class My_str:
                 raise ValueError('search re not found')
             else:
                 return None
-        fsta = start+found.start(1)
-        fend = start+found.end(1)
-        if isCheck and re_comp.pattern[0] != '^':
-            self.check_spilt(fsta-1)
-        if isCheck and re_comp.pattern[-1] != '$':
-            self.check_spilt(fend)
         return found
-    
-    def check_spilt(self, index, allow=[' ', '|', '.'], isRaise=True):
-        if 0<=index<len(self.in_str):
-            char = self.in_str[index]
-            if char not in allow and isRaise:
-                raise ValueError("'{}' not in avabile spilt character{}\n{}"\
-                .format(char, allow, self.mark(index)))
-            return char
-            return None
     
     def is_str_used(self, span):
         N_used = 0

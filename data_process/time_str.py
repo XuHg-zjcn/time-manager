@@ -27,7 +27,7 @@ def upper_d(k):
     return k, list(map(lambda x:(x.upper()), v))
 ENG_STRS = dict(map(upper_d, eng_strs))
 
-re_lmrs = re.compile('((\d+):(\d+:)*(\d+)(\.\d+)*)')
+re_lmrs = re.compile('((\d+):(\d+:)?(\d+)(\.\d+)?)')
 
 ABType = Enum('ABType', 'date time')
 class UType(Enum):
