@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import datetime
 import re
 from enum import Enum
@@ -339,12 +342,15 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
             print('process {:.3f}ms'.format((t1-t0)*1000))
         print()
     return t_sum
+
 #test codes
 if __name__ == '__main__':
+    import os
     test_ok = ['Wed 28/Oct 12:34:56.123',
                '20201030','1030','10:30 a','30 10:30','10:22 PM']
     t_sum = 0
     test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
+    os.system('clear')
     print('##########test_ok, should no error!!!!!!!!!!')
     t_sum += test_a_list_str(test_ok, expect_err=False)
     print('##########test_err, should happend error each item!!!!!!!!!!')
