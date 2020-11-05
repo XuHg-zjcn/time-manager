@@ -1,5 +1,6 @@
 import re
 from enum import Enum
+from collections import Iterable
 
 re_num = re.compile('\d+')
 re_eng = re.compile('[a-zA-Z]+')
@@ -254,15 +255,23 @@ class My_str:
             ret[n_i] = self.get_atype(re_i, stype_i)
         return ret
         
-    def mark(self, index, num=1):
-        if isinstance(index, tuple) and len(index) == 2:
+    def mark(self, index, num=1, out_str=True):
+        if isinstance(index, Iterable) and len(index) == 2:
             num = index[1] - index[0]
             index = index[0]
         elif isinstance(index, int):
             pass
         else:
             raise ValueError('index must len=2 or int')
-        return "{}\n{}".format(self.in_str, ' '*index+'^'*num)
+        #geterate
+        ret = ''
+        if out_str:
+            ret += self.in_str + '\n'
+        N_end_space = len(self.in_str)-index-num
+        if N_end_space < 0:
+            raise IndexError('end of mark out of range')
+        ret += ' '*index+'^'*num+' '*N_end_space
+        return ret
     
     def find_onlyone(self, sub):
         """

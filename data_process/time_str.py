@@ -255,7 +255,12 @@ class Time_str(My_str):
         if len(self.date_p)>=1 and len(self.time_p)>=1:
             date_time = self.date_p.span[1] <= self.time_p.span[0]
             time_date = self.time_p.span[1] <= self.date_p.span[0]
-            assert date_time or time_date
+            if not (date_time or time_date):
+                raise ValueError('date and time bigparts has overlapped\n\
+str :{}\ndate:{}\ntime:{}'
+.format(self.in_str,
+        self.mark(self.date_p.span, out_str=False),
+        self.mark(self.time_p.span, out_str=False)))
     
     def as_datetime(self):
         U = UType
@@ -314,6 +319,7 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
             if print_traceback:
                 traceback.print_exc()
             else:
+                print('str:|{}|'.format(tstr.in_str))
                 print('error happend:')
                 print(e)
             err_happend = True
@@ -342,5 +348,5 @@ if __name__ == '__main__':
     print('##########test_ok, should no error!!!!!!!!!!')
     t_sum += test_a_list_str(test_ok, expect_err=False)
     print('##########test_err, should happend error each item!!!!!!!!!!')
-    t_sum += test_a_list_str(test_err, expect_err=True)
-    print(t_sum*1000, 'ms')
+    t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
+    print('total use {:.3f}ms'.format(t_sum*1000))
