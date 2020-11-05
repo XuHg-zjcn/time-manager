@@ -29,12 +29,14 @@ re_num = re.compile('\d+')
 re_eng = re.compile('[a-zA-Z]+')
 re_norm = re.compile('[-:,/ ]+')
 re_lmrs = re.compile('((\d+):(\d+:)*(\d+)(\.\d+)*)')
-re3 = [re_num, re_eng, re_norm]
-sName = ['num', 'eng', 'norm', 'other']
 
 nums = '0123456789'
 engs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 norms= '-:.,/\ '
+sType = Enum('sType', 'num eng norm other')
+sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
+sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
+sName = ['num', 'eng', 'norm', 'other']
 
 ABType = Enum('ABType', 'date time')
 class UType(Enum):
@@ -76,19 +78,6 @@ def dt(U):
     return UxType, Char2UType
 UxType, Char2UType = dt(UType)
 #UType2Char = {v:k for k,v in Char2UType.items()}
-sType = Enum('sType', 'num eng norm other')
-
-sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
-sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
-#type 0: number  [0-9]
-#type 1: english [A-Za-z]
-#type 2: chara   -:,/  <space>
-#type 3: other
-class uStat(Enum):
-    unused    = 0
-    simple    = 1 #re.finditer('\d+', '[a-zA-z]+'), add part_set
-    lmrs      = 2 #lmrs time,  set_str_used
-    bigpart   = 3
 
 class uset(set):
     #TODO: add method remove, check
@@ -129,38 +118,26 @@ class Part():
                              .format(stype, gstype, self.mstr.mark(self.span)))
         return gstype
     
-    def get_value(self, v=None):
+    def get_value(self, v):
         s = self.match_str()
-        value = None
-        if self.stype == sType.num:
+        if v == 'no find':
+            value = None
+        elif self.stype == sType.num:
             if s[0] == '.':
                 value = float(s)
             else:
                 value = int(s)
-        elif self.stype == sType.eng:
-            S = s.upper()
-            for key in ENG_STRS:
-                ENG_STRS_Vi = ENG_STRS[key]
-                if S in ENG_STRS_Vi:
-                    v_index = ENG_STRS_Vi.index(S)
-                    v_key = key
-                    value = (v_key, v_index)
+            if v is not None:
+                assert value == v
         else:
             value = v
-        if v is not None:
-            assert value == v
         return value
     
     def __str__(self):
-        if isinstance(self.value, (int, float)):
+        if type(self.value) in (int, float) or self.value is None:
             str_value = str(self.value)
-        elif isinstance(self.value, tuple):
-            s1=self.value[0][0].name
-            s2=self.value[0][1].name if self.value[0][1] is not None else ''
-            s3=self.value[1]
-            str_value = '{}_{},{}'.format(s1, s2, s3)
         else:
-            raise ValueError("self.value isn't int, float or tuple")
+            raise ValueError("self.value isn't int, float or None")
         ret = 'span={:>7}, str="{}", value={}'\
         .format(str(self.span), self.mstr.in_str[self.span[0]:self.span[1]],
                 str_value)
@@ -338,7 +315,7 @@ class My_str:
         for i in founds:
             str_used = self.is_str_used(i.span())
             if filter_used is None or str_used == filter_used:
-                part = Part(self, i.span(), stype)
+                part = Part(self, i.span(), stype, value='no find')
                 bpart.append(part)
         return bpart
     
@@ -373,7 +350,7 @@ class My_str:
                raise ValueError('found multipy {} in str'.format(sub))
         return index
     
-    def find_strs(self, subs, err):
+    def find_strs(self, subs, puls1):
         """
         find which sub in in_str, only one sub can find, else raise ValueError
         @para subs: list of subs
@@ -387,9 +364,10 @@ class My_str:
             if index != -1:
                 span = (index, index+len(sub))
                 if ret is None:
-                    ret = Part(self, span, sType.eng)
+                    value = ni+1 if puls1 else ni
+                    ret = Part(self, span, sType.eng, value=value)
                 else:
-                    raise ValueError('found multipy {} in str'.format(err))
+                    raise ValueError('found multipy in str')
         return ret
     
     def search(self, re_comp, start=0, end=None, isRaise=True, isCheck=True):
@@ -559,8 +537,8 @@ class Time_str(My_str):
         self.check_unused_char(allow=' ', disallow=':-./', search_span=None)
         
     def english_month_weekday(self):
-        month = self.find_strs(month_short, 'english month')
-        weekday = self.find_strs(weekday_short, 'english weekday')
+        month = self.find_strs(month_short, puls1=True)
+        weekday = self.find_strs(weekday_short, puls1=False)
         apm = self.find_strs(ampm, 'AMPM')
         if month is not None:
             self.date_p[UType.month] = month
@@ -674,6 +652,7 @@ class Time_str(My_str):
         if oouu is not None:
             #TODO: use pop inserted delete, not remove in part_set
             oouu.delete()    #delete in UnusedParts and part_set
+            oouu.value = oouu.get_value(None)
             self.date_p[UType.day] = oouu
     
     def check_bigparts_not_overlapped(self):
@@ -694,12 +673,10 @@ class Time_str(My_str):
             d[k] = self.date_p[k]
         for k in self.time_p.keys():
             d[k] = self.time_p[k]
+        #fill d(dict) into l(datetime para list), key in both d and dx
         for k in d:
             if k in dx:
-                v = d[k].value
-                if isinstance(v, tuple): #v is english month
-                    v = v[1] + 1
-                l[dx[k]] = v
+                l[dx[k]] = d[k].value
         #subsec*1000000 to microsec int
         if U.subsec in d:
             l[6] = int(d[U.ss].value*1e6)
@@ -713,12 +690,12 @@ class Time_str(My_str):
         while l[i2] is not None and i2 < 6:
             i2 += 1
         if i2 - i1 < 2:
-            raise ValueError('vaild item less than 2')
+            raise ValueError('vaild item less than 2:\n{}'.format(l))
         #pop last items
         while len(l) > i2:
             l.pop()
         if U.ampm in d:
-            if d[U.ampm].value[1] == 1:
+            if d[U.ampm].value == 1:
                 l[3] += 12
         #print(l)
         dt_obj = datetime.datetime(*l)
