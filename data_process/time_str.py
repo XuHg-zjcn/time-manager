@@ -181,7 +181,7 @@ class Part():
 
 #part date or time, can include sub part
 class BigPart(dict):
-    def __init__(self, mstr, mtype):
+    def __init__(self, mstr, name, key_allow):
         '''
         @para inc: all sub parts increase, next part head after prev end.
         @para cont: all sub parts continuous, next part head close prev end.
@@ -190,28 +190,27 @@ class BigPart(dict):
         dict's key: sType.norm or UType.xxx
         dict's value: Part object
         '''
-        assert mtype in ABType
         super().__init__()
         self.mstr = mstr
-        self.mtype= mtype
+        self.name= name
         self.span = [len(mstr.in_str),0]
-        self.spilts = [] #each item is Part object
+        self.part_objs = [] #each item is Part object
+        self.key_allow = key_allow
         
     def __setitem__(self, key, value):
         assert isinstance(value, Part)
         if key != sType.norm:
             #check key vaild for BigPartType
-            d = {ABType.date:UxType['Date'], ABType.time:UxType['lmrTime']}
-            if key not in d[self.mtype]:
+            if key not in self.key_allow:
                 raise KeyError('key {} is invalid for BigPart {}'
-                               .format(key, self.mtype))
+                               .format(key, self.name))
             #check key is not using
             if key in self:
                 raise KeyError('key {} is already in BigPart {} dict'
-                               .format(key, self.mtype))
+                               .format(key, self.name))
             super().__setitem__(key, value)
         else:
-            self.spilts.append(value)
+            self.part_objs.append(value)
         #add set
         if hasattr(value, 'poped'):
             delattr(value, 'poped')  #Part obj poped
@@ -240,19 +239,6 @@ class BigPart(dict):
             last = i
         end = last.span[1]
         return start, end
-
-    def check_finally(self, req='MD hm'):
-        #time not contain lmr
-        d = {ABType.date:UxType['Date'], ABType.time:UxType['Time']}
-        mset = d[self.mtype] #vaild UType by mstype
-        req_char = set(req)          #set of chars in req
-        char_vaild = req_char.intersection(Char2UType) #chars can found in dict
-        req_UTypes = set(map(lambda x:Char2UType[x], char_vaild))
-        want_check = req_UTypes.intersection(mset) #UTypes in mstype and req
-        for ut in want_check:        #ut is a UType
-            if ut not in self:
-                return False
-        return True
     
     def check_breakpoint(self):
         #TODO: raise show last+1
@@ -273,15 +259,7 @@ class BigPart(dict):
                                      .format(key_n, last+1))
                 last = i
     
-    def check_unused_char(self):
-        '''
-        check chars in self.span but not flag in self.mstr.used[i]
-        raise error if invaild spilt or multipy continuous char
-        '''
-        allow_dict    = {ABType.date:'-./ ', ABType.time:' '}
-        disallow_dict = {ABType.date:'O',    ABType.time:'O'}
-        allow    = allow_dict[self.mtype]
-        disallow = disallow_dict[self.mtype]
+    def check_unused_char(self, allow, disallow):
         self.mstr.check_unused_char(allow, disallow, self.span)
     
     def __str__(self):
@@ -553,8 +531,8 @@ class Time_str(My_str):
         self.para = {'fd42':find_date42, 'dn2v':default_n2v}
         self.part_set = uset()        #only for two BigPart
         self.unused_part_set = uset() #only for all UnusedParts obj
-        self.date_p = BigPart(self, ABType.date)
-        self.time_p = BigPart(self, ABType.time)
+        self.date_p = BigPart(self, 'date', UxType['Date'])
+        self.time_p = BigPart(self, 'time', UxType['lmrTime'])
         self.process()
         self.check()
         
@@ -576,8 +554,8 @@ class Time_str(My_str):
         self.date_p.check_breakpoint()
         #TODO: check time_p
         self.check_bigparts_not_overlapped()
-        self.date_p.check_unused_char()
-        self.time_p.check_unused_char()
+        self.date_p.check_unused_char('-./ ', 'O')
+        self.time_p.check_unused_char(' ', 'O')
         self.check_unused_char(allow=' ', disallow=':-./', search_span=None)
         
     def english_month_weekday(self):
