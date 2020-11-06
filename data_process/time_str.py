@@ -6,8 +6,9 @@ import re
 from enum import Enum
 import traceback
 import time
-from my_str import uset, Part, BigPart, My_str
+from my_str import Part, BigPart, My_str
 from my_str import sType, sType2re_c, sName
+from my_lib import strictly_increasing, my_odict, uset
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -121,6 +122,7 @@ class Time_str(My_str):
         if 'time_found' in self.flags or self.para['fd42']:
             self.find_date(self.num4)     #find YYYY, MMDD
             self.onlyone_unused_num_as_date()
+            self.unused_chooise()
         if len(self.date_p) > 0:
             self.set_time_p('hours')  #date found
         else:
@@ -221,7 +223,7 @@ class Time_str(My_str):
         #get src_keys
         src_keys = []
         for key in (B.lt, B.md, B.rt, B.ss):
-            if key in self.time_p.keys():
+            if key in self.time_p:
                 src_keys.append(key)
         src_keys = tuple(src_keys)
         #use dict_rule
@@ -266,48 +268,105 @@ str :{}\ndate:{}\ntime:{}'
         self.mark(self.time_p.span, out_str=False)))
     
     def as_datetime(self):
+        def get_nNone_and_fill(dt_paras, today):
+            #get start of not None item in date, fill today paras, if None
+            s = 0
+            while dt_paras[s] is None and s < 3:
+                dt_paras[s] = today[s]
+                s += 1
+            #get end of not None item
+            e = s
+            while dt_paras[e] is not None and e < 6:
+                e += 1
+            if e - s < 2:
+                raise ValueError('vaild item less than 2:\n{}'
+                                 .format(dt_paras))
+            return s,e
+        
         U = UType
         dx = {U.Y:0, U.M:1, U.D:2, U.h:3, U.m:4, U.s:5}
-        l = [None]*7    #temp for datetime paras  YMD,hms,us
+        dt_paras = [None]*7    #temp for datetime paras  YMD,hms,us
         
         today = datetime.date.today()
         today = [today.year, today.month, today.day]
         d = {}
-        for k in self.date_p.keys():
+        for k in self.date_p:
             d[k] = self.date_p[k]
-        for k in self.time_p.keys():
+        for k in self.time_p:
             d[k] = self.time_p[k]
         #fill d(dict) into l(datetime para list), key in both d and dx
-        for k in d:
-            if k in dx:
-                l[dx[k]] = d[k].value
+        dks = set.intersection(set(d.keys()), set(dx.keys()))
+        for k in dks:
+            dt_paras[dx[k]] = d[k].value
         #subsec*1000000 to microsec int
         if U.subsec in d:
-            l[6] = int(d[U.ss].value*1e6)
-        #check start of item 3, and fill now paras
-        i1 = 0
-        while l[i1] is None and i1 < 3:
-            l[i1] = today[i1]
-            i1 += 1
-        #check vaild item
-        i2 = i1
-        while l[i2] is not None and i2 < 6:
-            i2 += 1
-        if i2 - i1 < 2:
-            raise ValueError('vaild item less than 2:\n{}'.format(l))
-        #pop last items
-        while len(l) > i2:
-            l.pop()
+            dt_paras[6] = int(d[U.ss].value*1e6)
+        #get index range of value not None
+        nNs,nNe = get_nNone_and_fill(dt_paras, today)
+        #pop last None items
+        while len(dt_paras) > nNe:
+            dt_paras.pop()
         if U.ampm in d:
             if d[U.ampm].value == 1:
-                l[3] += 12
-        #print(l)
-        dt_obj = datetime.datetime(*l)
+                dt_paras[3] += 12
+        #print(dt_paras)
+        dt_obj = datetime.datetime(*dt_paras)
         if U.weekday in d and d[U.WD].value != dt_obj.weekday():
             raise ValueError('weekday in str is {}, but infer by date is {}'
                              .format(d[U.WD].match_str(), 
                             dt_obj.strftime('%Y-%m-%d %A')))
         return dt_obj
+    
+    def unused_chooise(self, formats=['YMD', 'DMY']):        
+        def can_push(my_od, part_obj):
+            li,ri = my_od.get_allow_lr(part_obj)
+            Prev = my_od.next_nNone(li, prev_next=1)
+            nexT = my_od.next_nNone(ri, prev_next=-1)
+            return Prev, nexT
+        
+        ''' D  M  Y-<    allows
+            Y  M  D |
+        n1 =|--|--|-^
+        n2 ____|  |
+        n3 _______|
+        
+        ^
+        |
+        date_p, bpart['num']
+        '''
+        ut_parts = []            # is my_odict
+        for fmt in formats:      #a format         'YMD'
+            od = my_odict()
+            for c in fmt:        #a char of format 'Y'
+                ut = Char2UType[c]
+                od[ut] = None
+            ut_parts.append(od)
+        #fill ut_parts
+        for my_od in ut_parts:
+            for k in my_od:
+                if k in self.date_p:
+                    my_od[k] = self.date_p[k]
+        #remove reverse format
+        rm_i = []
+        for ni,my_od in enumerate(ut_parts):
+            part_objs = list(my_od.values())
+            part_objs = list(filter(None, part_objs))
+            if not strictly_increasing(part_objs):
+                rm_i.append(ni)
+        for i in rm_i: ut_parts.pop(i)
+        #check unused parts
+        rm_i = []
+        for ni,my_od in enumerate(ut_parts):
+            cont = False    #append in rm_i
+            for uup in self.parts['num']:
+                p,n = can_push(my_od, uup)
+                if p is None and n is None:
+                    rm_i.append(ni)
+                    cont = True
+                    break
+            if cont: continue
+        for i in rm_i: ut_parts.pop(i)
+                    
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
@@ -319,10 +378,10 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
             datetime = tstr.as_datetime()
         except Exception as e:
             t1 = time.time()
+            tstr.print_str_use_status('v')
             if print_traceback:
                 traceback.print_exc()
             else:
-                print('str:|{}|'.format(tstr.in_str))
                 print('error happend:')
                 print(e)
             err_happend = True
@@ -347,12 +406,14 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
 if __name__ == '__main__':
     import os
     test_ok = ['Wed 28/Oct 12:34:56.123',
-               '20201030','1030','10:30 a','30 10:30','10:22 PM']
+               '20201030','1030','10:30 a','30 10:30','10:22 PM',
+               '2020 10 5', '2020/11/5', '2020-11/5', '2020 Nov 5',
+               '2020 5 Nov', '5 Nov 2020', '5/Nov/2020', '5 Nov. 2020']
     t_sum = 0
     test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
     os.system('clear')
     print('##########test_ok, should no error!!!!!!!!!!')
-    t_sum += test_a_list_str(test_ok, expect_err=False)
+    t_sum += test_a_list_str(['2020/11/5'], expect_err=False, print_traceback=True)
     print('##########test_err, should happend error each item!!!!!!!!!!')
-    t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
+    #t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
     print('total use {:.3f}ms'.format(t_sum*1000))

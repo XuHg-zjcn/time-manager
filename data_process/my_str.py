@@ -14,15 +14,6 @@ sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
 sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
 sName = ['num', 'eng', 'norm', 'other']
 
-#set for BigPart
-class uset(set):
-    #TODO: add method remove, check
-    #TODO: use dict
-    def add(self, ele):
-        if ele in self:
-            raise KeyError('element {} already in set:\n{}'.format(ele, self))
-        super().add(ele)
-
 #a Part of str, can add to BigPart or UnusedParts
 class Part():
     StrUsed = Enum('IsUsed', 'unused partused allused')
@@ -83,6 +74,12 @@ class Part():
     def __eq__(self, other):
         return self.mstr == other.mstr and \
                self.span == other.span
+    
+    def __lt__(self, other):
+        return self.span[0] >= other.span[1]
+    
+    def __gt__(self, other):
+        return self.span[0] <= other.span[1]
     
     def __len__(self):
         return self.span[1] - self.span[0]
@@ -156,7 +153,7 @@ class BigPart(dict):
         key_v = list(map(lambda x:x.value, keys))
         key_v.sort()
         if len(key_v) >= 2:
-            last = key_v[0]
+            last = key_v[0]  #TODO: use zip
             for i in key_v[1:]:
                 if i != last+1:
                     key_n = list(map(lambda x:x.name, keys))
@@ -364,7 +361,7 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
         #get unused_span_list: used flag of char is False spans
         unused_span_list = []
         last_span = [0,0]
-        last_use = self.used[search_span[0]]
+        last_use = self.used[search_span[0]] #TODO: use zip
         for i in range(search_span[0]+1, search_span[1]):
             use_i = self.used[i]
             if last_use and not use_i:  #last True, curr False
@@ -377,7 +374,7 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
         for span in unused_span_list:
             if span[1] - span[0] != 1:
                 raise ValueError('multiply unused char continuous\n{}'
-                                 .format(self.mstr.mark(span)))
+                                 .format(self.mark(span)))
             else:
                 i = span[0]
                 assert span[1] == i+1
