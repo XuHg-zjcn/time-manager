@@ -76,10 +76,10 @@ class Part():
                self.span == other.span
     
     def __lt__(self, other):
-        return self.span[0] >= other.span[1]
+        return self.span[1] <= other.span[0]
     
     def __gt__(self, other):
-        return self.span[0] <= other.span[1]
+        return other.span[1] <= self.span[0]
     
     def __len__(self):
         return self.span[1] - self.span[0]

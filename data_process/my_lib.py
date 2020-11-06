@@ -29,24 +29,43 @@ class my_odict(dict):
         if isinstance(k, int):    #k as index
             k = self.key_list[k]
         return super().__getitem__(k)
-    def next_nNone(self, ki, prev_next):
-        if prev_next == 1:
-            ki += 1
-        sli = {1:slice(ki,None,1), -1:slice(0,ki,-1)}[prev_next]
-        for k in self.klst[sli]:
-            if self[k] is not None:
-                return k
-        return None
     def get_allow_lr(self, part_obj):
+        '''
+        prev left ... right next
+                part_obj
+        
+        prev and next are not None
+        prev.end <= part_obj.start   and   part_obj.end <= next.start
+        left = prev+1
+        right = next-1
+        
+        part_obj can add to left<=x<=right
+        '''
         left = None
         right = None
         for ni,k in enumerate(self.klst):
             v = self[k]
             if v is not None:
-                if left is None and v > part_obj:
-                    left = ni
-                if left is not None and right is None and v < part_obj:
-                    right = ni
+                if left is None and v < part_obj:
+                    left = ni + 1  #prev = v
+                if left is not None and right is None and v > part_obj:
+                    right = ni - 1 #next = v
+                if not any([left,right]): #left and right are not None
+                    break
+        if left is not None and right is None:
+            right = len(self.klst) - 1
+        if all([left,right]) and left > right:
+            return None
+        if not any([left,right]):
+            return None
         return left, right
+    def next_None(self, ki, prev_next):
+        l = len(self.klst)
+        ki = {1:0, -1:l-1}[prev_next] if ki is None else ki
+        sli = {1:(ki,l,1), -1:(ki,-1,-1)}[prev_next]
+        for i in range(*sli):
+            if self[self.klst[i]] is None:
+                return i
+        return sli[1]-prev_next
     def pop():                    #don't delete item
         raise NotImplementedError('my_odict delete is forbidden')

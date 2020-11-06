@@ -319,10 +319,14 @@ str :{}\ndate:{}\ntime:{}'
     
     def unused_chooise(self, formats=['YMD', 'DMY']):        
         def can_push(my_od, part_obj):
-            li,ri = my_od.get_allow_lr(part_obj)
-            Prev = my_od.next_nNone(li, prev_next=1)
-            nexT = my_od.next_nNone(ri, prev_next=-1)
-            return Prev, nexT
+            lr = my_od.get_allow_lr(part_obj)
+            if lr is None:
+                return None
+            else:
+                li, ri = lr
+                Left  = my_od.next_None(li, prev_next=1)
+                Right = my_od.next_None(ri, prev_next=-1)
+                return Left, Right
         
         ''' D  M  Y-<    allows
             Y  M  D |
@@ -334,39 +338,56 @@ str :{}\ndate:{}\ntime:{}'
         |
         date_p, bpart['num']
         '''
-        ut_parts = []            # is my_odict
+        ut_parts = {}            #key: format str, value: my_odict
         for fmt in formats:      #a format         'YMD'
-            od = my_odict()
+            my_od = my_odict()
             for c in fmt:        #a char of format 'Y'
                 ut = Char2UType[c]
-                od[ut] = None
-            ut_parts.append(od)
-        #fill ut_parts
-        for my_od in ut_parts:
-            for k in my_od:
-                if k in self.date_p:
-                    my_od[k] = self.date_p[k]
+                #fill ut_parts
+                if ut in self.date_p:
+                    my_od[ut] = self.date_p[ut]
+                else:
+                    my_od[ut] = None
+            ut_parts[fmt] = my_od
         #remove reverse format
-        rm_i = []
-        for ni,my_od in enumerate(ut_parts):
+        rm_fmt = []
+        for ut in ut_parts:
+            my_od = ut_parts[ut]
             part_objs = list(my_od.values())
             part_objs = list(filter(None, part_objs))
             if not strictly_increasing(part_objs):
-                rm_i.append(ni)
-        for i in rm_i: ut_parts.pop(i)
+                rm_fmt.append(ut)
+        for i in rm_fmt: ut_parts.pop(i)
         #check unused parts
-        rm_i = []
-        for ni,my_od in enumerate(ut_parts):
+        rm_fmt = []
+        OK_fmts = {}
+        '''
+        [[(uup,l,r),(uup,l,r)], format1
+         [(uup,l,r),(uup,l,r)], format2
+         [(uup,l,r),(uup,l,r)]] format3
+        '''
+        for ut in ut_parts:
+            my_od = ut_parts[ut]
             cont = False    #append in rm_i
+            ok_fills = []
             for uup in self.parts['num']:
-                p,n = can_push(my_od, uup)
-                if p is None and n is None:
-                    rm_i.append(ni)
+                lr = can_push(my_od, uup)
+                if lr is None:
+                    rm_fmt.append(ut)
                     cont = True
                     break
-            if cont: continue
-        for i in rm_i: ut_parts.pop(i)
-                    
+                else:
+                    l,r = lr
+                    ok_fills.append((uup, l, r))
+            if cont:
+                continue
+            else:
+                OK_fmts[ut] = ok_fills
+        for i in rm_fmt: ut_parts.pop(i)
+        
+        if len(OK_fmts) == 1:
+            for okf in list(OK_fmts.values())[0]:
+                print(okf)
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
@@ -408,7 +429,8 @@ if __name__ == '__main__':
     test_ok = ['Wed 28/Oct 12:34:56.123',
                '20201030','1030','10:30 a','30 10:30','10:22 PM',
                '2020 10 5', '2020/11/5', '2020-11/5', '2020 Nov 5',
-               '2020 5 Nov', '5 Nov 2020', '5/Nov/2020', '5 Nov. 2020']
+               '2020 5 Nov', '5 Nov 2020', '5/Nov/2020', '5 Nov. 2020',
+               '202010','2020 10','2020 Nov', '2020Nov', '2020 Nov.']
     t_sum = 0
     test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
     os.system('clear')
