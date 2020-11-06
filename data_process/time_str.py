@@ -9,7 +9,7 @@ import time
 from my_str import Part, BigPart, My_str
 from my_str import sType, sType2re_c, sName
 from my_lib import strictly_increasing, my_odict, uset
-from my_lib import mrange_set, part_lr
+from my_lib import mrange_dict, part_lr
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -254,7 +254,6 @@ class Time_str(My_str):
         if oouu is not None:
             #TODO: use pop inserted delete, not remove in part_set
             oouu.delete()    #delete in UnusedParts and part_set
-            oouu.value = oouu.get_value(None)
             self.date_p[UType.day] = oouu
     
     def check_bigparts_not_overlapped(self):
@@ -339,7 +338,7 @@ str :{}\ndate:{}\ntime:{}'
                 Right = my_od.next_None(ri, prev_next=-1)+1 #Right+1
                 return Left, Right
         
-        ut_parts = {}            #key: format str, value: my_odict
+        ut_fmts = {}            #key: format str, value: my_odict
         for fmt in formats:      #a format         'YMD'
             my_od = my_odict()
             for c in fmt:        #a char of format 'Y'
@@ -349,16 +348,16 @@ str :{}\ndate:{}\ntime:{}'
                     my_od[ut] = self.date_p[ut]
                 else:
                     my_od[ut] = None
-            ut_parts[fmt] = my_od
+            ut_fmts[fmt] = my_od
         #remove reverse format
         rm_fmt = []
-        for ut in ut_parts:
-            my_od = ut_parts[ut]
+        for fmt in ut_fmts:
+            my_od = ut_fmts[fmt]
             part_objs = list(my_od.values())
             part_objs = list(filter(None, part_objs))
             if not strictly_increasing(part_objs):
-                rm_fmt.append(ut)
-        for i in rm_fmt: ut_parts.pop(i)
+                rm_fmt.append(fmt)
+        for i in rm_fmt: ut_fmts.pop(i)
         #find unused parts can push location
         rm_fmt = []
         OK_fmts = {}
@@ -367,28 +366,41 @@ str :{}\ndate:{}\ntime:{}'
          [uup.tuple:(uup,lr), uup.tuple:(uup,lr)], format2
          [uup.tuple:(uup,lr), uup.tuple:(uup,lr)]} format3
         '''
-        for ut in ut_parts:
-            my_od = ut_parts[ut]
+        for fmt in ut_fmts:
+            my_od = ut_fmts[fmt]
             skip = False    #append in rm_i
             ok_fills = {}
             for uup in self.parts['num']:
                 lr = find_range_can_push(my_od, uup)
                 if lr is None:
-                    rm_fmt.append(ut)
+                    rm_fmt.append(fmt)
                     skip = True
                     break
                 else:
-                    ok_fills[uup.get_tuple()] = part_lr(uup,lr)
+                    if lr not in ok_fills:
+                        ok_fills[lr] = []
+                    ok_fills[lr].append(part_lr(fmt, uup, lr))
             if skip:
                 continue
             else:
-                OK_fmts[ut] = ok_fills
-        for i in rm_fmt: ut_parts.pop(i)
-        
+                OK_fmts[fmt] = ok_fills
+        for i in rm_fmt: ut_fmts.pop(i)
+        '''
+         0   1  2  3  4
+        left         right
+        [//][ ][ ][ ][//]
+            |---lr---|     lr=(1,4)
+             ^  ^  ^
+             |  |  |
+             n1 n2 n3     n* are Part obj
+        [n1,n2,n3].sort()
+        '''
         if len(OK_fmts) == 1:
+            #put part into good UType place
+            fmt = list(OK_fmts.keys())[0]
             fills_dict = list(OK_fmts.values())[0]
-            mr_set = mrange_set(fills_dict)
-            insec = mr_set.get_intersections()
+            mr_dict = mrange_dict(fills_dict)
+            fill_stat = mr_dict.fill(self.date_p, ut_fmts[fmt])
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0

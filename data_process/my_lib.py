@@ -1,6 +1,7 @@
 '''
 class and func for my_str, time_str
 '''
+from functools import cmp_to_key
 #set for BigPart
 class uset(set):
     #TODO: add method remove, check
@@ -26,7 +27,7 @@ class my_odict(dict):
         super().__setitem__(k, v)
     def __getitem__(self, k):
         if isinstance(k, int):    #k as index
-            k = self.key_list[k]
+            k = self.klst[k]
         return super().__getitem__(k)
     def get_allow_lr(self, part_obj):
         '''
@@ -70,34 +71,40 @@ class my_odict(dict):
         raise NotImplementedError('my_odict delete is forbidden')
 
 class part_lr:
-    def __init__(self, part, lr):
+    def __init__(self, fmt, part, lr):
+        self.fmt = fmt
         self.part = part
         self.lr = lr
         self.l = lr[0]
         self.r = lr[1]
+    def __lt__(self, other):
+        if max(self.l, other.l) > min(self.r, other.r):
+            raise RuntimeError('part_lr overlapped')
+        return self.l <= other.l or self.r <= other.r
+def intersection(i, j):
+    sta = max(i.l, j.l)
+    end = min(i.r, j.r)
+    l = end - sta
+    if l>0:  return sta, end
+    else:  return None
+
 class parts_insec:
     def __init__(self, part1, part2, insec):
         self.part1 = part1
         self.part2 = part2
         self.insec = insec
-class mrange_set(dict): #dict[Part.tuple] = (Part, l, r)
+
+class mrange_dict(dict): #dict[Part.tuple] = (Part, l, r)
     def __init__(self, from_dict):
         super().__init__(from_dict)
-    def intersection(self, i, j):
-        sta = max(self[i].l, self[j].l)
-        end = min(self[i].r, self[j].r)
-        l = end - sta
-        if l>0:  return sta, end
-        else:  return None
-    def get_intersections(self):
-        ret = []
-        skip = set()
-        for i in self:  #i,j are Part.tuple
-            skip.add(i)
-            for j in self:
-                if j in skip:
-                    continue
-                insec = self.intersection(i,j)
-                if insec is not None:
-                    ret.append(parts_insec(self[i].part, self[j].part, insec))
-        return ret
+    
+    def fill(self, date_p, my_odict):
+        for lr,plrs in self.items():  #a space can fill
+            if lr[1] - lr[0] == len(plrs):
+                cp_plrs = plrs.copy()
+                key1 = cmp_to_key(lambda x,y:x.part < y.part)
+                cp_plrs.sort(key=key1)  #part
+                ut_i = lr[0]
+                for plr in cp_plrs:
+                    date_p[my_odict.klst[ut_i]] = plr.part
+                    ut_i += 1

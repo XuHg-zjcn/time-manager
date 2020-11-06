@@ -136,6 +136,8 @@ class BigPart(dict):
                 self.span[0] = value.span[0]
             if value.span[1] > self.span[1]: #Part's right point over BigPart
                 self.span[1] = value.span[1]
+        if value.value is None:
+            value.value = value.get_value(None)
     
     def pop(self, key):
         value = super().pop(key)
