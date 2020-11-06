@@ -1,7 +1,8 @@
 '''
 class and func for my_str, time_str
 '''
-
+from collections import Iterable
+from my_str import Part
 #set for BigPart
 class uset(set):
     #TODO: add method remove, check
@@ -69,3 +70,39 @@ class my_odict(dict):
         return sli[1]-prev_next
     def pop():                    #don't delete item
         raise NotImplementedError('my_odict delete is forbidden')
+
+class mrange_set(set):
+    def __init__(self):
+        super().__init__()
+    def add(self, span):
+        if isinstance(span, Iterable):
+            pass
+        elif isinstance(span, Part):
+            span = Part.span
+        else:
+            raise ValueError('mrange_set add type invaild!')
+        super().add(tuple(span))
+    def intersection(i, j):
+        sta = max(i.sta, j.end)
+        end = min(i.sta, j.end)
+        l = end - sta
+        if l>0:  return sta, end
+        else:  return None
+    def intersections(self):
+        ret = []
+        cont = []
+        for i in self:
+            cont.append(i)
+            for j in self:
+                if j in cont:
+                    continue
+                insec = self.intersection(i,j)
+                if insec is not None:
+                    ret.append(insec)
+        return ret
+
+def as_mr_set(fills_dict):#dict[uup.get_tuple()] = (upp,l,r)
+    mr_set = mrange_set()
+    for lr in fills_dict.values():
+        mr_set.add(lr[1:])
+    return mr_set

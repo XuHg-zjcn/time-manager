@@ -9,6 +9,7 @@ import time
 from my_str import Part, BigPart, My_str
 from my_str import sType, sType2re_c, sName
 from my_lib import strictly_increasing, my_odict, uset
+from my_lib import as_mr_set
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -325,7 +326,7 @@ str :{}\ndate:{}\ntime:{}'
             else:
                 li, ri = lr
                 Left  = my_od.next_None(li, prev_next=1)
-                Right = my_od.next_None(ri, prev_next=-1)
+                Right = my_od.next_None(ri, prev_next=-1)+1
                 return Left, Right
         
         ''' D  M  Y-<    allows
@@ -369,7 +370,7 @@ str :{}\ndate:{}\ntime:{}'
         for ut in ut_parts:
             my_od = ut_parts[ut]
             cont = False    #append in rm_i
-            ok_fills = []
+            ok_fills = {}
             for uup in self.parts['num']:
                 lr = can_push(my_od, uup)
                 if lr is None:
@@ -378,7 +379,7 @@ str :{}\ndate:{}\ntime:{}'
                     break
                 else:
                     l,r = lr
-                    ok_fills.append((uup, l, r))
+                    ok_fills[uup.get_tuple()] = (uup,l,r)
             if cont:
                 continue
             else:
@@ -386,8 +387,9 @@ str :{}\ndate:{}\ntime:{}'
         for i in rm_fmt: ut_parts.pop(i)
         
         if len(OK_fmts) == 1:
-            for okf in list(OK_fmts.values())[0]:
-                print(okf)
+            fills_dict = list(OK_fmts.values())[0]
+            mr_set = as_mr_set(fills_dict)
+            mr_set.intersections()
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
