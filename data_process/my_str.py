@@ -152,13 +152,13 @@ class BigPart(dict):
         return True is not broken, False have probem
         '''
         keys = list(self.keys())
-        key_v = list(map(lambda x:x.value, keys))
+        key_v = list(map(lambda x:x.value, keys)) #value of Enum
         key_v.sort()
         if len(key_v) >= 2:
             last = key_v[0]  #TODO: use zip
             for i in key_v[1:]:
                 if i != last+1:
-                    key_n = list(map(lambda x:x.name, keys))
+                    key_n = list(map(lambda x:x.name, keys)) #name of Enum
                     raise ValueError('found keys:{}, but not {}'
                                      .format(key_n, last+1))
                 last = i

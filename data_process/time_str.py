@@ -284,20 +284,20 @@ str :{}\ndate:{}\ntime:{}'
             return s,e
         
         U = UType
-        dx = {U.Y:0, U.M:1, U.D:2, U.h:3, U.m:4, U.s:5}
+        UT2num = {U.Y:0, U.M:1, U.D:2, U.h:3, U.m:4, U.s:5}
         dt_paras = [None]*7    #temp for datetime paras  YMD,hms,us
         
         today = datetime.date.today()
         today = [today.year, today.month, today.day]
-        d = {}
-        for k in self.date_p:
+        d = {}  #key:UType, value:Part obj
+        for k in self.date_p.keys():
             d[k] = self.date_p[k]
-        for k in self.time_p:
+        for k in self.time_p.keys():
             d[k] = self.time_p[k]
         #fill d(dict) into l(datetime para list), key in both d and dx
-        dks = set.intersection(set(d.keys()), set(dx.keys()))
+        dks = set.intersection(set(d.keys()), set(UT2num.keys()))
         for k in dks:
-            dt_paras[dx[k]] = d[k].value
+            dt_paras[UT2num[k]] = d[k].value
         #subsec*1000000 to microsec int
         if U.subsec in d:
             dt_paras[6] = int(d[U.ss].value*1e6)
@@ -339,8 +339,7 @@ str :{}\ndate:{}\ntime:{}'
                 return Left, Right
         
         ut_fmts = {}            #key: format str, value: my_odict
-        for fmt in formats:      #a format         'YMD'
-            my_od = my_odict()
+        for fmt, my_od in ut_fmts.items():
             for c in fmt:        #a char of format 'Y'
                 ut = Char2UType[c]
                 #fill ut_parts
@@ -351,8 +350,7 @@ str :{}\ndate:{}\ntime:{}'
             ut_fmts[fmt] = my_od
         #remove reverse format
         rm_fmt = []
-        for fmt in ut_fmts:
-            my_od = ut_fmts[fmt]
+        for fmt, my_od in ut_fmts.items():
             part_objs = list(my_od.values())
             part_objs = list(filter(None, part_objs))
             if not strictly_increasing(part_objs):
@@ -366,8 +364,7 @@ str :{}\ndate:{}\ntime:{}'
          [uup.tuple:(uup,lr), uup.tuple:(uup,lr)], format2
          [uup.tuple:(uup,lr), uup.tuple:(uup,lr)]} format3
         '''
-        for fmt in ut_fmts:
-            my_od = ut_fmts[fmt]
+        for fmt,my_od in ut_fmts.items():
             skip = False    #append in rm_i
             ok_fills = {}
             for uup in self.parts['num']:
