@@ -9,7 +9,7 @@ import time
 from my_str import Part, BigPart, My_str
 from my_str import sType, sType2re_c, sName
 from my_lib import strictly_increasing, my_odict, uset
-from my_lib import as_mr_set
+from my_lib import mrange_set, part_lr
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -318,18 +318,8 @@ str :{}\ndate:{}\ntime:{}'
                             dt_obj.strftime('%Y-%m-%d %A')))
         return dt_obj
     
-    def unused_chooise(self, formats=['YMD', 'DMY']):        
-        def can_push(my_od, part_obj):
-            lr = my_od.get_allow_lr(part_obj)
-            if lr is None:
-                return None
-            else:
-                li, ri = lr
-                Left  = my_od.next_None(li, prev_next=1)
-                Right = my_od.next_None(ri, prev_next=-1)+1
-                return Left, Right
-        
-        ''' D  M  Y-<    allows
+    def unused_chooise(self, formats=['YMD', 'DMY']):
+        ''' D  M  Y-<      allows
             Y  M  D |
         n1 =|--|--|-^
         n2 ____|  |
@@ -339,6 +329,16 @@ str :{}\ndate:{}\ntime:{}'
         |
         date_p, bpart['num']
         '''
+        def find_range_can_push(my_od, part_obj):
+            lr = my_od.get_allow_lr(part_obj)
+            if lr is None:
+                return None
+            else:
+                li, ri = lr
+                Left  = my_od.next_None(li, prev_next=1)    #[Left, Right)
+                Right = my_od.next_None(ri, prev_next=-1)+1 #Right+1
+                return Left, Right
+        
         ut_parts = {}            #key: format str, value: my_odict
         for fmt in formats:      #a format         'YMD'
             my_od = my_odict()
@@ -359,28 +359,27 @@ str :{}\ndate:{}\ntime:{}'
             if not strictly_increasing(part_objs):
                 rm_fmt.append(ut)
         for i in rm_fmt: ut_parts.pop(i)
-        #check unused parts
+        #find unused parts can push location
         rm_fmt = []
         OK_fmts = {}
         '''
-        [[(uup,l,r),(uup,l,r)], format1
-         [(uup,l,r),(uup,l,r)], format2
-         [(uup,l,r),(uup,l,r)]] format3
+        {{uup.tuple:(uup,lr), uup.tuple:(uup,lr)}, format1
+         [uup.tuple:(uup,lr), uup.tuple:(uup,lr)], format2
+         [uup.tuple:(uup,lr), uup.tuple:(uup,lr)]} format3
         '''
         for ut in ut_parts:
             my_od = ut_parts[ut]
-            cont = False    #append in rm_i
+            skip = False    #append in rm_i
             ok_fills = {}
             for uup in self.parts['num']:
-                lr = can_push(my_od, uup)
+                lr = find_range_can_push(my_od, uup)
                 if lr is None:
                     rm_fmt.append(ut)
-                    cont = True
+                    skip = True
                     break
                 else:
-                    l,r = lr
-                    ok_fills[uup.get_tuple()] = (uup,l,r)
-            if cont:
+                    ok_fills[uup.get_tuple()] = part_lr(uup,lr)
+            if skip:
                 continue
             else:
                 OK_fmts[ut] = ok_fills
@@ -388,8 +387,8 @@ str :{}\ndate:{}\ntime:{}'
         
         if len(OK_fmts) == 1:
             fills_dict = list(OK_fmts.values())[0]
-            mr_set = as_mr_set(fills_dict)
-            mr_set.intersections()
+            mr_set = mrange_set(fills_dict)
+            insec = mr_set.get_intersections()
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
