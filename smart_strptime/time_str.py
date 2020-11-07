@@ -94,7 +94,7 @@ class Time_str(My_str):
         a Part can only add to a BigPart
         Parts in BigPart are not repeating
     '''
-    def __init__(self, in_str, fd642=True, default_n2v='hours', YY2=False):
+    def __init__(self, in_str, fd642=True, default_n2v='hours', YY2=True):
         super().__init__(in_str)
         self.flags = [] #'time_found'
         self.para = {'dn2v':default_n2v}
@@ -169,12 +169,15 @@ class Time_str(My_str):
         def YYMMDD(self, s, e):
             self.date_p[UType.year ] = Part(self, (s,   s+2), sType.num)
             self.date_p[UType.month] = Part(self, (s+2, s+4), sType.num)
-            self.date_p[UType.month] = Part(self, (s+4, e  ), sType.num)
+            self.date_p[UType.day  ] = Part(self, (s+4, e  ), sType.num)
         if e-s == 6:
             if 'YY2' in self.flags: 
-                if inti<2100: YYYYMM(self, s, e)
-                else:         YYMMDD(self, s, e)
-            else:             YYYYMM(self, s, e)
+                if 191300<=inti<210000:
+                    YYYYMM(self, s, e) #TODO Waring: probably not accurate
+                else:
+                    YYMMDD(self, s, e)
+            else:
+                YYYYMM(self, s, e)
             return True
         return False
     
