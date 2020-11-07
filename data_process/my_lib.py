@@ -2,14 +2,95 @@
 class and func for my_str, time_str
 '''
 from functools import cmp_to_key
+from collections import Hashable, Iterable
 #set for BigPart
-class uset(set):
-    #TODO: add method remove, check
-    #TODO: use dict
-    def add(self, ele):
-        if ele in self:
-            raise KeyError('element {} already in set:\n{}'.format(ele, self))
-        super().add(ele)
+class udict(dict):
+    uflag = 'udict inner'
+    def __init__(self, subset_names=None, pareset=None, read_only=False):
+        if subset_names is not None:
+            self.subset = {} #dict key:name, value:subset(udict)
+            for name in subset_names:
+                self.subset[name] = udict(pareset=self)
+        else:
+            self.subset = None
+        self.pareset = pareset
+        self.read_only = read_only
+        super().__init__()
+        self.flags = set()
+    
+    def ro_test(self, part):
+        has_uflag = udict.uflag in part.flags
+        if has_uflag:
+            part.flags.remove(udict.uflag)
+        if self.read_only and (not has_uflag):
+            raise RuntimeError('udict read-only, please add to subset')
+    
+    def apply_pare(self, fn, part):
+        if self.pareset is not None:
+            part.flags.add(udict.uflag)
+            getattr(self.pareset, fn)(part)
+    
+    def add(self, part):
+        self.ro_test(part)
+        ptup = tuple(part)
+        if ptup in self.keys():
+            raise KeyError('part {} already in set:\n{}'.format(part, self))
+        self[ptup] = part
+        self.apply_pare('add', part)
+
+    
+    def remove(self, part):
+        if isinstance(part, tuple):
+            part = self[part]
+        ptup = tuple(part)
+        self.ro_test(part)
+        if hasattr(self, 'uiter'):
+            self.uiter.skips.add(ptup)
+            return
+        self.pop(ptup)
+        if self.subset is not None:
+            for ss in self.subset.values():
+                part.flags.add(udict.uflag)
+                part.flags.add('udict subset')
+                try:
+                    ss.remove(part)
+                except Exception: pass
+                else:             break
+        if 'udict subset' not in part.flags:
+            self.apply_pare('remove', part)
+        else:
+            part.flags.remove('udict subset')
+    
+    def add_subset(self, name, subset):
+        assert isinstance(subset, udict)
+        self.subset[name] = subset
+        for i in subset:
+            self.add(i)
+    
+    def __contains__(self, obj):
+        if not isinstance(obj, Hashable) and isinstance(obj, Iterable):
+            obj = tuple(obj)
+        return super().__contains__(obj)
+              
+    def __iter__(self):  #iter dict value(Part objs)
+        class uiter():
+            def __init__(self, iter_from, ud):
+                self.skips = set()
+                self.iter_from = iter_from
+                self.ud = ud
+            def __next__(self):
+                try:
+                    n = next(self.iter_from)
+                except StopIteration:     #after iteration, remove skips
+                    del self.ud.uiter
+                    for skip in self.skips:
+                        self.ud.remove(skip)
+                    raise StopIteration
+                if n[0] in self.skips:
+                    return next(self)
+                return n[1]
+        self.uiter = uiter(self.items().__iter__(), self)
+        return self.uiter
 
 def strictly_increasing(L):
     return all(x<y for x, y in zip(L, L[1:]))
@@ -71,10 +152,9 @@ class my_odict(dict):
         raise NotImplementedError('my_odict delete is forbidden')
 
 class part_lr:
-    def __init__(self, fmt, part, part_i, lr):
+    def __init__(self, fmt, part, lr):
         self.fmt = fmt
         self.part = part
-        self.part_i = part_i
         self.lr = lr
         self.l = lr[0]
         self.r = lr[1]
@@ -95,7 +175,7 @@ class parts_insec:
         self.part2 = part2
         self.insec = insec
 
-class mrange_dict(dict): #dict[Part.tuple] = (Part, l, r)
+class mrange_dict(dict): #dict[Part.tuple] = [plr1, plr2]
     def __init__(self, from_dict):
         super().__init__(from_dict)
     
@@ -108,5 +188,4 @@ class mrange_dict(dict): #dict[Part.tuple] = (Part, l, r)
                 ut_i = lr[0]
                 for plr in cp_plrs:
                     date_p[my_odict.klst[ut_i]] = plr.part
-                    uuparts_list.remove(plr.part)
                     ut_i += 1

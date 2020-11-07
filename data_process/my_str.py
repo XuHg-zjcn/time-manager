@@ -1,6 +1,7 @@
 import re
 from enum import Enum
 from collections import Iterable
+from my_lib import udict
 
 re_num = re.compile('\d+')
 re_eng = re.compile('[a-zA-Z]+')
@@ -85,8 +86,8 @@ class Part():
     def __len__(self):
         return self.span[1] - self.span[0]
     
-    def get_tuple(self):
-        return tuple(self.span)
+    def __iter__(self):
+        return self.span.__iter__()
     
     def set_str_used(self):
         self.mstr.set_str_used(self.span)
@@ -124,14 +125,13 @@ class BigPart(dict):
         else:
             self.part_objs.append(value)
          #Part obj in UnusedParts poped
-        if 'poped' in value.flags:
-            value.flags.remove('poped')
-            self.mstr.unused_part_set.remove(value.get_tuple())
+        if value in self.mstr.unused_parts:
+            self.mstr.unused_parts.remove(value)
         #Part obj in BigPart poped
         if 'BigPart poped' in value.flags:
             value.flags.remove('BigPart poped')
         else:
-            self.mstr.part_set.add(value.get_tuple())
+            self.mstr.part_set.add(value)
             value.set_str_used()
             
         #update self.span
@@ -183,53 +183,14 @@ class BigPart(dict):
         else:
             return 'empty------------------------------'
 
-class UnusedParts(list):
-    def __init__(self, mstr):
-        super().__init__()
-        self.mstr = mstr
-    
-    def append(self, part):
-        assert isinstance(part, Part)
-        p_tuple = part.get_tuple()
-        self.mstr.unused_part_set.add(p_tuple)
-        super().append(part)
-    
-    def pop_onlyone_unused(self):
-        if len(self) == 1:
-            return self.pop(0)
-        else:
-            return None
-    
-    def __str__(self):
-        ret = 'UnusedParts:\n'
-        for i in self:
-            ret += str(i)
-        return ret
-    
-    def pop(self, index):
-        '''
-        delete for Part obj in UnusedParts to BigPart,
-        part can spilt some parts
-        '''
-        part = super().pop(index)
-        part.flags.add('poped')
-        return part
-    
-    def remove(self, obj):
-        obj.flags.add('poped')
-        super().remove(obj)
-    
-    def delete(self, index):
-        part = self.pop(index)
-        p_tuple = part.get_tuple()
-        self.mstr.unused_part_set.remove(p_tuple)
-
 class My_str:
     def __init__(self, in_str):
         self.in_str = in_str
         #only modify in BigPart.__setitem__ through set_str_used
         self.used = [False]*len(in_str)
         self.disallow_unused_chars = ''
+        self.part_set = udict()                    #for two BigPart
+        self.unused_parts = udict(subset_names=[]) #for all UnusedParts obj
 
     def get_atype(self, re_comp, stype,
                   filter_used=Part.StrUsed.unused):
@@ -240,21 +201,18 @@ class My_str:
         @para filter_used: only output unused
         """
         founds = re_comp.finditer(self.in_str)
-        bpart = UnusedParts(self)
+        ud = udict()
         for i in founds:
             str_used = self.is_str_used(i.span())
             if filter_used is None or str_used == filter_used:
                 part = Part(self, i.span(), stype, value='no find')
-                bpart.append(part)
-        return bpart
+                ud.add(part)
+        return ud
     
     def get_allsType_parts(self, sType2X_dict, names):
-        ret = {}
-        for key,n_i in zip(sType2X_dict, names):
-            stype_i = key
-            re_i = sType2X_dict[key]
-            ret[n_i] = self.get_atype(re_i, stype_i)
-        return ret
+        for stype,name in zip(sType2X_dict, names):
+            re_i = sType2X_dict[stype]
+            self.unused_parts.add_subset(name, self.get_atype(re_i, stype))
         
     def mark(self, index, num=1, out_str=True):
         if isinstance(index, Iterable) and len(index) == 2:

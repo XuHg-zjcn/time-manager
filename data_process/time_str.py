@@ -8,9 +8,8 @@ import traceback
 import time
 from my_str import Part, BigPart, My_str
 from my_str import sType, sType2re_c, sName
-from my_lib import strictly_increasing, my_odict, uset
+from my_lib import strictly_increasing, my_odict, udict
 from my_lib import mrange_dict, part_lr
-import functools
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -110,8 +109,6 @@ class Time_str(My_str):
     
     def process_check(self):
         assert 'process OK' not in self.flags
-        self.part_set = uset()        #only for two BigPart
-        self.unused_part_set = uset() #only for all UnusedParts obj
         self.date_p = BigPart(self, 'date', UxType['Date'])
         self.time_p = BigPart(self, 'time', UxType['lmrTime'])
         self.process()
@@ -121,7 +118,7 @@ class Time_str(My_str):
     def process(self):
         self.time_lmrs()
         self.english_month_weekday()
-        self.parts = self.get_allsType_parts(sType2re_c, sName)
+        self.get_allsType_parts(sType2re_c, sName)
         self.find_date(self.num8)         #find YYYYMMDD
         if ('time_found' in self.flags) or ('fd642' in self.flags):
             self.find_date(self.num4)     #find YYYY, MMDD
@@ -132,7 +129,6 @@ class Time_str(My_str):
             self.set_time_p('hours')  #date found
         else:
             self.set_time_p(self.para['dn2v'])
-        del self.parts
     
     def check(self):
         self.date_p.check_breakpoint()
@@ -154,12 +150,10 @@ class Time_str(My_str):
             self.time_p[UType.ampm] = apm
     
     def find_date(self, func):
-        pop_i = None
-        for ni,part in enumerate(self.parts['num']):
+        nums = self.unused_parts.subset['num']
+        for part in nums:
             if func(part) == True:
-                if pop_i is None:
-                    pop_i = ni
-                    self.parts['num'].delete(ni)
+                nums.remove(part)
     
     def num8(self, part):
         s = part.span[0]
@@ -276,9 +270,9 @@ class Time_str(My_str):
         self.flags.append('set_time_p')
 
     def onlyone_unused_num_as_date(self):
-        oouu = self.parts['num'].pop_onlyone_unused()
-        if oouu is not None:
-            #TODO: use pop inserted delete, not remove in part_set
+        nums = self.unused_parts.subset['num']
+        if len(nums) == 1:
+            oouu = list(nums)[0]
             self.date_p[UType.day] = oouu
 
     def check_bigparts_not_overlapped(self):
@@ -393,7 +387,7 @@ str :{}\ndate:{}\ntime:{}'
         for fmt,my_od in ut_fmts.items():
             skip = False    #append in rm_i
             ok_fills = {}
-            for nj,uup in enumerate(self.parts['num']):
+            for nj,uup in enumerate(self.unused_parts.subset['num']):
                 lr = find_range_can_push(my_od, uup)
                 if lr is None:
                     rm_fmt.append(fmt)
@@ -402,7 +396,7 @@ str :{}\ndate:{}\ntime:{}'
                 else:
                     if lr not in ok_fills:
                         ok_fills[lr] = []
-                    ok_fills[lr].append(part_lr(fmt, uup, nj, lr))
+                    ok_fills[lr].append(part_lr(fmt, uup, lr))
             if skip:
                 continue
             else:
@@ -433,7 +427,8 @@ str :{}\ndate:{}\ntime:{}'
             fmt = list(OK_fmts.keys())[0]
             fills_dict = list(OK_fmts.values())[0]
             mr_dict = mrange_dict(fills_dict)
-            mr_dict.fill(self.date_p, ut_fmts[fmt], self.parts['num'])
+            mr_dict.fill(self.date_p, ut_fmts[fmt],
+                         self.unused_parts.subset['num'])
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
@@ -483,5 +478,5 @@ if __name__ == '__main__':
     print('##########test_ok, should no error!!!!!!!!!!')
     t_sum += test_a_list_str(test_ok, expect_err=False, print_traceback=True)
     print('##########test_err, should happend error each item!!!!!!!!!!')
-    #t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
+    t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
     print('total use {:.3f}ms'.format(t_sum*1000))
