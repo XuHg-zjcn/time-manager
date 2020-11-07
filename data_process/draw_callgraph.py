@@ -14,4 +14,4 @@ graphviz = GraphvizOutput()
 graphviz.output_file = 'graph.png'
 with PyCallGraph(output=graphviz):
     tstr = Time_str(test_str)
-    datetime = tstr.as_datetime()
+    tstr.process_check()

@@ -4,11 +4,9 @@
 import datetime
 import re
 from enum import Enum
-import traceback
-import time
 from my_str import Part, BigPart, My_str
-from my_str import sType, sType2re_c, sName
-from my_lib import strictly_increasing, my_odict, udict
+from my_str import sType, sType2re_c
+from my_lib import strictly_increasing, my_odict
 from my_lib import mrange_dict, part_lr
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
@@ -118,7 +116,7 @@ class Time_str(My_str):
     def process(self):
         self.time_lmrs()
         self.english_month_weekday()
-        self.get_allsType_parts(sType2re_c, sName)
+        self.get_allsType_parts(sType2re_c)
         self.find_date(self.num8)         #find YYYYMMDD
         if ('time_found' in self.flags) or ('fd642' in self.flags):
             self.find_date(self.num4)     #find YYYY, MMDD
@@ -152,48 +150,39 @@ class Time_str(My_str):
     def find_date(self, func):
         nums = self.unused_parts.subset['num']
         for part in nums:
-            if func(part) == True:
+            s = part.span[0]
+            e = part.span[1]
+            match = part.match_str()
+            inti = int(match)
+            if func(part, s, e, inti) == True:
                 nums.remove(part)
     
-    def num8(self, part):
-        s = part.span[0]
-        e = part.span[1]
-        match = part.match_str()
-        if len(match) == 8:
+    def num8(self, part, s, e, inti):
+        if e-s == 8:
             self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
             self.date_p[UType.month] = Part(self, (s+4, s+6), sType.num)
-            self.date_p[UType.day  ] = Part(self, (s+6, e  ),   sType.num)
+            self.date_p[UType.day  ] = Part(self, (s+6, e  ), sType.num)
             return True
         return False
     
-    def num6(self, part):
+    def num6(self, part, s, e, inti):
         def YYYYMM(self, s, e):
             self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
-            self.date_p[UType.month] = Part(self, (s+4, e  ),   sType.num)
+            self.date_p[UType.month] = Part(self, (s+4, e  ), sType.num)
         def YYMMDD(self, s, e):
             self.date_p[UType.year ] = Part(self, (s,   s+2), sType.num)
             self.date_p[UType.month] = Part(self, (s+2, s+4), sType.num)
             self.date_p[UType.month] = Part(self, (s+4, e  ), sType.num)
-        s = part.span[0]
-        e = part.span[1]
-        match = part.match_str()
-        if len(match) == 6:
+        if e-s == 6:
             if 'YY2' in self.flags: 
-                if 1913<=int(match[:4])<2100:
-                    YYYYMM(self, s, e)
-                else:
-                    YYMMDD(self, s, e)
-            else:
-                YYYYMM(self, s, e)
+                if inti<2100: YYYYMM(self, s, e)
+                else:         YYMMDD(self, s, e)
+            else:             YYYYMM(self, s, e)
             return True
         return False
     
-    def num4(self, part):
-        s = part.span[0]
-        e = part.span[1]
-        match = part.match_str()
-        inti = int(match)
-        if len(match) == 4:
+    def num4(self, part, s, e, inti):
+        if e-s == 4:
             if 1970<=inti<2050:
                 self.date_p[UType.year ] = Part(self, (s, e  ), sType.num)
                 return True
@@ -429,54 +418,3 @@ str :{}\ndate:{}\ntime:{}'
             mr_dict = mrange_dict(fills_dict)
             mr_dict.fill(self.date_p, ut_fmts[fmt],
                          self.unused_parts.subset['num'])
-
-def test_a_list_str(test_list, expect_err=False, print_traceback=True):
-    t_sum = 0
-    for i in test_list:
-        try:
-            t0 = time.time()
-            tstr = Time_str(i)
-            tstr.process_check()
-            #dt_obj = tstr.as_datetime()
-        except Exception as e:
-            t1 = time.time()
-            tstr.print_str_use_status('v')
-            if print_traceback:
-                traceback.print_exc()
-            else:
-                print('error happend:')
-                print(e)
-            err_happend = True
-        else:
-            t1 = time.time()
-            tstr.print_str_use_status('v')
-            print('date:', tstr.date_p)
-            print('time:', tstr.time_p)
-            err_happend = False
-            #print('datetime out:',dt_obj)
-            print('no error')
-        finally:
-            t_sum += t1 - t0
-            if err_happend != expect_err:
-                print('error not expect, expect is {}, but result is {}'
-                      .format(expect_err, err_happend))
-            print('process {:.3f}ms'.format((t1-t0)*1000))
-        print()
-    return t_sum
-
-#test codes
-if __name__ == '__main__':
-    import os
-    test_ok = ['Wed 28/Oct 12:34:56.123',
-               '20201030','1030','10:30 a','30 10:30','10:22 PM',
-               '2020 10 5', '2020/11/5', '2020-11/5', '2020 Nov 5',
-               '2020 5 Nov', '5 Nov 2020', '5/Nov/2020', '5 Nov. 2020',
-               '202010','2020 10','2020 Nov', '2020Nov', '2020 Nov.']
-    t_sum = 0
-    test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
-    os.system('clear')
-    print('##########test_ok, should no error!!!!!!!!!!')
-    t_sum += test_a_list_str(test_ok, expect_err=False, print_traceback=True)
-    print('##########test_err, should happend error each item!!!!!!!!!!')
-    t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
-    print('total use {:.3f}ms'.format(t_sum*1000))

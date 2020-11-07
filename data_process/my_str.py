@@ -13,7 +13,6 @@ norms= '-:.,/\ '
 sType = Enum('sType', 'num eng norm other')
 sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
 sType2re_c = {sType.num:re_num, sType.eng:re_eng, sType.norm:re_norm}
-sName = ['num', 'eng', 'norm', 'other']
 
 #a Part of str, can add to BigPart or UnusedParts
 class Part():
@@ -191,28 +190,32 @@ class My_str:
         self.disallow_unused_chars = ''
         self.part_set = udict()                    #for two BigPart
         self.unused_parts = udict(subset_names=[]) #for all UnusedParts obj
-
-    def get_atype(self, re_comp, stype,
-                  filter_used=Part.StrUsed.unused):
-        """
-        find all use re, atype of sub
-        @para re_comp: re.compile object
-        @para stype: type_id for Part object
-        @para filter_used: only output unused
-        """
-        founds = re_comp.finditer(self.in_str)
-        ud = udict()
-        for i in founds:
-            str_used = self.is_str_used(i.span())
-            if filter_used is None or str_used == filter_used:
-                part = Part(self, i.span(), stype, value='no find')
-                ud.add(part)
-        return ud
     
-    def get_allsType_parts(self, sType2X_dict, names):
-        for stype,name in zip(sType2X_dict, names):
-            re_i = sType2X_dict[stype]
-            self.unused_parts.add_subset(name, self.get_atype(re_i, stype))
+    def get_allsType_parts(self, sType2re_c):
+        """
+        find a group re_compile
+        @para sType2re_c: a dict key:sType, value:re.compile obj
+        """
+        def get_atype(self, re_comp, stype,
+                      filter_used=Part.StrUsed.unused):
+            """
+            find all use re, atype of sub
+            @para re_comp: re.compile object
+            @para stype: type_id for Part object
+            @para filter_used: only output unused
+            """
+            founds = re_comp.finditer(self.in_str)
+            ud = udict()
+            for i in founds:
+                str_used = self.is_str_used(i.span())
+                if filter_used is None or str_used == filter_used:
+                    part = Part(self, i.span(), stype, value='no find')
+                    ud.add(part)
+            return ud
+        
+        for stype, re_i in sType2re_c.items():
+            self.unused_parts.add_subset(
+                stype.name, get_atype(self, re_i, stype))
         
     def mark(self, index, num=1, out_str=True):
         if isinstance(index, Iterable) and len(index) == 2:
