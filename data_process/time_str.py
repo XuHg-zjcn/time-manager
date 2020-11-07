@@ -338,8 +338,9 @@ str :{}\ndate:{}\ntime:{}'
                 Right = my_od.next_None(ri, prev_next=-1)+1 #Right+1
                 return Left, Right
         
-        ut_fmts = {}            #key: format str, value: my_odict
-        for fmt, my_od in ut_fmts.items():
+        ut_fmts = {}             #key: format str, value: my_odict
+        for fmt in formats:      #a format         'YMD'
+            my_od = my_odict()
             for c in fmt:        #a char of format 'Y'
                 ut = Char2UType[c]
                 #fill ut_parts
