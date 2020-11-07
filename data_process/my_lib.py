@@ -3,8 +3,31 @@ class and func for my_str, time_str
 '''
 from functools import cmp_to_key
 from collections import Hashable, Iterable
-#set for BigPart
-class udict(dict):
+
+class oset(set):
+    def __init__(self, set0):
+        super().__init__(set0)
+    def __contains__(self, x):
+        return not super().__contains__(x)
+
+class uiter:
+    def __init__(self, iter_from, ud):
+        self.skips = set()
+        self.iter_from = iter_from
+        self.ud = ud
+    def __next__(self):
+        try:
+            n = next(self.iter_from)
+        except StopIteration:     #after iteration, remove skips
+            del self.ud.uiter
+            for skip in self.skips:
+                self.ud.remove(skip)
+            raise StopIteration
+        if n[0] in self.skips:
+            return next(self)
+        return n[1]
+
+class udict(dict):        
     uflag = 'udict inner'
     def __init__(self, subset_names=None, pareset=None, read_only=False):
         if subset_names is not None:
@@ -71,24 +94,8 @@ class udict(dict):
         if not isinstance(obj, Hashable) and isinstance(obj, Iterable):
             obj = tuple(obj)
         return super().__contains__(obj)
-              
+    
     def __iter__(self):  #iter dict value(Part objs)
-        class uiter():
-            def __init__(self, iter_from, ud):
-                self.skips = set()
-                self.iter_from = iter_from
-                self.ud = ud
-            def __next__(self):
-                try:
-                    n = next(self.iter_from)
-                except StopIteration:     #after iteration, remove skips
-                    del self.ud.uiter
-                    for skip in self.skips:
-                        self.ud.remove(skip)
-                    raise StopIteration
-                if n[0] in self.skips:
-                    return next(self)
-                return n[1]
         self.uiter = uiter(self.items().__iter__(), self)
         return self.uiter
 

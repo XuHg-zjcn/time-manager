@@ -11,6 +11,7 @@ import os
 import time
 from time_str import Time_str
 import traceback
+import cProfile
 test_ok = ['Wed 28/Oct 12:34:56.123',
            '20201030','1030','10:30 a','30 10:30','10:22 PM',
            '2020 10 5', '2020/11/5', '2020-11/5', '2020 Nov 5',
@@ -67,7 +68,7 @@ def test_quiet(test_list):
             t_sum += t1 - t0
     return t_sum
 
-def test_speed_repeats(N_rep):
+def test_speed_Nrepeat(N_rep=200):
     print('')
     print('speed test:')
     t_sum = 0
@@ -75,7 +76,6 @@ def test_speed_repeats(N_rep):
         t_sum += test_quiet(test_ok)
         t_sum += test_quiet(test_err)
     t_sum *= 1000 #sec to ms
-    print('total use {:.3f}ms'.format(t_sum))
     print('{:.2f}ms/({}*{})test, {:.3f}ms per test'
           .format(t_sum, n_test, N_rep, t_sum/(n_test*N_rep)))
 
@@ -94,5 +94,6 @@ def test_check():
 #test codes
 if __name__ == '__main__':
     n_test = len(test_ok)+len(test_err)
-    test_check()
-    test_speed_repeats(100)
+    #test_check()
+    cProfile.run('test_speed_Nrepeat()', sort=2)
+    test_speed_Nrepeat()

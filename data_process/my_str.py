@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from collections import Iterable
-from my_lib import udict
+from my_lib import udict, oset
 
 re_num = re.compile('\d+')
 re_eng = re.compile('[a-zA-Z]+')
@@ -156,13 +156,13 @@ class BigPart(dict):
         return True is not broken, False have probem
         '''
         keys = list(self.keys())
-        k_cls = map(lambda x:x.__class__, keys) #value of Enum
-        try:
-            kcls1 = next(k_cls)
-        except StopIteration:
+        if len(keys) > 0:
+            k_iter = iter(keys)
+            k_cls1 = next(k_iter).__class__
+            for k in k_iter:
+                assert k.__class__ == k_cls1
+        else:
             return
-        for i in k_cls:
-            assert i == kcls1
         key_v = list(map(lambda x:x.value, keys)) #value of Enum
         key_v.sort()
         if len(key_v) >= 2:
@@ -170,7 +170,7 @@ class BigPart(dict):
                 if i0+1 != i1:
                     key_n = list(map(lambda x:x.name, keys)) #name of Enum
                     raise ValueError('found keys:{}, but not {}'
-                                     .format(key_n, kcls1(i1)))
+                                     .format(key_n, k_cls1(i1)))
     
     def check_unused_char(self, allow, disallow):
         if self.span is not None:
@@ -310,11 +310,6 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
         don't add other char if 'O' in str, is invaild
         char not in both allow and disallow, add to disallow for later call.
         '''
-        class oset(set):
-            def __init__(self, set0):
-                super().__init__(set0)
-            def __contains__(self, x):
-                return not super().__contains__(x)
         if search_span is None:
             search_span = (0, len(self.in_str))
         #get allow and disallow set
