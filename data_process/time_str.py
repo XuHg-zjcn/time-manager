@@ -387,7 +387,7 @@ str :{}\ndate:{}\ntime:{}'
         for fmt,my_od in ut_fmts.items():
             skip = False    #append in rm_i
             ok_fills = {}
-            for nj,uup in enumerate(self.unused_parts.subset['num']):
+            for uup in self.unused_parts.subset['num']:
                 lr = find_range_can_push(my_od, uup)
                 if lr is None:
                     rm_fmt.append(fmt)
