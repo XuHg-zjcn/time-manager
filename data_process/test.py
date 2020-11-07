@@ -16,7 +16,9 @@ test_ok = ['Wed 28/Oct 12:34:56.123',
            '20201030','1030','10:30 a','30 10:30','10:22 PM',
            '2020 10 5', '2020/11/5', '2020-11/5', '2020 Nov 5',
            '2020 5 Nov', '5 Nov 2020', '5/Nov/2020', '5 Nov. 2020',
-           '202010','2020 10','2020 Nov', '2020Nov', '2020 Nov.']
+           '202010','2020 10','2020 Nov', '2020Nov', '2020 Nov.',
+           '2020 November 7', '7 November.2020', '7/Nov. 2020','7Nov2020',
+           '7/Nov/2020 18:56','2020.11.7']
 test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
 n_test = len(test_ok) + len(test_err)
 
@@ -58,13 +60,13 @@ def test_quiet(test_list):
     t_sum = 0
     for i in test_list:
         try:
-            t0 = time.time()
+            t0 = time.process_time()
             tstr = Time_str(i)
             tstr.process_check()
         except Exception:
             pass
         finally:
-            t1 = time.time()
+            t1 = time.process_time()
             t_sum += t1 - t0
     return t_sum
 
@@ -94,6 +96,6 @@ def test_check():
 #test codes
 if __name__ == '__main__':
     n_test = len(test_ok)+len(test_err)
-    #test_check()
+    test_check()
     cProfile.run('test_speed_Nrepeat()', sort=2)
     test_speed_Nrepeat()

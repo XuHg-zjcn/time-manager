@@ -6,9 +6,10 @@ from my_lib import udict, oset
 re_num = re.compile('\d+')
 re_eng = re.compile('[a-zA-Z]+')
 re_norm = re.compile('[-:,/ ]+')
+re_ext = re.compile(r'^[a-zA-Z]*\.?')
 
 nums = '0123456789'
-engs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+engs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.'
 norms= '-:.,/\ '
 sType = Enum('sType', 'num eng norm other')
 sType2exam = {sType.num:nums,   sType.eng:engs,   sType.norm:norms}
@@ -260,11 +261,18 @@ class My_str:
                    raise ValueError('found multipy {} in str'.format(sub))
             return index
         
+        #TODO check extend
+        def extend_word(self, start):
+            m = re_ext.match(self.in_str[start:])
+            return m.end(0)
+        
         ret = None
         for ni,sub in enumerate(subs):
             index = find_onlyone(self, sub)
             if index != -1:
-                span = (index, index+len(sub))
+                stop = index+len(sub)
+                stop += extend_word(self, stop)
+                span = (index, stop)
                 if ret is None:
                     value = ni+1 if puls1 else ni
                     ret = Part(self, span, sType.eng, value=value)

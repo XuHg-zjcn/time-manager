@@ -75,7 +75,6 @@ class Time_str(My_str):
     '''
     pseudo-code:
     find ll:mm:rr.ss, english
-    TODO: extend word
     find YYYYMMDD
     if time_found or flags.find_date42:
         find YYYY, MMDD
