@@ -10,6 +10,7 @@ from my_str import Part, BigPart, My_str
 from my_str import sType, sType2re_c, sName
 from my_lib import strictly_increasing, my_odict, uset
 from my_lib import mrange_dict, part_lr
+import functools
 
 weekday_full=['Monday','Tuesday','Wednesday','Thursday',
           'Friday','Saturday','Sunday']
@@ -100,10 +101,12 @@ class Time_str(My_str):
         a Part can only add to a BigPart
         Parts in BigPart are not repeating
     '''
-    def __init__(self, in_str, find_date42=True, default_n2v='hours'):
+    def __init__(self, in_str, fd642=True, default_n2v='hours', YY2=False):
         super().__init__(in_str)
         self.flags = [] #'time_found'
-        self.para = {'fd42':find_date42, 'dn2v':default_n2v}
+        self.para = {'dn2v':default_n2v}
+        if fd642: self.flags.append('fd642')
+        if YY2:   self.flags.append('YY2')
     
     def process_check(self):
         assert 'process OK' not in self.flags
@@ -120,10 +123,11 @@ class Time_str(My_str):
         self.english_month_weekday()
         self.parts = self.get_allsType_parts(sType2re_c, sName)
         self.find_date(self.num8)         #find YYYYMMDD
-        if 'time_found' in self.flags or self.para['fd42']:
+        if ('time_found' in self.flags) or ('fd642' in self.flags):
             self.find_date(self.num4)     #find YYYY, MMDD
-            self.onlyone_unused_num_as_date()
+            self.find_date(self.num6)     #find YYYYMM
             self.unused_chooise()
+            self.onlyone_unused_num_as_date()
         if len(self.date_p) > 0:
             self.set_time_p('hours')  #date found
         else:
@@ -164,7 +168,29 @@ class Time_str(My_str):
         if len(match) == 8:
             self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
             self.date_p[UType.month] = Part(self, (s+4, s+6), sType.num)
-            self.date_p[UType.day  ] = Part(self, (s+6, e),   sType.num)
+            self.date_p[UType.day  ] = Part(self, (s+6, e  ),   sType.num)
+            return True
+        return False
+    
+    def num6(self, part):
+        def YYYYMM(self, s, e):
+            self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
+            self.date_p[UType.month] = Part(self, (s+4, e  ),   sType.num)
+        def YYMMDD(self, s, e):
+            self.date_p[UType.year ] = Part(self, (s,   s+2), sType.num)
+            self.date_p[UType.month] = Part(self, (s+2, s+4), sType.num)
+            self.date_p[UType.month] = Part(self, (s+4, e  ), sType.num)
+        s = part.span[0]
+        e = part.span[1]
+        match = part.match_str()
+        if len(match) == 6:
+            if 'YY2' in self.flags: 
+                if 1913<=int(match[:4])<2100:
+                    YYYYMM(self, s, e)
+                else:
+                    YYMMDD(self, s, e)
+            else:
+                YYYYMM(self, s, e)
             return True
         return False
     
@@ -175,7 +201,7 @@ class Time_str(My_str):
         inti = int(match)
         if len(match) == 4:
             if 1970<=inti<2050:
-                self.date_p[UType.year ] = Part(self, (s, e), sType.num)
+                self.date_p[UType.year ] = Part(self, (s, e  ), sType.num)
                 return True
             elif 101<=inti<=1231:
                 self.date_p[UType.month] = Part(self, (s, s+2), sType.num)
@@ -248,14 +274,13 @@ class Time_str(My_str):
             if d_k is not None:
                 self.time_p[d_k] = self.time_p.pop(s_k)
         self.flags.append('set_time_p')
-    
+
     def onlyone_unused_num_as_date(self):
-        oouu = self.parts['num'].onlyone_unused()
+        oouu = self.parts['num'].pop_onlyone_unused()
         if oouu is not None:
             #TODO: use pop inserted delete, not remove in part_set
-            oouu.delete()    #delete in UnusedParts and part_set
             self.date_p[UType.day] = oouu
-    
+
     def check_bigparts_not_overlapped(self):
         if len(self.date_p)>=1 and len(self.time_p)>=1:
             date_time = self.date_p.span[1] <= self.time_p.span[0]
@@ -278,8 +303,8 @@ str :{}\ndate:{}\ntime:{}'
             e = s
             while dt_paras[e] is not None and e < 6:
                 e += 1
-            if e - s < 2:
-                raise ValueError('vaild item less than 2:\n{}'
+            if e - s < 3:
+                raise ValueError('vaild item less than 3:\n{}'
                                  .format(dt_paras))
             return s,e
         
@@ -317,7 +342,7 @@ str :{}\ndate:{}\ntime:{}'
                             dt_obj.strftime('%Y-%m-%d %A')))
         return dt_obj
     
-    def unused_chooise(self, formats=['YMD', 'DMY']):
+    def unused_chooise(self, formats=['YMD', 'DMY', 'YM']):
         ''' D  M  Y-<      allows
             Y  M  D |
         n1 =|--|--|-^
@@ -368,7 +393,7 @@ str :{}\ndate:{}\ntime:{}'
         for fmt,my_od in ut_fmts.items():
             skip = False    #append in rm_i
             ok_fills = {}
-            for uup in self.parts['num']:
+            for nj,uup in enumerate(self.parts['num']):
                 lr = find_range_can_push(my_od, uup)
                 if lr is None:
                     rm_fmt.append(fmt)
@@ -377,12 +402,22 @@ str :{}\ndate:{}\ntime:{}'
                 else:
                     if lr not in ok_fills:
                         ok_fills[lr] = []
-                    ok_fills[lr].append(part_lr(fmt, uup, lr))
+                    ok_fills[lr].append(part_lr(fmt, uup, nj, lr))
             if skip:
                 continue
             else:
                 OK_fmts[fmt] = ok_fills
         for i in rm_fmt: ut_fmts.pop(i)
+        
+        #remove lr place != num of part_lr
+        rm_fmt = []
+        for fmt,d_lr2plr in OK_fmts.items():
+            for lr,plrs in d_lr2plr.items():
+                dlr = lr[1]-lr[0]
+                n_plr = len(plrs)
+                if dlr != n_plr:
+                    rm_fmt.append(fmt)
+        for i in rm_fmt: OK_fmts.pop(i)
         '''
          0   1  2  3  4
         left         right
@@ -398,7 +433,7 @@ str :{}\ndate:{}\ntime:{}'
             fmt = list(OK_fmts.keys())[0]
             fills_dict = list(OK_fmts.values())[0]
             mr_dict = mrange_dict(fills_dict)
-            fill_stat = mr_dict.fill(self.date_p, ut_fmts[fmt])
+            mr_dict.fill(self.date_p, ut_fmts[fmt], self.parts['num'])
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
@@ -407,7 +442,7 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
             t0 = time.time()
             tstr = Time_str(i)
             tstr.process_check()
-            datetime = tstr.as_datetime()
+            #dt_obj = tstr.as_datetime()
         except Exception as e:
             t1 = time.time()
             tstr.print_str_use_status('v')
@@ -423,7 +458,7 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
             print('date:', tstr.date_p)
             print('time:', tstr.time_p)
             err_happend = False
-            print('datetime out:',datetime)
+            #print('datetime out:',dt_obj)
             print('no error')
         finally:
             t_sum += t1 - t0
@@ -448,5 +483,5 @@ if __name__ == '__main__':
     print('##########test_ok, should no error!!!!!!!!!!')
     t_sum += test_a_list_str(test_ok, expect_err=False, print_traceback=True)
     print('##########test_err, should happend error each item!!!!!!!!!!')
-    t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
+    #t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
     print('total use {:.3f}ms'.format(t_sum*1000))

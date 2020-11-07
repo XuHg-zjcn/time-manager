@@ -71,9 +71,10 @@ class my_odict(dict):
         raise NotImplementedError('my_odict delete is forbidden')
 
 class part_lr:
-    def __init__(self, fmt, part, lr):
+    def __init__(self, fmt, part, part_i, lr):
         self.fmt = fmt
         self.part = part
+        self.part_i = part_i
         self.lr = lr
         self.l = lr[0]
         self.r = lr[1]
@@ -98,7 +99,7 @@ class mrange_dict(dict): #dict[Part.tuple] = (Part, l, r)
     def __init__(self, from_dict):
         super().__init__(from_dict)
     
-    def fill(self, date_p, my_odict):
+    def fill(self, date_p, my_odict, uuparts_list):
         for lr,plrs in self.items():  #a space can fill
             if lr[1] - lr[0] == len(plrs):
                 cp_plrs = plrs.copy()
@@ -107,4 +108,5 @@ class mrange_dict(dict): #dict[Part.tuple] = (Part, l, r)
                 ut_i = lr[0]
                 for plr in cp_plrs:
                     date_p[my_odict.klst[ut_i]] = plr.part
+                    uuparts_list.remove(plr.part)
                     ut_i += 1

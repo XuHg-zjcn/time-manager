@@ -23,6 +23,7 @@ class Part():
         self.mstr = mstr
         self.stype = self.check_stype(stype)
         self.value = self.get_value(value)
+        self.flags = set()
     
     def match_str(self):
         return self.mstr.in_str[self.span[0]:self.span[1]]
@@ -122,12 +123,17 @@ class BigPart(dict):
             super().__setitem__(key, value)
         else:
             self.part_objs.append(value)
-        #add set
-        if hasattr(value, 'poped'):
-            delattr(value, 'poped')  #Part obj poped
+         #Part obj in UnusedParts poped
+        if 'poped' in value.flags:
+            value.flags.remove('poped')
+            self.mstr.unused_part_set.remove(value.get_tuple())
+        #Part obj in BigPart poped
+        if 'BigPart poped' in value.flags:
+            value.flags.remove('BigPart poped')
         else:
             self.mstr.part_set.add(value.get_tuple())
             value.set_str_used()
+            
         #update self.span
         if self.span is None:
             self.span = list(value.span)
@@ -140,9 +146,9 @@ class BigPart(dict):
             value.value = value.get_value(None)
     
     def pop(self, key):
-        value = super().pop(key)
-        value.poped = True
-        return value
+        part = super().pop(key)
+        part.flags.add('BigPart poped')
+        return part
     
     def check_breakpoint(self):
         #TODO: raise show last+1
@@ -188,22 +194,9 @@ class UnusedParts(list):
         self.mstr.unused_part_set.add(p_tuple)
         super().append(part)
     
-    def __getitem_delable(self, s):
-        def delete():
-            if v.deleted == True:
-                raise RuntimeError('UnusedParts item already delete')
-            self.delete(v.s)
-            v.deleted = True
-        
-        v = super().__getitem__(s)
-        v.deleted = False
-        v.s = s
-        v.delete = delete
-        return v
-    
-    def onlyone_unused(self):
+    def pop_onlyone_unused(self):
         if len(self) == 1:
-            return self.__getitem_delable(0)
+            return self.pop(0)
         else:
             return None
     
@@ -213,13 +206,22 @@ class UnusedParts(list):
             ret += str(i)
         return ret
     
-    def delete(self, index):
+    def pop(self, index):
         '''
         delete for Part obj in UnusedParts to BigPart,
         part can spilt some parts
         '''
-        p = self.pop(index)
-        p_tuple = p.get_tuple()
+        part = super().pop(index)
+        part.flags.add('poped')
+        return part
+    
+    def remove(self, obj):
+        obj.flags.add('poped')
+        super().remove(obj)
+    
+    def delete(self, index):
+        part = self.pop(index)
+        p_tuple = part.get_tuple()
         self.mstr.unused_part_set.remove(p_tuple)
 
 class My_str:
@@ -399,7 +401,7 @@ not all unused\n{}'.format(str_used.name, self.mark(span)))
         n_used = 0
         for used_i in self.used:
             marks += {False:' ', True:mark}[used_i]
-            n_used += 1
+            n_used += used_i
         len_str = len(self.in_str)
         unused = len_str - n_used
         if mark == '^':
