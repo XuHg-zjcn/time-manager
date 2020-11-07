@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import datetime
 import re
 from enum import Enum
@@ -87,8 +84,8 @@ class Time_str(My_str):
         set_time_p(n2v='hours')
     else:
         set_time_p(n2v=default_n2v)
-  TODO: check_result
-  TODO: as datetime object
+    check_result
+    as datetime object
     
     part add rule:
         BigPart no breakpoint,           exam: YYYY//DD without month
@@ -130,6 +127,7 @@ class Time_str(My_str):
     
     def check(self):
         self.date_p.check_breakpoint()
+        self.time_p.check_breakpoint()
         #TODO: check time_p
         self.check_bigparts_not_overlapped()
         self.date_p.check_unused_char('-./ ', 'O')

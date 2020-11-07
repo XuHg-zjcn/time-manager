@@ -150,23 +150,27 @@ class BigPart(dict):
         return part
     
     def check_breakpoint(self):
-        #TODO: raise show last+1
         '''
         check is middle broken, 
         such as found HH::SS without minute, YYYY//DD without month
         return True is not broken, False have probem
         '''
         keys = list(self.keys())
+        k_cls = map(lambda x:x.__class__, keys) #value of Enum
+        try:
+            kcls1 = next(k_cls)
+        except StopIteration:
+            return
+        for i in k_cls:
+            assert i == kcls1
         key_v = list(map(lambda x:x.value, keys)) #value of Enum
         key_v.sort()
         if len(key_v) >= 2:
-            last = key_v[0]  #TODO: use zip
-            for i in key_v[1:]:
-                if i != last+1:
+            for i0,i1 in zip(key_v, key_v[1:]):
+                if i0+1 != i1:
                     key_n = list(map(lambda x:x.name, keys)) #name of Enum
                     raise ValueError('found keys:{}, but not {}'
-                                     .format(key_n, last+1))
-                last = i
+                                     .format(key_n, kcls1(i1)))
     
     def check_unused_char(self, allow, disallow):
         if self.span is not None:
@@ -235,19 +239,6 @@ class My_str:
         ret += ' '*index+'^'*num+' '*N_end_space
         return ret
     
-    def find_onlyone(self, sub):
-        """
-        find only one sub str or not contain.
-        @para sub: the sub str
-        @return: found index, -1 if not contain
-        """
-        index = self.in_str.find(sub)
-        if index != -1:         #found
-           more = self.in_str.find(sub, index+len(sub))
-           if more != -1:       #found more
-               raise ValueError('found multipy {} in str'.format(sub))
-        return index
-    
     def find_strs(self, subs, puls1):
         """
         find which sub in in_str, only one sub can find, else raise ValueError
@@ -256,9 +247,22 @@ class My_str:
         @ret sub_i: the index of sub, when found the Part
         @ret ret_Part: found Part
         """
+        def find_onlyone(self, sub):
+            """
+            find only one sub str or not contain.
+            @para sub: the sub str
+            @return: found index, -1 if not contain
+            """
+            index = self.in_str.find(sub)
+            if index != -1:         #found
+               more = self.in_str.find(sub, index+len(sub))
+               if more != -1:       #found more
+                   raise ValueError('found multipy {} in str'.format(sub))
+            return index
+        
         ret = None
         for ni,sub in enumerate(subs):
-            index = self.find_onlyone(sub)
+            index = find_onlyone(self, sub)
             if index != -1:
                 span = (index, index+len(sub))
                 if ret is None:
