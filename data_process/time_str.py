@@ -446,7 +446,7 @@ if __name__ == '__main__':
     test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
     os.system('clear')
     print('##########test_ok, should no error!!!!!!!!!!')
-    t_sum += test_a_list_str(['2020/11/5'], expect_err=False, print_traceback=True)
+    t_sum += test_a_list_str(test_ok, expect_err=False, print_traceback=True)
     print('##########test_err, should happend error each item!!!!!!!!!!')
-    #t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
+    t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
     print('total use {:.3f}ms'.format(t_sum*1000))
