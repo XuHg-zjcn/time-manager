@@ -15,7 +15,7 @@ sType = Enum('sType', 'num eng norm other')
 StrUsed = Enum('IsUsed', 'unused partused allused')
 sType2exam = {sType.num: nums,   sType.eng: engs,   sType.norm: norms}
 sType2re_c = {sType.num: re_num, sType.eng: re_eng, sType.norm: re_norm}
-
+sType2re_c2 = {sType.num: re_num, sType.eng: re_eng}
 
 class Part:
     """Part for date and time.

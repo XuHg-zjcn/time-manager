@@ -57,6 +57,9 @@ class udict(dict):
         else:
             self.subset = None
         self.pareset = pare
+        # if subset not None, forbidden add to self
+        if nadd is None:
+            nadd = ssn is not None
         self.no_add = nadd
         super().__init__()
 
@@ -70,29 +73,30 @@ class udict(dict):
         if self.pareset is not None:
             self.pareset.add(part, inner=True)
 
-    def remove(self, part):
+    def remove(self, part, rm_pare=True, rm_sub=True):
         if isinstance(part, tuple):
             part = self[part]
         ptup = tuple(part)
         if hasattr(self, 'uiter'):
             self.uiter.skips.add(ptup)
             return
-        self.pop(ptup)
-        if self.subset is not None:
+        if ptup in self.keys():
+            self.pop(ptup)
+        # remove from subset
+        if rm_sub and self.subset is not None:
             for ss in self.subset.values():
                 if part in ss:
-                    ss.remove(part)
-        if 'udict subset' not in part.flags:
-            if self.pareset is not None:
-                self.pareset.remove(part)
-        else:
-            part.flags.remove('udict subset')
+                    ss.remove(part, rm_pare=False)
+        # remove from parent
+        if rm_pare and self.pareset is not None:
+            self.pareset.remove(part, rm_sub=False)
 
     def add_subset(self, name, subset):
         assert isinstance(subset, udict)
+        for part in subset.values():
+            self.add(part, inner=True)
+        subset.pareset = self
         self.subset[name] = subset
-        for i in subset:
-            self.add(i, inner=True)
 
     def __contains__(self, part):
         if not isinstance(part, Hashable) and isinstance(part, Iterable):
@@ -190,9 +194,9 @@ class parts_insec:
 class mrange_dict(dict): #dict[Part.tuple] = [plr1, plr2]
     def __init__(self, from_dict):
         super().__init__(from_dict)
-    
-    def fill(self, date_p, my_odict, uuparts_list):
-        for lr,plrs in self.items():  #a space can fill
+
+    def fill(self, date_p, my_odict):
+        for lr, plrs in self.items():  #a space can fill
             if lr[1] - lr[0] == len(plrs):
                 cp_plrs = plrs.copy()
                 key1 = cmp_to_key(lambda x,y:x.part < y.part)

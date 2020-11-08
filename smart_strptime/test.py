@@ -13,13 +13,14 @@ from time_str import Time_str
 import traceback
 import cProfile
 test_ok = ['Wed 28/Oct 12:34:56.123',
-           '20201030','1030','10:30 a','30 10:30','10:22 PM',
+           '20201030','1030','30 10:30','10:22 PM',
            '2020 10 5', '2020/11/5', '2020-11/5', '2020 Nov 5',
            '2020 5 Nov', '5 Nov 2020', '5/Nov/2020', '5 Nov. 2020',
            '202010','2020 10','2020 Nov', '2020Nov', '2020 Nov.',
            '2020 November 7', '7 November.2020', '7/Nov. 2020','7Nov2020',
            '7/Nov/2020 18:56','2020.11.7','201107','197001','191015','220202']
-test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct']
+test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct',
+            '10:30 a']
 n_test = len(test_ok) + len(test_err)
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
@@ -97,5 +98,5 @@ def test_check():
 if __name__ == '__main__':
     n_test = len(test_ok)+len(test_err)
     test_check()
-    cProfile.run('test_speed_Nrepeat()', sort=1)
+    #cProfile.run('test_speed_Nrepeat()', sort=1)
     test_speed_Nrepeat()

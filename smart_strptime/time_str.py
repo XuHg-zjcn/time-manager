@@ -2,7 +2,7 @@ import datetime
 import re
 from enum import Enum
 from my_str import Part, BigPart, My_str
-from my_str import sType, sType2re_c
+from my_str import sType, sType2re_c2
 from my_lib import strictly_increasing, my_odict
 from my_lib import mrange_dict, part_lr
 from my_lib import span
@@ -134,7 +134,7 @@ class Time_str(My_str):
         """Process input str."""
         self.time_lmrs()
         self.english_month_weekday_ampm()
-        self.get_allsType_parts(sType2re_c)
+        self.get_allsType_parts(sType2re_c2)
         self.find_date(8)         # find YYYYMMDD
         if ('time_found' in self.flags) or ('fd642' in self.flags):
             self.find_date(4)     # find YYYY, MMDD
@@ -156,6 +156,8 @@ class Time_str(My_str):
         self.date_p.check_unused_char('-./ ', 'O')
         self.time_p.check_unused_char(' ', 'O')
         self.check_unused_char(' ', ':-./')
+        assert len(self.unused_parts) == 0
+        assert all(self.used)
 
     def english_month_weekday_ampm(self):
         """find english str"""
@@ -203,11 +205,10 @@ class Time_str(My_str):
             if e-s == 4:
                 if 1970 <= inti < 2050:
                     self.date_p[UType.year ] = Part(self, (s, e  ), sType.num)
-                    return True
                 elif 101 <= inti <= 1231:
                     self.date_p[UType.month] = Part(self, (s, s+2), sType.num)
                     self.date_p[UType.day  ] = Part(self, (s+2, e), sType.num)
-                    return True
+                return True
             return False
 
         nums = self.unused_parts.subset['num']
@@ -496,7 +497,7 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
             fmt = list(OK_fmts.keys())[0]
             fills_dict = list(OK_fmts.values())[0]
             mr_dict = mrange_dict(fills_dict)
-            mr_dict.fill(self.date_p, fmt2myOD[fmt], nums)
+            mr_dict.fill(self.date_p, fmt2myOD[fmt])
 
         fmt2myOD = get_fmt2myOD(formats)
         remove_unmatched_format(fmt2myOD)  # remove in fmt2myOD
