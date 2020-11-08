@@ -10,6 +10,24 @@ class oset(set):
     def __contains__(self, x):
         return not super().__contains__(x)
 
+
+class span(tuple):
+    """Span tuple."""
+
+    def __new__(cls, sta, end):
+        """Create span tuple."""
+        return super().__new__(cls, (sta, end))
+
+    @property
+    def s(self):
+        """Get start of span."""
+        return self[0]
+
+    @property
+    def e(self):
+        """Get end of span."""
+        return self[1]
+
 class uiter:
     def __init__(self, iter_from, ud):
         self.skips = set()

@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from collections import Iterable
-from my_lib import udict, oset
+from my_lib import udict, oset, span
 
 re_num = re.compile(r'\d+')
 re_eng = re.compile(r'[a-zA-Z]+')
@@ -172,6 +172,7 @@ class BigPart(dict):
             super().__setitem__(ut, part)
         else:  # normal char
             self.norms.append(part)
+
         # Part obj in unused_part
         if part in self.mstr.unused_parts:
             self.mstr.unused_parts.remove(part)
@@ -384,7 +385,7 @@ class My_str:
         spans = []
         for i in range(found.lastindex+1):
             m_sp = found.span(i)
-            sp1 = (m_sp[0]+sta, m_sp[1]+sta)
+            sp1 = span(m_sp[0]+sta, m_sp[1]+sta)
             spans.append(sp1)
         return found, spans
 
