@@ -149,7 +149,7 @@ class Time_str(My_str):
         for part in nums:
             s = part.span[0]
             e = part.span[1]
-            match = part.match_str()
+            match = part.part_str()
             inti = int(match)
             if func(part, s, e, inti) == True:
                 nums.remove(part)
@@ -198,9 +198,9 @@ class Time_str(My_str):
         return Left:Midd:Right.subsec
         if not found Midd or subsec, return None
         """
-        m = self.search(re_lmrs, isRaise=False)
+        m, _ = self.search(re_lmrs)
         if m is None:
-            return None
+            return
         self.flags.append('time_found')
         #append Parts to self.time_parts
         self.time_p[UType.left] = Part(self, m.span(2),              sType.num)
@@ -321,7 +321,7 @@ str :{}\ndate:{}\ntime:{}'
         dt_obj = datetime.datetime(*dt_paras)
         if U.weekday in d and d[U.WD].value != dt_obj.weekday():
             raise ValueError('weekday in str is {}, but infer by date is {}'
-                             .format(d[U.WD].match_str(), 
+                             .format(d[U.WD].part_str(),
                             dt_obj.strftime('%Y-%m-%d %A')))
         return dt_obj
     
