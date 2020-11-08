@@ -200,10 +200,11 @@ class BigPart(dict):
         part.flags.add('BigPart poped')
         return part
 
-    def check_breakpoint(self):
+    def check_breakpoint(self, skips=set()):
         """Check is not middle broken.
 
         such as found HH::SS without minute, YYYY//DD without month
+        @para skips: must Enum.value
         @raise ValueError: found problem
         """
         keys = list(self.keys())
@@ -218,7 +219,7 @@ class BigPart(dict):
         key_v.sort()
         if len(key_v) >= 2:
             for i0, i1 in zip(key_v, key_v[1:]):
-                if i0+1 != i1:
+                if i0+1 != i1 and i1 not in skips:
                     key_n = list(map(lambda x: x.name, keys))  # name of Enum
                     raise ValueError('found keys:{}, but not {}'
                                      .format(key_n, k_cls1(i1)))
@@ -266,8 +267,9 @@ class My_str:
         self.in_str = in_str
         self.used = [False]*len(in_str)         # only modify by set_str_used
         self.disallow_unused_chars = ''
-        self.part_set = udict()                     # for two BigPart
-        self.unused_parts = udict(subset_names=[])  # for all unused parts obj
+        self.part_set = udict()                       # for two BigPart
+        self.unused_parts = udict(ssn=[], nadd=True)  # for unused parts obj
+        self.flags = set()
 
     def get_allsType_parts(self, sType2re_c):
         """Search a group re_compile.

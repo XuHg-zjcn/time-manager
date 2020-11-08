@@ -42,29 +42,35 @@ class UType(Enum):
     year = 0
     month = 1
     day = 2
-    weekday = 3  # skip in check_breakpoint
+    Nweek = 3    # N weeks from new year
+    weekday = 4  # skip in check_breakpoint
     Y = 0
     M = 1
     D = 2
-    WD = 3
+    NW = 3
+    WD = 4
     # time
-    ampm = 4     # skip in check_breakpoint
-    hours = 5
-    minute = 6
-    second = 7
-    subsec = 8
-    ap = 4
-    h = 5
-    m = 6
-    s = 7
-    ss = 8
+    ampm = 5     # skip in check_breakpoint
+    hours = 6
+    minute = 7
+    second = 8
+    subsec = 9
+    milisec = 10
+    microsec = 11
+    ap = 5
+    h = 6
+    m = 7
+    s = 8
+    ss = 9
+    ms = 10
+    us = 11
     # time lmr
-    left = 9
-    midd = 10
-    right = 11
-    lt = 9
-    md = 10
-    rt = 11
+    left = 12
+    midd = 13
+    right = 14
+    lt = 12
+    md = 13
+    rt = 14
 
 
 def dt(U):
@@ -108,7 +114,7 @@ class Time_str(My_str):
 
     def __init__(self, in_str, fd642=True, default_n2v='hours', YY2=True):
         super().__init__(in_str)
-        self.flags = set()  # 'time_found', 'fd642', 'YY2', 'process OK'
+        # self.flags 'time_found', 'fd642', 'YY2', 'process OK'
         self.para = {'dn2v': default_n2v}  # default time format
         if fd642:
             self.flags.add('fd642')  # find 6,4,2 digts without time found
@@ -123,7 +129,7 @@ class Time_str(My_str):
         self.process()
         self.check()
         self.flags.add('process OK')
-        
+
     def process(self):
         """Process input str."""
         self.time_lmrs()
@@ -135,14 +141,15 @@ class Time_str(My_str):
             self.find_date(6)     # find YYYYMM, YYMMDD
             self.unused_chooise()
             self.onlyone_unused_num_as_day()
-        if len(self.date_p) > 0:          # any about date found
+        if len(self.date_p) > 0:  # any about date found
             self.set_time_p('hours')
         else:
             self.set_time_p(self.para['dn2v'])
 
     def check(self):
         """Check process result."""
-        self.date_p.check_breakpoint()
+        date_skips = {UType.Nweek.value, UType.weekday.value}
+        self.date_p.check_breakpoint(date_skips)
         self.time_p.check_breakpoint()
         # TODO: check time_p
         self.check_bigparts_not_overlapped()

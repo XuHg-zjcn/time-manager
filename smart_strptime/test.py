@@ -44,9 +44,9 @@ def test_a_list_str(test_list, expect_err=False, print_traceback=True):
             tstr.print_str_use_status('v')
             print('date:', tstr.date_p)
             print('time:', tstr.time_p)
-            err_happend = False
             #print('datetime out:',dt_obj)
             print('no error')
+            err_happend = False
         finally:
             t_sum += t1 - t0
             if err_happend != expect_err:

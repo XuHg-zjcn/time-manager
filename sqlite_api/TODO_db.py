@@ -4,9 +4,13 @@ import time
 import datetime
 import numpy as np
 
+
 class TreeItem:
+    """Plan tree node."""
+    
     def __init__(self, pares=None, subs=None, reqs=None):
-        def process(x):   #convert x to numpy array
+        def process(x):
+            """Convert x to numpy array."""
             if x is None:
                 return np.array([], np.uint64)
             if isinstance(x, int):
@@ -17,13 +21,14 @@ class TreeItem:
                 return np.frombuffer(x, np.uint64)
             else:
                 raise TypeError('input type must int, list or bytes')
-        in_datas = [pares, subs, reqs]
-        self.datas = []
-        for i in in_datas:
-            self.datas.append(process(i))
-    
+        self.pares = process(pares)
+        self.subs = process(subs)
+        self.reqs = process(reqs)
+
     def db_BLOBs(self):
-        return tuple(map(lambda x:x.tostring(), self.datas))
+        """Get sqlite db BLOB."""
+        datas = [self.pares, self.subs, self.reqs]
+        return tuple(map(lambda x: x.tostring(), datas))
 
 class PlanTime:
     def __init__(self, sta_time='now', end_time='now', use_time=0, sub_time=0):

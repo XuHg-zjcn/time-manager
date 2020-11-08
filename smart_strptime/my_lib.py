@@ -17,7 +17,10 @@ class span(tuple):
     def __new__(cls, sta, end):
         """Create span tuple."""
         return super().__new__(cls, (sta, end))
-
+    
+    def __len__(self):
+        return self[1] - self[0]
+    
     @property
     def s(self):
         """Get start of span."""
@@ -45,74 +48,57 @@ class uiter:
             return next(self)
         return n[1]
 
-class udict(dict):        
-    uflag = 'udict inner'
-    def __init__(self, subset_names=None, pareset=None, read_only=False):
-        if subset_names is not None:
+class udict(dict):
+    def __init__(self, ssn=None, pare=None, nadd=None):
+        if ssn is not None:
             self.subset = {} #dict key:name, value:subset(udict)
-            for name in subset_names:
+            for name in ssn:
                 self.subset[name] = udict(pareset=self)
         else:
             self.subset = None
-        self.pareset = pareset
-        self.read_only = read_only
+        self.pareset = pare
+        self.no_add = nadd
         super().__init__()
-        self.flags = set()
-    
-    def ro_test(self, part):
-        has_uflag = udict.uflag in part.flags
-        if has_uflag:
-            part.flags.remove(udict.uflag)
-        if self.read_only and (not has_uflag):
+
+    def add(self, part, inner=False):
+        if self.no_add and not inner:
             raise RuntimeError('udict read-only, please add to subset')
-    
-    def apply_pare(self, fn, part):
-        if self.pareset is not None:
-            part.flags.add(udict.uflag)
-            getattr(self.pareset, fn)(part)
-    
-    def add(self, part):
-        self.ro_test(part)
         ptup = tuple(part)
         if ptup in self.keys():
             raise KeyError('part {} already in set:\n{}'.format(part, self))
         self[ptup] = part
-        self.apply_pare('add', part)
+        if self.pareset is not None:
+            self.pareset.add(part, inner=True)
 
-    
     def remove(self, part):
         if isinstance(part, tuple):
             part = self[part]
         ptup = tuple(part)
-        self.ro_test(part)
         if hasattr(self, 'uiter'):
             self.uiter.skips.add(ptup)
             return
         self.pop(ptup)
         if self.subset is not None:
             for ss in self.subset.values():
-                part.flags.add(udict.uflag)
-                part.flags.add('udict subset')
-                try:
+                if part in ss:
                     ss.remove(part)
-                except Exception: pass
-                else:             break
         if 'udict subset' not in part.flags:
-            self.apply_pare('remove', part)
+            if self.pareset is not None:
+                self.pareset.remove(part)
         else:
             part.flags.remove('udict subset')
-    
+
     def add_subset(self, name, subset):
         assert isinstance(subset, udict)
         self.subset[name] = subset
         for i in subset:
-            self.add(i)
-    
-    def __contains__(self, obj):
-        if not isinstance(obj, Hashable) and isinstance(obj, Iterable):
-            obj = tuple(obj)
-        return super().__contains__(obj)
-    
+            self.add(i, inner=True)
+
+    def __contains__(self, part):
+        if not isinstance(part, Hashable) and isinstance(part, Iterable):
+            ptup = tuple(part)
+        return super().__contains__(ptup)
+
     def __iter__(self):  #iter dict value(Part objs)
         self.uiter = uiter(self.items().__iter__(), self)
         return self.uiter
@@ -187,6 +173,7 @@ class part_lr:
         if max(self.l, other.l) > min(self.r, other.r):
             raise RuntimeError('part_lr overlapped')
         return self.l <= other.l or self.r <= other.r
+
 def intersection(i, j):
     sta = max(i.l, j.l)
     end = min(i.r, j.r)
