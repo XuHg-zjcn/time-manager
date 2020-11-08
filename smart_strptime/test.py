@@ -98,5 +98,5 @@ def test_check():
 if __name__ == '__main__':
     n_test = len(test_ok)+len(test_err)
     test_check()
-    #cProfile.run('test_speed_Nrepeat()', sort=1)
+    cProfile.run('test_speed_Nrepeat()', sort=2)
     test_speed_Nrepeat()

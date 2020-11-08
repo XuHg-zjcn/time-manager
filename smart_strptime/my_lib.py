@@ -82,6 +82,10 @@ class udict(dict):
             return
         if ptup in self.keys():
             self.pop(ptup)
+        elif (not rm_pare) or (not rm_sub):
+            pass
+        else:
+            raise KeyError('odict remove part: {}'.format(part))
         # remove from subset
         if rm_sub and self.subset is not None:
             for ss in self.subset.values():
