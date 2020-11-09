@@ -28,8 +28,17 @@ class Part:
     flags: flags in running
     """
 
-    def __init__(self, mstr, span: tuple, stype=None, value=None):
-        self.span = span
+    def __init__(self, mstr, span, stype=None, vspan=None, value=None):
+        """Init part object.
+
+        @para mstr: main str My_str obj
+        @para span: all span of part
+        @para stype: check sType
+        @para vspan: span of value, defalut same with span
+        @para value: english str value or check value
+        """
+        self.span = span                               # all span
+        self.vspan = span if vspan is None else vspan  # value span
         self.mstr = mstr
         self.stype = self.check_stype(stype)
         self.value = self.get_value(value)
@@ -39,6 +48,10 @@ class Part:
         """Slice main str by span."""
         return self.mstr.in_str[self.span[0]:self.span[1]]
 
+    def part_vstr(self):
+        """Slice main str by span."""
+        return self.mstr.in_str[self.vspan[0]:self.vspan[1]]
+
     def check_stype(self, stype):
         """Check input stype is correct.
 
@@ -46,7 +59,7 @@ class Part:
         @raise RuntimeError: stype via detect and input is not same
         @return: sType via detect, and same with input
         """
-        s = self.part_str()
+        s = self.part_vstr()
         gstype = None
         for key in sType2exam:                            # detce first char
             if s[0] in sType2exam[key]:
@@ -57,12 +70,12 @@ class Part:
         for c in s[1:]:                                   # check others char
             if c not in sType2exam[gstype]:
                 raise RuntimeError('check_stype faild {},\n{}'
-                                   .format(gstype, self.mstr.mark(self.span)))
+                                   .format(gstype, self.mstr.mark(self.vspan)))
         assert gstype is not None
         if stype is not None and stype != gstype:
             raise RuntimeError('stype:{} != gstype:{}\n{}'
                                .format(stype, gstype,
-                                       self.mstr.mark(self.span)))
+                                       self.mstr.mark(self.vspan)))
         return gstype
 
     def get_value(self, v):
@@ -71,7 +84,7 @@ class Part:
         @para v: defalut value if value can't found.
         @return: the get value result, add to obj attr.
         """
-        s = self.part_str()
+        s = self.part_vstr()
         if v == 'no find':
             value = None
         elif self.stype == sType.num:

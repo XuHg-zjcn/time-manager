@@ -18,7 +18,7 @@ class span(tuple):
         """Create span tuple."""
         return super().__new__(cls, (sta, end))
     
-    def __len__(self):
+    def len_ab(self):
         return self[1] - self[0]
     
     @property

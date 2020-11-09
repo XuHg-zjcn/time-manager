@@ -215,7 +215,7 @@ class Time_str(My_str):
         for part in nums:
             s = part.span[0]
             e = part.span[1]
-            match = part.part_str()
+            match = part.part_vstr()
             inti = int(match)
 
             func = {8: num8, 6: num6, 4: num4}[digts]
