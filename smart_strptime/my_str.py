@@ -393,29 +393,24 @@ class My_str:
 
     def is_str_used(self, span):
         """Get str use status of span."""
-        N_used = 0
-        for i in range(*span):
-            if self.used[i]:
-                N_used += 1
-        if N_used == 0:
-            str_used = StrUsed.unused
-        elif N_used == span[1] - span[0]:
-            str_used = StrUsed.allused
+        used = self.used[span[0]:span[1]]
+        if all(used):
+            return StrUsed.allused
+        elif any(used):
+            return StrUsed.partused
         else:
-            str_used = StrUsed.partused
-        return str_used
+            return StrUsed.unused
 
     # only call in BigPart.__setitem__, pack by Part.set_str_used,
     # and check_unused_char
-    def set_str_used(self, span):
+    def set_str_used(self, span, check=True):
         """Set span used each character.
 
         @raise RuntimeError: has already used char in span
         """
-        str_used = self.is_str_used(span)
-        if str_used != StrUsed.unused:
+        if check and self.is_str_used(span) != StrUsed.unused:
             raise RuntimeError('set_str_used has already used char in span\n{}'
-                               .format(str_used.name, self.mark(span)))
+                               .format(self.mark(span)))
         for i in range(*span):
             self.used[i] = True
 

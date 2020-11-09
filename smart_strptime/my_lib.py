@@ -44,12 +44,10 @@ class uiter:
             for skip in self.skips:
                 self.ud.remove(skip)
             raise StopIteration
-        if n[0] in self.skips:
-            return next(self)
         return n[1]
 
 class udict(dict):
-    def __init__(self, ssn=None, pare=None, nadd=None):
+    def __init__(self, ssn=None, pare=None, nadd=None, check_add=True):
         if ssn is not None:
             self.subset = {} #dict key:name, value:subset(udict)
             for name in ssn:
@@ -61,13 +59,14 @@ class udict(dict):
         if nadd is None:
             nadd = ssn is not None
         self.no_add = nadd
+        self.check_add = check_add
         super().__init__()
 
     def add(self, part, inner=False):
         if self.no_add and not inner:
             raise RuntimeError('udict read-only, please add to subset')
         ptup = tuple(part)
-        if ptup in self.keys():
+        if self.check_add and ptup in self.keys():
             raise KeyError('part {} already in set:\n{}'.format(part, self))
         self[ptup] = part
         if self.pareset is not None:
@@ -203,8 +202,7 @@ class mrange_dict(dict): #dict[Part.tuple] = [plr1, plr2]
         for lr, plrs in self.items():  #a space can fill
             if lr[1] - lr[0] == len(plrs):
                 cp_plrs = plrs.copy()
-                key1 = cmp_to_key(lambda x,y:x.part < y.part)
-                cp_plrs.sort(key=key1)  #part
+                cp_plrs.sort(key=lambda x: x.part)  # part
                 ut_i = lr[0]
                 for plr in cp_plrs:
                     date_p[my_odict.klst[ut_i]] = plr.part
