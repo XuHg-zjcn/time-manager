@@ -487,14 +487,14 @@ class My_str:
             return allow, disallow
 
         if sspan is None:
-            sspan = (0, None)
+            sspan = (0, len(self.in_str))
         sp_used = self.used[sspan[0]:sspan[1]]
         sp_str = self.in_str[sspan[0]:sspan[1]]
         # no continuous False, near two always has one True
         map_or = map(lambda x: x[0] or x[1], zip(sp_used, sp_used[1:]))
         if not all(map_or):
             raise ValueError('multiply unused char continuous\n{}'
-                             .format(self.mark(span)))
+                             .format(self.str_use_status('^', p_unused=True)))
         # check unused chars
         allow, dis = get_allow_dis_set(allow, disallow)
         for ni, i in enumerate(sp_used):
@@ -515,7 +515,7 @@ class My_str:
         # check_and_set_used(self, uuspan_list, allow, dis)
         # check and set_str_used
 
-    def str_use_status(self, mark):
+    def str_use_status(self, mark, p_unused=False):
         """Print main str use status.
 
         print mark symbol each used char, and count
@@ -531,7 +531,7 @@ class My_str:
         marks = ''
         n_used = 0
         for used_i in self.used:
-            marks += {False: ' ', True: mark}[used_i]
+            marks += {False: ' ', True: mark}[used_i^p_unused]
             n_used += used_i
         len_str = len(self.in_str)
         unused = len_str - n_used
@@ -540,8 +540,9 @@ class My_str:
             ret += 'str:|{}|\n     {}\n'.format(self.in_str, marks)
         else:
             ret += '     {}\nstr:|{}|\n'.format(marks, self.in_str)
-        ret += 'str use status: total={}, used={}, unused={}\n'\
-            .format(len_str, n_used, unused)
+        if not p_unused:
+            ret += 'str use status: total={}, used={}, unused={}\n'\
+                .format(len_str, n_used, unused)
         return ret
 
     def __repr__(self):
