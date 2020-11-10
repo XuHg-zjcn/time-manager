@@ -89,6 +89,3 @@ h:帮助, e:退出
         dtstr.process_check()
         dt_obj = dtstr.as_datetime()
         return dt_obj.timestamp()
-
-ti = Time_input()
-n = ti.input_str('n')

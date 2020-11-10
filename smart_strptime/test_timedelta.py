@@ -11,8 +11,8 @@ import sys
 sys.path.append("..")
 from smart_strptime import TimeDelta_str
 
-test_ok = ['1d 12:10', '12:34:12', '12m34s', '1h12m34s']
-test_err = ['1s 12:14', ' ', '']
+test_ok = ['1d 12:10', '12:34:12', '12m34s', '1h12m34s', '1m']
+test_err = ['1s 12:14', ' ', '', '1hh', '1hm']
 
 if __name__ == '__main__':
     bt = BaseTest(TimeDelta_str, test_ok, test_err)

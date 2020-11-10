@@ -73,10 +73,7 @@ class DateTime_str(lmrTime_str, Date_str):
         self.date_p.check_unused_char('-./ ', 'O')
         self.time_p.check_unused_char(' ', 'O')
         self.check_unused_char(' ', ':-./')
-        if len(self.unused_parts) != 0:
-            raise ValueError('has unused part')
-        if not all(self.used):
-            raise ValueError('not all char used')
+        super()._check()
 
     def __onlyone_unused_num_as_day(self):
         """Unused num onlyone, set it to day."""

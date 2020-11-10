@@ -69,6 +69,10 @@ class Part:
                 break
         if len(s) >= 2 and s[0] == '.' and s[1] in nums:  # detct float number
             gstype = sType.num
+        if gstype == sType.num and s.replace('.', '').isdecimal():
+            return gstype
+        if gstype == sType.eng and s.replace('.', '').isalpha():
+            return gstype
         for c in s[1:]:                                   # check others char
             if c not in sType2exam[gstype]:
                 raise RuntimeError('check_stype faild {},\n{}'
@@ -90,7 +94,7 @@ class Part:
         if v == 'no find':
             value = None
         elif self.stype == sType.num:
-            if s[0] == '.':
+            if '.' in s:
                 value = float(s)
             else:
                 value = int(s)
@@ -337,6 +341,12 @@ class My_str:
             self.unused_parts.add_subset(
                 stype.name, get_atype(self, re_i, stype))
 
+    def _check(self):
+        if len(self.unused_parts) != 0:
+            raise ValueError('has unused part')
+        if not all(self.used):
+            raise ValueError('not all char used')
+
     def mark(self, index, num=1, out_str=True):
         """Mark '^' range below orignal string.
 
@@ -487,6 +497,9 @@ class My_str:
                 if not u0 and u1:   # u0 not used, u1 used, as end of span
                     last_span[1] = i
                     uuspan_list.append(tuple(last_span))
+                    last_span = [0, 0]
+            if last_span != [0, 0]:
+                uuspan_list.append((last_span[0], len(used)))
             return uuspan_list
 
         def check_and_set_used(self, uuspan_list, allow, dis):

@@ -21,7 +21,7 @@ def re_comp_unit(name_spilt, allow_s=True):
     if number not found, only match unit
     number allow float
     """
-    re_template = r'(?i)(\d+(\.\d)?)\s{{0,2}}({0}{1})'
+    re_template = r'(?i)((\d+)?(\.\d+)?)\s{{0,2}}({0}{1})'
     ext = r'{0}({1})?'  # {0}:first letter, {1}:other letter
 
     def N_ext(lst):
@@ -59,11 +59,11 @@ class TimeDelta_str(lmrTime_str):
     def process_check(self):
         if 'process_check' in self.flags:
             raise RuntimeError('process_check already OK')
-        self.__process()
-        self.__check()
+        self._process()
+        self._check()
         self.flags.add('process_check_ok')
 
-    def __process(self):
+    def _process(self):
         """Process input str."""
         self.t_units = BigPart(self, 't_units', units.keys())
         super().process()
@@ -75,18 +75,21 @@ class TimeDelta_str(lmrTime_str):
             n2v = self.__get_n2v()
             self.set_time_p(n2v)
 
-    def __check(self):
+    def _check(self):
         if len(self.t_units) + len(self.time_p) == 0:
             raise ValueError('timedelta not found any item')
         self.check_unused_char(' ,', 'O')
+        super()._check()
 
     def __find_units(self, ut2re_c):
         mxx = udict(check_add=False)
         for ut, re_c in ut2re_c.items():
-            _, sp = self.search(re_c)
+            m, sp = self.search(re_c)
             if sp is not None:
+                if m.group(1) == '' or m.group(4) == '':
+                    continue
                 part = Part(self, sp[0], sType.num, sp[1])
-                if ut in {UType.month, UType.minute} and sp[3].len_ab() == 1:
+                if ut in {UType.month, UType.minute} and sp[4].len_ab() == 1:
                     mxx.add(part)
                 else:
                     self.t_units[ut] = part
