@@ -1,0 +1,71 @@
+import time
+import re
+import sys
+sys.path.append("..")
+import smart_strptime as sspt
+
+re_c = re.compile('^(n(ow)?)?([+-])')
+
+
+class Time_input:
+    def __init__(self):
+        self.last_value = None
+
+    def print_help(self):
+        print('''\
+时间输入法:
+n(ow):当前时间
+n+,n-:与当前时间加减
++,-  :与上次输入的时间加减
+无前置符号:输入完整时间
+''')
+
+    def input_str(self, in_str):
+        """Input str and return timestamp."""
+        self.in_str = in_str
+        now, char = self.now_process()
+        if now is True:            # now[+/-]  n+ n-, n
+            value = time.time()
+            value = self.puls_sub_char(char, value)
+        elif char is not None:     # (last)[+/-]  + -
+            if self.last_value is None:
+                raise ValueError('use last value in first input')
+            value = self.last_value
+            value = self.puls_sub_char(char, value)
+        else:                      # re not match
+            value = self.get_datetime()
+        assert 1e9 < value < 2.5e9  # check value year 2001<x<2049
+        self.last_value = value
+        return value
+
+    def now_process(self):
+        match = re_c.match(self.in_str)
+        if match is not None:
+            self.in_str = self.in_str[match.span(0)[1]:]
+            now = match.group(1) is not None
+            puls_sub = match.group(3)
+            if now and puls_sub is None and len(self.in_str) != 0:
+                raise ValueError('now without puls or sub, must no more str!')
+        else:
+            now = False
+            puls_sub = None
+        return now, puls_sub
+
+    def puls_sub_char(self, char, value):
+        if char is None:
+            return value
+        elif char == '+':
+            return value + self.get_timedelta()
+        elif char == '-':
+            return value - self.get_timedelta()
+
+    def get_timedelta(self):
+        tdstr = sspt.TimeDelta_str(self.in_str)
+        tdstr.process()
+        return tdstr.as_sec()
+
+    def get_datetime(self):
+        dtstr = sspt.DateTime_str(self.in_str)
+        dtstr.process()
+        dt_obj = dtstr.as_datetime()
+        return dt_obj.timestamp()
