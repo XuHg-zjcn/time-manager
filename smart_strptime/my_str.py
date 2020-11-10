@@ -309,7 +309,7 @@ class My_str:
     def __init__(self, in_str):
         self.in_str = in_str
         self.used = [False]*len(in_str)         # only modify by set_str_used
-        self.disallow_unused_chars = ''
+        self.disallow_unused_chars = set()
         self.part_set = udict()                       # for two BigPart
         self.unused_parts = udict(ssn=[], nadd=True)  # for unused parts obj
         self.flags = set()
@@ -463,7 +463,7 @@ class My_str:
         for i in range(*span):
             self.used[i] = True
 
-    def check_unused_char(self, allow, disallow, search_span=None):
+    def check_unused_char(self, allow, disallow, sspan=None):
         """Check unused char, and set used.
 
         if char'O' in allow or disallow, as the defalut other chars,
@@ -486,48 +486,33 @@ class My_str:
                 disallow = oset(allow)
             return allow, disallow
 
-        def uu_span(used, sspan):
-            """Get unused_span_list: used flag of char is False spans."""
-            uuspan_list = []
-            last_span = [0, 0]  # i = index of u1
-            for u0, u1, i in zip(used[sspan[0]:], used[sspan[0]+1:],
-                                 range(sspan[0]+1, len(used))):
-                if u0 and not u1:   # u0 used, u1 not used, as start of span
-                    last_span[0] = i
-                if not u0 and u1:   # u0 not used, u1 used, as end of span
-                    last_span[1] = i
-                    uuspan_list.append(tuple(last_span))
-                    last_span = [0, 0]
-            if last_span != [0, 0]:
-                uuspan_list.append((last_span[0], len(used)))
-            return uuspan_list
-
-        def check_and_set_used(self, uuspan_list, allow, dis):
-            for span in uuspan_list:
-                if span[1] - span[0] != 1:
-                    raise ValueError('multiply unused char continuous\n{}'
-                                     .format(self.mark(span)))
-                else:
-                    i = span[0]
-                    assert span[1] == i+1
-                    c = self.in_str[i]
-                    if c in allow:
-                        self.set_str_used(span)
-                    elif c in dis:
-                        raise ValueError('in call disallow unused char\n{}'
-                                         .format(self.mark(i)))
-                    elif c in self.disallow_unused_chars:
-                        raise ValueError('in My_str disallow unused char\n{}'
-                                         .format(self.mark(i)))
-                    else:
-                        # disable for later calls
-                        self.disallow_unused_chars += c
-
-        if search_span is None:
-            search_span = (0, len(self.in_str))
+        if sspan is None:
+            sspan = (0, None)
+        sp_used = self.used[sspan[0]:sspan[1]]
+        sp_str = self.in_str[sspan[0]:sspan[1]]
+        # no continuous False, near two always has one True
+        map_or = map(lambda x: x[0] or x[1], zip(sp_used, sp_used[1:]))
+        if not all(map_or):
+            raise ValueError('multiply unused char continuous\n{}'
+                             .format(self.mark(span)))
+        # check unused chars
         allow, dis = get_allow_dis_set(allow, disallow)
-        uuspan_list = uu_span(self.used, search_span)
-        check_and_set_used(self, uuspan_list, allow, dis)
+        for ni, i in enumerate(sp_used):
+            if i is False:
+                c = sp_str[ni]
+                if c in allow:
+                    self.used[ni+sspan[0]] = True
+                elif c in dis:
+                    raise ValueError('in call disallow unused char\n{}'
+                                     .format(self.mark(ni)))
+                elif c in self.disallow_unused_chars:
+                    raise ValueError('in My_str disallow unused char\n{}'
+                                     .format(self.mark(ni)))
+                else:
+                    # disable for later calls
+                    self.disallow_unused_chars.add(c)
+        # uuspan_list = uu_span(self.used, search_span)
+        # check_and_set_used(self, uuspan_list, allow, dis)
         # check and set_str_used
 
     def str_use_status(self, mark):

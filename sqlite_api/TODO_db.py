@@ -121,12 +121,12 @@ class TODO_db:
         for key in cond_dict.keys():
             assert key in allow_filed
             value = cond_dict[key]
-            if type(value) in [bool, int, float]:
+            if type(value) in [bool, int, float]:               # x == ?
                 sql += '{}=? and'.format(key)
                 paras.append(value)
-            elif isinstance(value, tuple) and len(value) == 2:
+            elif isinstance(value, tuple) and len(value) == 2:  # a <= x < b
                 if type(value[0]) in [int, float]:
-                    sql += '?<{0} and {0}<? and'.format(key)
+                    sql += '?<={0} and {0}<? and'.format(key)
                     paras.append(value[0])
                     paras.append(value[1])
                 elif value[0] in ['<', '>']:
@@ -143,6 +143,7 @@ class TODO_db:
         self.conn.close()
         # assert len(res) == 13
         # return Plan(*res[:3], TreeItem(*res[3:5]), PlanTime(*res[5:]))
+        return res
 
 
 # test code
