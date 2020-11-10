@@ -57,30 +57,30 @@ class TimeDelta_str(lmrTime_str):
         super().__init__(in_str)
 
     def process_check(self):
-        self.process()
-        self.check()
+        if 'process_check' in self.flags:
+            raise RuntimeError('process_check already OK')
+        self.__process()
+        self.__check()
         self.flags.add('process_check_ok')
 
-    def process(self):
+    def __process(self):
         """Process input str."""
         self.t_units = BigPart(self, 't_units', units.keys())
-        self.time_p = BigPart(self, 'time', UxType['lmrTime'])
-        self.time_lmrs()
-        mxx = self.find_units(ut2re_c)
+        super().process()
+        mxx = self.__find_units(ut2re_c)
         self.unused_parts.add_subset('mxx', mxx)
         if len(mxx) > 0:
-            self.month_or_minute(mxx)
+            self.__month_or_minute(mxx)
         if 'time_found' in self.flags:
-            n2v = self.get_n2v()
+            n2v = self.__get_n2v()
             self.set_time_p(n2v)
 
-    def check(self):
+    def __check(self):
         if len(self.t_units) + len(self.time_p) == 0:
             raise ValueError('timedelta not found any item')
-        is_inc, cp = self.check_inc()
         self.check_unused_char(' ,', 'O')
 
-    def find_units(self, ut2re_c):
+    def __find_units(self, ut2re_c):
         mxx = udict(check_add=False)
         for ut, re_c in ut2re_c.items():
             _, sp = self.search(re_c)
@@ -95,7 +95,7 @@ class TimeDelta_str(lmrTime_str):
                 mxx.remove(m)
         return mxx
 
-    def check_inc(self):
+    def __check_inc(self):
         cp = list(self.t_units.items())
         cp.sort(key=lambda x: x[1])                    # sort by Part
         ut_v = map(lambda x: x[0].value, cp)           # get UType Enum values
@@ -103,9 +103,9 @@ class TimeDelta_str(lmrTime_str):
         is_inc = strictly_increasing(ut_v)
         return is_inc, cp
 
-    def month_or_minute(self, mxx, defalut=UType.minute):
+    def __month_or_minute(self, mxx, defalut=UType.minute):
         def use_sort(mxx):
-            is_inc, cp = self.check_inc()
+            is_inc, cp = self.__check_inc()
             if not is_inc:
                 raise ValueError('unit order incorrect')
             cp += list(map(lambda x: (None, x), mxx.values()))
@@ -154,7 +154,7 @@ class TimeDelta_str(lmrTime_str):
                 self.t_units[defalut] = part
         assert len(mxx) == 0
 
-    def get_n2v(self, default='second'):
+    def __get_n2v(self, default='second'):
         if len(self.t_units) > 0:
             bp_keys = self.t_units.keys()
             bp_kv = list(map(lambda x: x.value, bp_keys))
@@ -216,5 +216,5 @@ class TimeDelta_str(lmrTime_str):
         if 'process_check_ok' in self.flags:
             td = self.as_timedelta()
             ret += 'time delta :{}\n'.format(td)
-            ret += 'total {}sec'.format(td.total_seconds())
-        return ret
+            ret += 'total {}sec\n'.format(td.total_seconds())
+        return ret[:-1]

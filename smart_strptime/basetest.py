@@ -26,6 +26,8 @@ class BaseTest:
             try:
                 tstr.process_check()
             except Exception as e:
+                if print_traceback:
+                    traceback.print_exc()
                 err = e
             else:
                 err = None
@@ -34,9 +36,7 @@ class BaseTest:
                 t_sum += t1 - t0
                 print(tstr)
                 err_happend = err is not None
-                if err_happend and print_traceback:
-                    traceback.print_exc()
-                elif err_happend and not print_traceback:
+                if err_happend:
                     print('Error: ', err)
                 else:
                     print('no error')

@@ -45,20 +45,23 @@ class DateTime_str(lmrTime_str, Date_str):
     def process_check(self):
         """Call after init."""
         assert 'process OK' not in self.flags  # not entry before
-        self.process()
-        self.check()
+        self._process()
+        self._check()
         self.flags.add('process OK')
 
-    def process(self):
+    def _process(self):
         """Process input str."""
         lmrTime_str.process(self)
         Date_str.process(self)
+        if ('time_found' in self.flags) or ('fd642' in self.flags):
+            self._unused_chooise()
+            self.__onlyone_unused_num_as_day()
         if len(self.date_p) > 0:  # any about date found
             lmrTime_str.set_time_p(self, 'hour')
         else:
             lmrTime_str.set_time_p(self, self.para['dn2v'])
 
-    def check(self):
+    def _check(self):
         """Check process result."""
         if len(self.date_p) + len(self.time_p) == 0:
             raise ValueError('datetime not found any item')
@@ -66,21 +69,23 @@ class DateTime_str(lmrTime_str, Date_str):
         self.date_p.check_breakpoint(date_skips)
         self.time_p.check_breakpoint()
         # TODO: check time_p
-        self.check_bigparts_not_overlapped()
+        self.__check_bigparts_not_overlapped()
         self.date_p.check_unused_char('-./ ', 'O')
         self.time_p.check_unused_char(' ', 'O')
         self.check_unused_char(' ', ':-./')
-        assert len(self.unused_parts) == 0
-        assert all(self.used)
+        if len(self.unused_parts) != 0:
+            raise ValueError('has unused part')
+        if not all(self.used):
+            raise ValueError('not all char used')
 
-    def onlyone_unused_num_as_day(self):
+    def __onlyone_unused_num_as_day(self):
         """Unused num onlyone, set it to day."""
         nums = self.unused_parts.subset['num']
         if len(nums) == 1:
             oouu = list(nums)[0]
             self.date_p[UType.day] = oouu
 
-    def check_bigparts_not_overlapped(self):
+    def __check_bigparts_not_overlapped(self):
         """Raise Error if overlapped."""
         if len(self.date_p) >= 1 and len(self.time_p) >= 1:
             date_time = self.date_p.span[1] <= self.time_p.span[0]
@@ -156,7 +161,7 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
                                      dt_obj.strftime('%Y-%m-%d %A')))
         return dt_obj
 
-    def unused_chooise(self, formats=['YMD', 'DMY', 'YM']):
+    def _unused_chooise(self, formats=['YMD', 'DMY', 'YM']):
         """Unused numbers add to date BigPart.
 
         fig1:

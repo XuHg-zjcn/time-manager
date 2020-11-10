@@ -34,16 +34,14 @@ class Date_str(My_str):
         self.date_p = BigPart(self, 'date', UxType['Date'])
 
     def process(self):
-        self.english_month_weekday()
-        self.get_allsType_parts(sType2re_c2)
-        self.find_date(8)         # find YYYYMMDD
+        self.__english_month_weekday()
+        self._get_allsType_parts(sType2re_c2)
+        self.__find_date(8)         # find YYYYMMDD
         if ('time_found' in self.flags) or ('fd642' in self.flags):
-            self.find_date(4)     # find YYYY, MMDD
-            self.find_date(6)     # find YYYYMM, YYMMDD
-            self.unused_chooise()
-            self.onlyone_unused_num_as_day()
+            self.__find_date(4)     # find YYYY, MMDD
+            self.__find_date(6)     # find YYYYMM, YYMMDD
 
-    def english_month_weekday(self):
+    def __english_month_weekday(self):
         """find english str"""
         month = self.find_strs(month_short, puls1=True)
         weekday = self.find_strs(weekday_short, puls1=False)
@@ -52,7 +50,7 @@ class Date_str(My_str):
         if weekday is not None:
             self.date_p[UType.weekday] = weekday
 
-    def find_date(self, digts):
+    def __find_date(self, digts):
         def num8(self, part, s, e, inti):
             if e-s == 8:
                 self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)

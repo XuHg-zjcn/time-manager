@@ -310,7 +310,7 @@ class My_str:
         self.unused_parts = udict(ssn=[], nadd=True)  # for unused parts obj
         self.flags = set()
 
-    def get_allsType_parts(self, sType2re_c):
+    def _get_allsType_parts(self, sType2re_c):
         """Search a group re_compile.
 
         @para sType2re_c: dict {sType: re.compile}
