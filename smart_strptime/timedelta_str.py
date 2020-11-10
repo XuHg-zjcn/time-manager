@@ -98,7 +98,7 @@ class Timedelta_str(lmrTime_str):
         return is_inc, cp
 
     def month_or_minute(self, mxx):
-        def use_sort(check_inc_result, mxx):
+        def use_sort(mxx):
             is_inc, cp = self.check_inc()
             if not is_inc:
                 raise ValueError('unit order incorrect')
@@ -107,11 +107,17 @@ class Timedelta_str(lmrTime_str):
             # get None item with index
             v_N = filter(lambda x: x[1][0] is None, enumerate(cp))
             v_N = list(v_N)
+            utv_month = UType.month.value
+            utv_minute = UType.minute.value
             for ni, (_, part) in v_N:
-                if ni+1 < len(cp) and cp[ni+1][0].value > UType.month.value:
-                    self.t_units[UType.month] = part
-                elif ni-1 >= 0 and cp[ni-1][0].value < UType.minute.value:
-                    self.t_units[UType.minute] = part
+                if ni+1 < len(cp):
+                    utv_next = cp[ni+1][0].value
+                    if utv_month < utv_next <= utv_minute:
+                        self.t_units[UType.month] = part
+                if ni-1 >= 0:
+                    utv_prev = cp[ni-1][0].value
+                    if utv_month <= utv_prev < utv_minute:
+                        self.t_units[UType.minute] = part
             return mxx
 
         def score_set(bp_keys):
@@ -131,7 +137,7 @@ class Timedelta_str(lmrTime_str):
 
         if len(mxx) == 0:
             return
-        mxx = use_sort(self.check_inc(), mxx)
+        mxx = use_sort(mxx)
         if len(mxx) == 1:
             ut = score_set(self.t_units.keys())
             part = list(mxx.values())[0]
@@ -194,7 +200,7 @@ class Timedelta_str(lmrTime_str):
 def test():
     test_ok = ['1d 12:10', '12:34:12', '12m34s', '1h12m34s']
     test_err = ['1s 12:14']
-    dt_str = Timedelta_str('1d 12:14')
+    dt_str = Timedelta_str('1h12m34s')
     dt_str.process()
     dt_str.print_str_use_status('v')
     td = dt_str.as_timedelta()
