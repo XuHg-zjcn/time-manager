@@ -1,7 +1,8 @@
-import re
+import re                             # L0 built-in model
 from enum import Enum
 from collections import Iterable
-from my_lib import udict, oset, span
+from my_lib import udict, oset, span  # L1 my_lib
+# level of the module is L2
 
 re_num = re.compile(r'\d+')
 re_eng = re.compile(r'[a-zA-Z]+')
@@ -16,6 +17,7 @@ StrUsed = Enum('IsUsed', 'unused partused allused')
 sType2exam = {sType.num: nums,   sType.eng: engs,   sType.norm: norms}
 sType2re_c = {sType.num: re_num, sType.eng: re_eng, sType.norm: re_norm}
 sType2re_c2 = {sType.num: re_num, sType.eng: re_eng}
+
 
 class Part:
     """Part for date and time.

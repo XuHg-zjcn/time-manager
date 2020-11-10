@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import re                                        # L0 built-in model
 from datetime import timedelta
-import re
-
-from my_str import Part, BigPart, My_str
-from datetime_str import Time_str
-from datetime_str import UType, UxType, sType
-from my_lib import udict
+from my_lib import udict                         # L1 my_lib
 from my_lib import strictly_increasing
+from my_str import Part, BigPart, sType          # L2 my_str
+from basetime import UType, UxType               # L3 basetime define
+from lmrTime_str import lmrTime_str              # L4 time search type
+# level of the module is L5, can use outside package
+
 
 def re_comp_unit(name_spilt, allow_s=True):
     """Get re.compile for time_unit
@@ -24,6 +25,7 @@ def re_comp_unit(name_spilt, allow_s=True):
     """
     re_template = r'(?i)(\d+(\.\d)?)\s{{0,2}}({0}{1})'
     ext = r'{0}({1})?'  # {0}:first letter, {1}:other letter
+
     def N_ext(lst):
         if len(lst) == 1:
             return lst[0]
@@ -40,7 +42,7 @@ units = {U.year  : ('y', 'ear'),
          U.month : ('m', 'onth'),
          U.Nweek : ('w', 'eek'),
          U.day   : ('d', 'ay'),
-         U.hour : ('h', 'our'),
+         U.hour  : ('h', 'our'),
          U.minute: ('m', 'in', 'ute'),
          U.second: ('s', 'ec', 'ond'),
          U.ms    : ('ms',)}
@@ -52,7 +54,7 @@ for ut, spilt in units.items():
     ut2re_c[ut] = re_comp_unit(spilt, allow_s)
 
 
-class Timedelta_str(My_str):
+class Timedelta_str(lmrTime_str):
     def __init__(self, in_str):
         super().__init__(in_str)
 
@@ -71,14 +73,6 @@ class Timedelta_str(My_str):
 
     def check(self):
         is_inc, cp = self.check_inc()
-
-    def time_lmrs(self):
-        """See time_str.Time_str.time_lmrs."""
-        Time_str.time_lmrs(self)
-
-    def set_time_p(self, n2v=None):
-        """See time_str.Time_str.set_time_p."""
-        Time_str.set_time_p(self, n2v)
 
     def find_units(self, ut2re_c):
         mxx = udict(check_add=False)
@@ -196,8 +190,9 @@ class Timedelta_str(My_str):
         td = self.as_timedelta()
         return td.total_seconds()
 
+
 def test():
-    test_ok = ['1d 12:10', '1d 12:14', '12:34:12', '12m34s', '1h12m34s']
+    test_ok = ['1d 12:10', '12:34:12', '12m34s', '1h12m34s']
     test_err = ['1s 12:14']
     dt_str = Timedelta_str('1d 12:14')
     dt_str.process()
