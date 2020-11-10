@@ -202,3 +202,13 @@ class TimeDelta_str(lmrTime_str):
     def as_sec(self):
         td = self.as_timedelta()
         return td.total_seconds()
+
+    def __repr__(self):
+        ret = super().__repr__()
+        ret += 't_uints:{}'.format(repr(self.t_units))
+        ret += 'time_p :{}'.format(repr(self.time_p))
+        ret += '-------------------------------------------------'
+        td = self.as_timedelta()
+        ret += 'time delta :'.format(td)
+        ret += 'total {}sec'.format(td.total_seconds())
+        return ret
