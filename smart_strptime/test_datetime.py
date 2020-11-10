@@ -9,9 +9,13 @@ test time_str model speed and errors
 
 import os
 import time
-from datetime_str import DateTime_str
 import traceback
 import cProfile
+
+import sys
+sys.path.append("..")
+from smart_strptime import DateTime_str
+
 test_ok = ['Wed 28/Oct 12:34:56.123',
            '20201030', '1030', '30 10:30', '10:22 PM',
            '2020 10 5', '2020/11/5', '2020-11/5', '2020 Nov 5',

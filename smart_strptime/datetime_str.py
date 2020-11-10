@@ -123,7 +123,6 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
             # get start of not None item
             s = 0
             while dt_paras[s] is None and s < 3:
-                dt_paras[s] = today[s]
                 s += 1
             # get end of not None item
             e = s
@@ -132,6 +131,8 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
             if e - s < 2:
                 raise ValueError('vaild item less than 2:\n{}'
                                  .format(dt_paras))
+            for i in range(s):
+                dt_paras[s] = today[s]
             return s, e
 
         U = UType

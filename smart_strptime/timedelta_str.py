@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import re                                        # L0 built-in model
+import re                                               # L0 built-in model
 from datetime import timedelta
 from smart_strptime.my_lib import udict                 # L1 my_lib
 from smart_strptime.my_lib import strictly_increasing
@@ -195,21 +193,3 @@ class TimeDelta_str(lmrTime_str):
     def as_sec(self):
         td = self.as_timedelta()
         return td.total_seconds()
-
-
-def test():
-    test_ok = ['1d 12:10', '12:34:12', '12m34s', '1h12m34s']
-    test_err = ['1s 12:14']
-    dt_str = Timedelta_str('1h12m34s')
-    dt_str.process()
-    print(dt_str)
-    print('t_uints:', repr(dt_str.t_units))
-    print('time_p: ', repr(dt_str.time_p))
-    print('-------------------------------------------------')
-    td = dt_str.as_timedelta()
-    print('time delta :', td)
-    print('total {}sec'.format(dt_str.as_sec()))
-    return dt_str
-
-if __name__ == '__main__':
-    dt_str = test()

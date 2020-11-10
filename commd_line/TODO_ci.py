@@ -1,9 +1,8 @@
 from TODO_db import TODO_db
-
+from time_input import Time_input
 tdb = TODO_db()
-print('''n:当前时间
-n+,n-:与当前时间加减
-+,-:与上次输入的时间加减''')
+ti = Time_input()
+ti.print_help()
 op = input('''请输入要进行的操作
 1. 添加任务
 2. 列出任务
