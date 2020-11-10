@@ -100,6 +100,6 @@ class lmrTime_str(My_str):
         self.flags.add('set_time_p')
 
     def __get_AMPM(self):
-        apm = self.find_strs(ampm, 'AMPM')
+        apm = self._find_strs(ampm, 'AMPM')
         if apm is not None:
             self.time_p[UType.ampm] = apm

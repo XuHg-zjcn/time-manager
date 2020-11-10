@@ -43,8 +43,8 @@ class Date_str(My_str):
 
     def __english_month_weekday(self):
         """find english str"""
-        month = self.find_strs(month_short, puls1=True)
-        weekday = self.find_strs(weekday_short, puls1=False)
+        month = self._find_strs(month_short, puls1=True)
+        weekday = self._find_strs(weekday_short, puls1=False)
         if month is not None:
             self.date_p[UType.month] = month
         if weekday is not None:

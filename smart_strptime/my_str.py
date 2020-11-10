@@ -367,7 +367,7 @@ class My_str:
         ret += ' '*index+'^'*num+' '*N_end_space
         return ret
 
-    def find_strs(self, subs, puls1):
+    def _find_strs(self, subs, puls1):
         """Find which sub in in_str.
 
         allow onlyone sub can find, else raise ValueError
