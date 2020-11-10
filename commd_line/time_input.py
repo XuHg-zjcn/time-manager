@@ -4,7 +4,7 @@ import sys
 sys.path.append("..")
 import smart_strptime as sspt
 
-re_c = re.compile('^(n(ow)?)?([+-])')
+re_c = re.compile('^(n(ow)?)?([+-])?')
 
 
 class Time_input:
@@ -26,39 +26,39 @@ h:帮助, e:退出
         while True:
             if in_str in {'help', 'h'}:
                 self.print_help()
-                in_str = input('please input again:')
+                in_str = input('请重新输入:')
                 continue
             if in_str in {'e', 'exit'}:
                 return None
             try:
-                value = self.process(in_str)
+                value = self._process(in_str)
             except Exception as e:
                 print('Error:', e)
-                in_str = input('please input again, h for help, e for exit:')
+                in_str = input('请重新输入, h:帮助, e:退出:')
                 if in_str in {'e', 'exit'}:
                     return None
                 continue
             else:
                 return value
 
-    def process(self, in_str):
+    def _process(self, in_str):
         self.in_str = in_str
-        now, char = self.now_char()
+        now, char = self._now_char()
         if now is True:            # now[+/-]  n+ n-, n
             value = time.time()
-            value = self.puls_sub_char(char, value)
+            value = self._puls_sub_char(char, value)
         elif char is not None:     # (last)[+/-]  + -
             if self.last_value is None:
                 raise ValueError('use last value in first input')
             value = self.last_value
-            value = self.puls_sub_char(char, value)
+            value = self._puls_sub_char(char, value)
         else:                      # re not match
-            value = self.get_datetime()
+            value = self._get_datetime()
         assert 1e9 < value < 2.5e9  # check value year 2001<x<2049
         self.last_value = value
         return value
 
-    def now_char(self):
+    def _now_char(self):
         match = re_c.match(self.in_str)
         if match is not None:
             self.in_str = self.in_str[match.span(0)[1]:]
@@ -71,21 +71,24 @@ h:帮助, e:退出
             puls_sub = None
         return now, puls_sub
 
-    def puls_sub_char(self, char, value):
+    def _puls_sub_char(self, char, value):
         if char is None:
             return value
         elif char == '+':
-            return value + self.get_timedelta()
+            return value + self._get_timedelta()
         elif char == '-':
-            return value - self.get_timedelta()
+            return value - self._get_timedelta()
 
-    def get_timedelta(self):
+    def _get_timedelta(self):
         tdstr = sspt.TimeDelta_str(self.in_str)
         tdstr.process_check()
         return tdstr.as_sec()
 
-    def get_datetime(self):
+    def _get_datetime(self):
         dtstr = sspt.DateTime_str(self.in_str)
         dtstr.process_check()
         dt_obj = dtstr.as_datetime()
         return dt_obj.timestamp()
+
+ti = Time_input()
+n = ti.input_str('n')
