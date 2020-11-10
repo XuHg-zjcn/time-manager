@@ -18,12 +18,30 @@ n(ow):当前时间
 n+,n-:与当前时间加减
 +,-  :与上次输入的时间加减
 无前置符号:输入完整时间
+h:帮助, e:退出
 ''')
 
     def input_str(self, in_str):
         """Input str and return timestamp."""
+        while True:
+            if in_str in {'help', 'h'}:
+                self.print_help()
+                in_str = input('please input again:')
+                continue
+            try:
+                value = self.process(in_str)
+            except Exception as e:
+                print('Error:', e)
+                in_str = input('please input again, h for help, e for exit:')
+                if in_str in {'e', 'exit'}:
+                    return None
+                continue
+            else:
+                return value
+
+    def process(self, in_str):
         self.in_str = in_str
-        now, char = self.now_process()
+        now, char = self.now_char()
         if now is True:            # now[+/-]  n+ n-, n
             value = time.time()
             value = self.puls_sub_char(char, value)
@@ -38,7 +56,7 @@ n+,n-:与当前时间加减
         self.last_value = value
         return value
 
-    def now_process(self):
+    def now_char(self):
         match = re_c.match(self.in_str)
         if match is not None:
             self.in_str = self.in_str[match.span(0)[1]:]
