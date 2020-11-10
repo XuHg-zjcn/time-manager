@@ -40,7 +40,7 @@ units = {U.year  : ('y', 'ear'),
          U.month : ('m', 'onth'),
          U.Nweek : ('w', 'eek'),
          U.day   : ('d', 'ay'),
-         U.hours : ('h', 'our'),
+         U.hour : ('h', 'our'),
          U.minute: ('m', 'in', 'ute'),
          U.second: ('s', 'ec', 'ond'),
          U.ms    : ('ms',)}
@@ -123,7 +123,7 @@ class Timedelta_str(My_str):
         def score_set(bp_keys):
             U = UType
             month_set = {U.year, U.day, U.Nweek}
-            minute_set = {U.hours, U.second, U.ms}
+            minute_set = {U.hour, U.second, U.ms}
             month_score = len(set.intersection(month_set, bp_keys))
             minute_score = len(set.intersection(minute_set, bp_keys))
             if month_score == minute_score:
@@ -144,31 +144,70 @@ class Timedelta_str(My_str):
             self.t_units[ut] = part
         assert len(mxx) == 0
 
-    def get_n2v(self, default='hours'):
+    def get_n2v(self, default='second'):
         if len(self.t_units) > 0:
             bp_keys = self.t_units.keys()
-            bp_kv = list(map(lambda x:x.value, bp_keys))
+            bp_kv = list(map(lambda x: x.value, bp_keys))
             kv_max = max(bp_kv)
-            kv_min = min(bp_kv)
-            if kv_min > UType.day.value:  # Enum value
+            if kv_max > UType.day.value:  # Enum value, as small as unit big
                 raise ValueError('time lmr found and \
                                  little than day item found')
-            if kv_min <= UType.day.value:
-                n2v = 'hours'
-            else:
+            else:    # kv_max <= UType.day.value
                 n2v = 'second'
         else:
             n2v = default
         return n2v
 
+    def as_timedelta(self):
+        def check_disjoint(t_units, time_p):
+            tp_k = set(time_p.keys())
+            tu_k = set(t_units.keys())
+            disjoint = set.isdisjoint(tp_k, tu_k)
+            assert disjoint
+
+        def merges(t_units, time_p):
+            merge = t_units.copy()
+            merge.update(time_p)
+            if UType.subsec in merge.keys():
+                merge[UType.sec].value += merge[UType.subsec].value
+                merge.pop(UType.subsec)
+            return merge
+
+        def get_para_dict(merged):
+            U = UType
+            ut2td = {U.Nweek: 'weeks', U.day: 'days', U.hour: 'hours',
+                     U.min: 'minutes', U.sec: 'seconds'}
+            is_subset = set(merged.keys()).issubset(set(ut2td.keys()))
+            if not is_subset:
+                more = merged.keys() - ut2td.keys()
+                raise ValueError('datetime.timedelta not allow this units:\n{}'
+                                 .format(more))
+            paras = {}
+            for ut, part in merged.items():
+                paras[ut2td[ut]] = part.value
+            return paras
+
+        check_disjoint(self.t_units, self.time_p)
+        merged = merges(self.t_units, self.time_p)
+        paras = get_para_dict(merged)
+        return timedelta(**paras)
+
+    def as_sec(self):
+        td = self.as_timedelta()
+        return td.total_seconds()
+
 def test():
     test_ok = ['1d 12:10', '1d 12:14', '12:34:12', '12m34s', '1h12m34s']
     test_err = ['1s 12:14']
-    dt_str = Timedelta_str('1h12m34s')
+    dt_str = Timedelta_str('1d 12:14')
     dt_str.process()
     dt_str.print_str_use_status('v')
-    print('time_p: ', dt_str.time_p)
+    td = dt_str.as_timedelta()
     print('t_uints:', dt_str.t_units)
+    print('time_p: ', dt_str.time_p)
+    print('--------------------------------------------')
+    print('time delta :', td)
+    print('total {}sec'.format(dt_str.as_sec()))
     return dt_str
 
 dt_str = test()

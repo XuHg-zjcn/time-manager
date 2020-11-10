@@ -51,12 +51,14 @@ class UType(Enum):
     WD = 4
     # time
     ampm = 5     # skip in check_breakpoint
-    hours = 6
+    hour = 6
     minute = 7
     second = 8
     subsec = 9
     milisec = 10
     microsec = 11
+    min = 7
+    sec = 8
     ap = 5
     h = 6
     m = 7
@@ -97,7 +99,7 @@ class Time_str(My_str):
         find YYYY, MMDD
         find DD, if onlyone num
     if any about date found:
-        set_time_p(n2v='hours')
+        set_time_p(n2v='hour')
     else:
         set_time_p(n2v=default_n2v)
     check result
@@ -112,7 +114,7 @@ class Time_str(My_str):
         Parts in BigPart are not repeating
     """
 
-    def __init__(self, in_str, fd642=True, default_n2v='hours', YY2=True):
+    def __init__(self, in_str, fd642=True, default_n2v='hour', YY2=True):
         super().__init__(in_str)
         # self.flags 'time_found', 'fd642', 'YY2', 'process OK'
         self.para = {'dn2v': default_n2v}  # default time format
@@ -142,7 +144,7 @@ class Time_str(My_str):
             self.unused_chooise()
             self.onlyone_unused_num_as_day()
         if len(self.date_p) > 0:  # any about date found
-            self.set_time_p('hours')
+            self.set_time_p('hour')
         else:
             self.set_time_p(self.para['dn2v'])
 
@@ -256,7 +258,7 @@ class Time_str(My_str):
         ll :  rr.sss... ->    MM:SS.subsec
         ll :  rr          ?-> HH:MM or MM:SS
         @para n2v: if found ll:rr, such as 12:34,
-                   'hours' for HH:MM, 'second' for MM:SS, None raise ValueError
+                   'hour' for HH:MM, 'second' for MM:SS, None raise ValueError
         """
         assert 'set_time_p' not in self.flags  # no entry before
         B = UType
@@ -280,12 +282,12 @@ class Time_str(My_str):
                 dst_keys = dict_rule[src_keys]
             # use n2v
             elif src_keys == (B.lt, B.rt):
-                if n2v == 'hours':
+                if n2v == 'hour':
                     dst_keys = (B.h, B.m)
                 elif n2v == 'second':
                     dst_keys = (B.m, B.s)
                 else:
-                    raise ValueError('n2v must be hours or second')
+                    raise ValueError('n2v must be hour or second')
             # empty src_keys
             elif src_keys == ():
                 dst_keys = ()
