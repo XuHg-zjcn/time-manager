@@ -4,8 +4,8 @@ from datetime import timedelta
 import re
 
 from my_str import Part, BigPart, My_str
-from time_str import Time_str
-from time_str import UType, UxType, sType
+from datetime_str import Time_str
+from datetime_str import UType, UxType, sType
 from my_lib import udict
 from my_lib import strictly_increasing
 

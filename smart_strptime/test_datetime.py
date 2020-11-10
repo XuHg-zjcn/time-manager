@@ -9,7 +9,7 @@ test time_str model speed and errors
 
 import os
 import time
-from time_str import Time_str
+from datetime_str import Time_str
 import traceback
 import cProfile
 test_ok = ['Wed 28/Oct 12:34:56.123',
