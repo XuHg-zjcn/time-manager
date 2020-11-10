@@ -60,6 +60,8 @@ class DateTime_str(lmrTime_str, Date_str):
 
     def check(self):
         """Check process result."""
+        if len(self.date_p) + len(self.time_p) == 0:
+            raise ValueError('datetime not found any item')
         date_skips = {UType.Nweek.value, UType.weekday.value}
         self.date_p.check_breakpoint(date_skips)
         self.time_p.check_breakpoint()

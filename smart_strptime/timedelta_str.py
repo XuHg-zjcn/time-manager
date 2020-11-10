@@ -59,6 +59,7 @@ class TimeDelta_str(lmrTime_str):
     def process_check(self):
         self.process()
         self.check()
+        self.flags.add('process_check_ok')
 
     def process(self):
         """Process input str."""
@@ -74,6 +75,8 @@ class TimeDelta_str(lmrTime_str):
             self.set_time_p(n2v)
 
     def check(self):
+        if len(self.t_units) + len(self.time_p) == 0:
+            raise ValueError('timedelta not found any item')
         is_inc, cp = self.check_inc()
         self.check_unused_char(' ,', 'O')
 
@@ -157,8 +160,8 @@ class TimeDelta_str(lmrTime_str):
             bp_kv = list(map(lambda x: x.value, bp_keys))
             kv_max = max(bp_kv)
             if kv_max > UType.day.value:  # Enum value, as small as unit big
-                raise ValueError('time lmr found and \
-                                 little than day item found')
+                raise ValueError('time lmr found and\
+ little than day item found')
             else:    # kv_max <= UType.day.value
                 n2v = 'second'
         else:
@@ -194,6 +197,8 @@ class TimeDelta_str(lmrTime_str):
                 paras[ut2td[ut]] = part.value
             return paras
 
+        if 'process_check_ok' not in self.flags:
+            raise RuntimeError('call as_timedelta before process_check')
         check_disjoint(self.t_units, self.time_p)
         merged = merges(self.t_units, self.time_p)
         paras = get_para_dict(merged)
@@ -205,10 +210,11 @@ class TimeDelta_str(lmrTime_str):
 
     def __repr__(self):
         ret = super().__repr__()
-        ret += 't_uints:{}'.format(repr(self.t_units))
-        ret += 'time_p :{}'.format(repr(self.time_p))
-        ret += '-------------------------------------------------'
-        td = self.as_timedelta()
-        ret += 'time delta :'.format(td)
-        ret += 'total {}sec'.format(td.total_seconds())
+        ret += 't_uints:{}\n'.format(repr(self.t_units))
+        ret += 'time_p :{}\n'.format(repr(self.time_p))
+        ret += '-------------------------------------------------\n'
+        if 'process_check_ok' in self.flags:
+            td = self.as_timedelta()
+            ret += 'time delta :{}\n'.format(td)
+            ret += 'total {}sec'.format(td.total_seconds())
         return ret
