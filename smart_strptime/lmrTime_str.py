@@ -6,8 +6,8 @@ Created on Tue Nov 10 12:49:54 2020
 @author: xrj
 """
 import re
-from my_str import Part, BigPart, My_str, sType
-from basetime import UType, UxType
+from smart_strptime.my_str import Part, BigPart, My_str, sType
+from smart_strptime.basetime import UType, UxType
 
 re_lmrs = re.compile(r'(\d+):(\d+:)?(\d+)(\.\d+)?')
 ampm = ['AM', 'PM']

@@ -1,10 +1,10 @@
-import datetime                                    # L0 built-in model
-from my_lib import strictly_increasing             # L1 my_lib
-from my_lib import my_odict, mrange_dict
-from my_lib import part_lr
-from basetime import UType, Char2UType             # L3 basetime define
-from lmrTime_str import lmrTime_str                # L4 time search type
-from Date_str import Date_str
+import datetime                                        # L0 built-in model
+from smart_strptime.my_lib import strictly_increasing  # L1 my_lib
+from smart_strptime.my_lib import my_odict, mrange_dict
+from smart_strptime.my_lib import part_lr
+from smart_strptime.basetime import UType, Char2UType  # L3 basetime define
+from smart_strptime.lmrTime_str import lmrTime_str     # L4 time search type
+from smart_strptime.Date_str import Date_str
 # level of the module is L5, can use outside package
 
 
