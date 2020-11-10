@@ -28,6 +28,8 @@ h:帮助, e:退出
                 self.print_help()
                 in_str = input('please input again:')
                 continue
+            if in_str in {'e', 'exit'}:
+                return None
             try:
                 value = self.process(in_str)
             except Exception as e:
@@ -79,11 +81,11 @@ h:帮助, e:退出
 
     def get_timedelta(self):
         tdstr = sspt.TimeDelta_str(self.in_str)
-        tdstr.process()
+        tdstr.process_check()
         return tdstr.as_sec()
 
     def get_datetime(self):
         dtstr = sspt.DateTime_str(self.in_str)
-        dtstr.process()
+        dtstr.process_check()
         dt_obj = dtstr.as_datetime()
         return dt_obj.timestamp()

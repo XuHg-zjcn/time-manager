@@ -14,7 +14,7 @@ import cProfile
 
 import sys
 sys.path.append("..")
-from smart_strptime import DateTime_str
+from smart_strptime import TimeDelta_str as test_class
 
 test_ok = ['Wed 28/Oct 12:34:56.123',
            '20201030', '1030', '30 10:30', '10:22 PM',
@@ -25,22 +25,20 @@ test_ok = ['Wed 28/Oct 12:34:56.123',
            '7/Nov/2020 18:56', '2020.11.7',
            '201107', '197001', '191015', '220202']
 test_err = ['12:34:56:12', '12.34:34', 'Oct:12', '2020:12', '12 20:12 Oct',
-            '10:30 a']
+            '10:30 a', 'abcd', '12:ab', '', ' ']
 n_test = len(test_ok) + len(test_err)
 
 
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
     for i in test_list:
-        tstr = DateTime_str(i)
+        tstr = test_class(i)
+        t0 = time.time()
         try:
-            t0 = time.time()
             tstr.process_check()
-            # dt_obj = tstr.as_datetime()
         except Exception as e:
             err = e
         else:
-            # print('datetime out:', dt_obj)
             err = None
         finally:
             t1 = time.time()
@@ -66,7 +64,7 @@ def test_quiet(test_list):
     for i in test_list:
         try:
             t0 = time.process_time()
-            tstr = DateTime_str(i)
+            tstr = test_class(i)
             tstr.process_check()
         except Exception:
             pass

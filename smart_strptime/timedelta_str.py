@@ -56,6 +56,10 @@ class TimeDelta_str(lmrTime_str):
     def __init__(self, in_str):
         super().__init__(in_str)
 
+    def process_check(self):
+        self.process()
+        self.check()
+
     def process(self):
         """Process input str."""
         self.t_units = BigPart(self, 't_units', units.keys())
@@ -71,6 +75,7 @@ class TimeDelta_str(lmrTime_str):
 
     def check(self):
         is_inc, cp = self.check_inc()
+        self.check_unused_char(' ,', 'O')
 
     def find_units(self, ut2re_c):
         mxx = udict(check_add=False)
@@ -95,7 +100,7 @@ class TimeDelta_str(lmrTime_str):
         is_inc = strictly_increasing(ut_v)
         return is_inc, cp
 
-    def month_or_minute(self, mxx):
+    def month_or_minute(self, mxx, defalut=UType.minute):
         def use_sort(mxx):
             is_inc, cp = self.check_inc()
             if not is_inc:
@@ -118,28 +123,32 @@ class TimeDelta_str(lmrTime_str):
                         self.t_units[UType.minute] = part
             return mxx
 
-        def score_set(bp_keys):
+        def score_set(self, part, tu_keys):
             U = UType
             month_set = {U.year, U.day, U.Nweek}
             minute_set = {U.hour, U.second, U.ms}
-            month_score = len(set.intersection(month_set, bp_keys))
-            minute_score = len(set.intersection(minute_set, bp_keys))
+            month_score = len(set.intersection(month_set, tu_keys))
+            minute_score = len(set.intersection(minute_set, tu_keys))
             if month_score == minute_score:
-                raise ValueError('month or minute')
+                return None
             elif month_score > minute_score:  # month higher score
-                assert U.ms not in bp_keys
-                return U.month
+                assert U.ms not in tu_keys
+                return UType.month
             elif month_score < minute_score:  # minute higher score
-                assert U.year not in bp_keys
-                return U.minute
+                assert U.year not in tu_keys
+                return UType.minute
 
         if len(mxx) == 0:
             return
         mxx = use_sort(mxx)
         if len(mxx) == 1:
-            ut = score_set(self.t_units.keys())
             part = list(mxx.values())[0]
-            self.t_units[ut] = part
+            tu_keys = self.t_units.keys()
+            ut = score_set(self, part, tu_keys)
+            if ut is not None:
+                self.t_units[ut] = part
+            else:
+                self.t_units[defalut] = part
         assert len(mxx) == 0
 
     def get_n2v(self, default='second'):
