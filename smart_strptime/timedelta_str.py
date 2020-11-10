@@ -54,7 +54,7 @@ for ut, spilt in units.items():
     ut2re_c[ut] = re_comp_unit(spilt, allow_s)
 
 
-class Timedelta_str(lmrTime_str):
+class TimeDelta_str(lmrTime_str):
     def __init__(self, in_str):
         super().__init__(in_str)
 
