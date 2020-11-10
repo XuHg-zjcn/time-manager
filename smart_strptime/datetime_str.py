@@ -54,9 +54,9 @@ class DateTime_str(lmrTime_str, Date_str):
         lmrTime_str.process(self)
         Date_str.process(self)
         if len(self.date_p) > 0:  # any about date found
-            self.set_time_p('hour')
+            lmrTime_str.set_time_p(self, 'hour')
         else:
-            self.set_time_p(self.para['dn2v'])
+            lmrTime_str.set_time_p(self, self.para['dn2v'])
 
     def check(self):
         """Check process result."""
