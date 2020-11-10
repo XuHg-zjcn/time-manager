@@ -101,6 +101,19 @@ class Part:
         return value
 
     def __str__(self):
+        """Simple infomation about Part.
+
+        Example:
+        -------
+        "1h"=1
+        """
+        if type(self.value) in (int, float) or self.value is None:
+            str_value = str(self.value)
+        else:
+            raise ValueError("self.value isn't int, float or None")
+        return '"{}"={}'.format(self.part_str(), str_value)
+
+    def __repr__(self):
         """Generate string for Part print.
 
         Example:
@@ -111,8 +124,9 @@ class Part:
             str_value = str(self.value)
         else:
             raise ValueError("self.value isn't int, float or None")
-        ret = 'span={:>7}, str="{}", value={}'\
-              .format(str(self.span), self.part_str(), str_value)
+        space = ' '*max(0, 5-len(self))
+        ret = 'span=({:>2},{:>2}), str="{}",{}value={}'\
+              .format(*(self.span), self.part_str(), space, str_value)
         return ret
 
     def __eq__(self, other):
@@ -250,6 +264,16 @@ class BigPart(dict):
             self.mstr.check_unused_char(allow, disallow, self.span)
 
     def __str__(self):
+        if len(self) != 0:
+            ret = ''
+            for i in self:
+                ret += '{}:{}, '.format(i.name, str(self[i]))
+            ret = ret[:-1]
+            return ret
+        else:
+            return 'empty'
+
+    def __repr__(self):
         """Generate string for BigPart print.
 
         Example:
@@ -259,13 +283,13 @@ class BigPart(dict):
         year   :span= (0, 4), str="2020", value=2020
         """
         if len(self) != 0:
-            ret = '-----------------------------------\n'
+            ret = '----------------------------------------\n'
             for i in self:
-                ret += '{:<7}:{}\n'.format(i.name, self[i])
+                ret += '{:<6}: {}\n'.format(i.name, repr(self[i]))
             ret = ret[:-1]
             return ret
         else:
-            return 'empty------------------------------'
+            return 'empty-----------------------------------'
 
 
 class My_str:
@@ -493,7 +517,7 @@ class My_str:
         check_and_set_used(self, uuspan_list, allow, dis)
         # check and set_str_used
 
-    def print_str_use_status(self, mark):
+    def str_use_status(self, mark):
         """Print main str use status.
 
         print mark symbol each used char, and count
@@ -513,9 +537,14 @@ class My_str:
             n_used += used_i
         len_str = len(self.in_str)
         unused = len_str - n_used
+        ret = ''
         if mark == '^':
-            print('str:|{}|\n     {}'.format(self.in_str, marks))
+            ret += 'str:|{}|\n     {}\n'.format(self.in_str, marks)
         else:
-            print('     {}\nstr:|{}|'.format(marks, self.in_str))
-        print('str use status: total={}, used={}, unused={}'
-              .format(len_str, n_used, unused))
+            ret += '     {}\nstr:|{}|\n'.format(marks, self.in_str)
+        ret += 'str use status: total={}, used={}, unused={}\n'\
+            .format(len_str, n_used, unused)
+        return ret
+
+    def __repr__(self):
+        return self.str_use_status('v')

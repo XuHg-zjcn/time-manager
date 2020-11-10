@@ -276,3 +276,10 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
         if len(OK_fmts) == 1:
             nums = self.unused_parts.subset['num']
             onlyone_format_fill(OK_fmts, self.date_p, fmt2myOD, nums)
+
+    def __repr__(self):
+        ret = ''
+        ret += self.str_use_status('v')
+        ret += 'date:{}\n'.format(repr(self.date_p))
+        ret += 'time:{}'.format(repr(self.time_p))
+        return ret

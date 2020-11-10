@@ -202,11 +202,11 @@ def test():
     test_err = ['1s 12:14']
     dt_str = Timedelta_str('1h12m34s')
     dt_str.process()
-    dt_str.print_str_use_status('v')
+    print(dt_str)
+    print('t_uints:', repr(dt_str.t_units))
+    print('time_p: ', repr(dt_str.time_p))
+    print('-------------------------------------------------')
     td = dt_str.as_timedelta()
-    print('t_uints:', dt_str.t_units)
-    print('time_p: ', dt_str.time_p)
-    print('--------------------------------------------')
     print('time delta :', td)
     print('total {}sec'.format(dt_str.as_sec()))
     return dt_str

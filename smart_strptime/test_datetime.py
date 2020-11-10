@@ -28,30 +28,27 @@ n_test = len(test_ok) + len(test_err)
 def test_a_list_str(test_list, expect_err=False, print_traceback=True):
     t_sum = 0
     for i in test_list:
+        tstr = DateTime_str(i)
         try:
             t0 = time.time()
-            tstr = DateTime_str(i)
             tstr.process_check()
             # dt_obj = tstr.as_datetime()
         except Exception as e:
-            t1 = time.time()
-            tstr.print_str_use_status('v')
-            if print_traceback:
-                traceback.print_exc()
-            else:
-                print('error happend:')
-                print(e)
-            err_happend = True
+            err = e
         else:
-            t1 = time.time()
-            tstr.print_str_use_status('v')
-            print('date:', tstr.date_p)
-            print('time:', tstr.time_p)
             # print('datetime out:', dt_obj)
-            print('no error')
-            err_happend = False
+            err = None
         finally:
+            t1 = time.time()
             t_sum += t1 - t0
+            print(tstr)
+            err_happend = err is not None
+            if err_happend and print_traceback:
+                traceback.print_exc()
+            elif err_happend and not print_traceback:
+                print('Error: ', err)
+            else:
+                print('no error')
             if err_happend != expect_err:
                 print('error not expect, expect is {}, but result is {}'
                       .format(expect_err, err_happend))
@@ -90,9 +87,9 @@ def test_speed_Nrepeat(N_rep=200):
 def test_check():
     os.system('clear')
     t_sum = 0
-    print('##########test_ok, should no error!!!!!!!!!!')
+    print('################Test_OK, should no error!!!!!!!!!!!!!!!!!!!!')
     t_sum += test_a_list_str(test_ok, expect_err=False, print_traceback=True)
-    print('##########test_err, should happend error each item!!!!!!!!!!')
+    print('##########Test_Err, should happend error each item!!!!!!!!!!')
     t_sum += test_a_list_str(test_err, expect_err=True, print_traceback=False)
     t_sum *= 1000
     print('{}tests, total {:.2f}ms, {:.3f}ms per test'
