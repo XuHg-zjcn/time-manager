@@ -151,7 +151,7 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
                 raise ValueError('vaild item less than 2:\n{}'
                                  .format(dt_paras))
             for i in range(s):
-                dt_paras[s] = today[s]
+                dt_paras[i] = today[i]
             return s, e
 
         U = UType
