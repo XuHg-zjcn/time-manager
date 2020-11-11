@@ -31,3 +31,13 @@ op = input('''请输入要进行的操作:
 ''')
 if op == '1':
     fixed()
+elif op == '2':
+    sta_str = input('最晚开始:')
+    sta = ti.input_str(sta_str)
+    end_str = input('最早结束:')
+    end = ti.input_str(end_str)
+    res = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
+    for i in res:
+        print(i)
+else:
+    print('输入有误，请输入正确的序号1-4')

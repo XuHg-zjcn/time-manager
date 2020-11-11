@@ -30,6 +30,8 @@ h:帮助, e:退出
                 continue
             if in_str in {'e', 'exit'}:
                 return None
+            if in_str.upper() in {'NONE', 'NULL'}:
+                return None
             try:
                 value = self._process(in_str)
             except Exception as e:

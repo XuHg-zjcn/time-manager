@@ -88,6 +88,8 @@ class TODO_db:
         self.db_path = db_path
         if not os.path.exists(db_path):
             self.db_init()
+        else:
+            self.conn = sqlite3.connect(self.db_path)
 
     def db_init(self):
         self.conn = sqlite3.connect(self.db_path)
@@ -100,15 +102,12 @@ class TODO_db:
             finish   BOOL);'''
         self.c.execute(sql)
         self.conn.commit()
-        self.conn.close()
 
     def add_aitem(self, plan):
-        self.conn = sqlite3.connect(self.db_path)
         self.c = self.conn.cursor()
         sql = "INSERT INTO todo VALUES(NULL,?,?,?,?,?,?,?,?,?,?);"
         self.c.execute(sql, plan.db_item())
         self.conn.commit()
-        self.conn.close()
 
     def get_aitem(self, cond_dict):
         self.conn = sqlite3.connect(self.db_path)
@@ -121,7 +120,9 @@ class TODO_db:
         for key in cond_dict.keys():
             assert key in allow_filed
             value = cond_dict[key]
-            if type(value) in [bool, int, float]:               # x == ?
+            if value is None:
+                continue
+            elif type(value) in [bool, int, float]:               # x == ?
                 sql += '{}=? and'.format(key)
                 paras.append(value)
             elif isinstance(value, tuple) and len(value) == 2:  # a <= x < b
@@ -137,10 +138,6 @@ class TODO_db:
                 raise ValueError('key type invaild')
         sql = sql[:-4]
         res = self.c.execute(sql, paras)
-        for i in res:
-            print(i)
-        self.conn.commit()
-        self.conn.close()
         # assert len(res) == 13
         # return Plan(*res[:3], TreeItem(*res[3:5]), PlanTime(*res[5:]))
         return res
