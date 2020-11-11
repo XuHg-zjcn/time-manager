@@ -1,7 +1,8 @@
 import datetime                                        # L0 built-in model
 from smart_strptime.my_lib import strictly_increasing  # L1 my_lib
-from smart_strptime.my_lib import my_odict, mrange_dict
+from smart_strptime.my_lib import lr_dict, mrange_dict
 from smart_strptime.my_lib import part_lr
+from smart_strptime.my_str import sType2re_c2
 from smart_strptime.basetime import UType, Char2UType  # L3 basetime define
 from smart_strptime.lmrTime_str import lmrTime_str     # L4 time search type
 from smart_strptime.Date_str import Date_str
@@ -33,10 +34,10 @@ class DateTime_str(lmrTime_str, Date_str):
         Parts in BigPart are not repeating
     """
 
-    def __init__(self, in_str, fd642=True, default_n2v='hour', YY2=True):
+    def __init__(self, in_str, fd642=True, dn2v='hour', YY2=True):
         super().__init__(in_str)
         # self.flags 'time_found', 'fd642', 'YY2', 'process OK'
-        self.para = {'dn2v': default_n2v}  # default time format
+        self.para = {'dn2v': dn2v}  # default time format
         if fd642:
             self.flags.add('fd642')  # find 6,4,2 digts without time found
         if YY2:
@@ -51,11 +52,25 @@ class DateTime_str(lmrTime_str, Date_str):
 
     def _process(self):
         """Process input str."""
-        lmrTime_str.process(self)
-        Date_str.process(self)
+        self._time_lmrs()
+        self._get_AMPM()
+
+        self._english_month_weekday()
+        self._get_allsType_parts(sType2re_c2)
+        self._find_date(8)         # find YYYYMMDD
         if ('time_found' in self.flags) or ('fd642' in self.flags):
-            self._unused_chooise()
-            self.__onlyone_unused_num_as_day()
+            self._find_date(4)     # find YYYY, MMDD
+            self._find_date(6)     # find YYYYMM, YYMMDD
+
+        fmt_base = ['YMD', 'DMY']
+        if 'time_found' in self.flags:
+            fmt_base += ['MD']
+        else:
+            fmt_base += ['MD', 'YM']
+
+        self._unused_chooise(fmt_base)
+        self.__onlyone_unused_num_as_day()
+
         if len(self.date_p) > 0:  # any about date found
             lmrTime_str.set_time_p(self, 'hour')
         else:
@@ -158,7 +173,7 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
                                      dt_obj.strftime('%Y-%m-%d %A')))
         return dt_obj
 
-    def _unused_chooise(self, formats=['YMD', 'DMY', 'YM']):
+    def _unused_chooise(self, formats):
         """Unused numbers add to date BigPart.
 
         fig1:
@@ -186,45 +201,55 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
         n* are Part obj
         [n1,n2,n3].sort()
         """
-        def find_range_can_push(my_od, part_obj):
-            lr = my_od.get_allow_lr(part_obj)
-            if lr is None:
-                return None
-            else:
-                li, ri = lr
-                Left = my_od.next_None(li, prev_next=1)      # [Left, Right)
-                Right = my_od.next_None(ri, prev_next=-1)+1  # Right+1
-                return Left, Right
 
-        def get_fmt2myOD(formats):
-            fmt2myOD = {}            # key: format str, value: my_odict
+        def get_fmt2lrd(formats):
+            fmt2lrd = {}            # key: format str, value: lr_dict
             for fmt in formats:      # a format         'YMD'
-                my_od = my_odict()   # key: UType, value: Part obj
+                lr_d = lr_dict()   # key: UType, value: Part obj
                 for c in fmt:        # a char of format 'Y'
                     ut = Char2UType[c]
                     # fill ut_parts
                     if ut in self.date_p:
-                        my_od[ut] = self.date_p[ut]
+                        lr_d[ut] = self.date_p[ut]
                     else:
-                        my_od[ut] = None
-                fmt2myOD[fmt] = my_od
-            return fmt2myOD
+                        lr_d[ut] = None
+                fmt2lrd[fmt] = lr_d
+            return fmt2lrd
 
-        def remove_unmatched_format(fmt2myOD):
-            rm_fmt = []
-            for fmt, my_od in fmt2myOD.items():
-                part_objs = list(my_od.values())
-                part_objs = list(filter(None, part_objs))
-                if not strictly_increasing(part_objs):
-                    rm_fmt.append(fmt)
+        def remove_unmatched_format(fmt2lrd):
+            """ 0   1    2    ni
+               [Y] [M]  [D]   format
+                |        |    links, linked item in lr_d not None
+            p0 p1 p2 p3 p4    parts in merge bigpart
+             0  1  2  3  4    bp_ni
+            """
+            rm_fmt = set()
+            bp_merge = self.date_p.copy()
+            bp_merge.update(self.time_p)
+            bp_merge = list(bp_merge.items())
+            for fmt, lr_d in fmt2lrd.items():
+                bp_i = None
+                for i, (lr, part) in enumerate(lr_d.items()):
+                    if bp_i is not None:
+                        bp_i += 1  # increase when bp_i assiged
+                    if bp_i is None and part is not None:
+                        bp_i = i   # init bp_i
+                    if bp_i is not None and part is not None:
+                        if bp_i >= len(bp_merge):
+                            rm_fmt.add(fmt)    # bp_merge not enough
+                            continue
+                        bp_part = bp_merge[bp_i][1]
+                        if part != bp_part:
+                            rm_fmt.add(fmt)    # part not same
+                            continue
             for i in rm_fmt:
-                fmt2myOD.pop(i)
+                fmt2lrd.pop(i)
 
-        def get_OK_fmts(fmt2myOD):
+        def get_OK_fmts(fmt2lrd):
             """Find unused parts can push location.
 
             if any push range of unused part can't found, remove the format
-            from fmt2myOD.
+            from fmt2lrd.
 
             OK_fmts:
             -------
@@ -232,15 +257,24 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
              fmt2: {lr:part_lr, lr:part_lr}, format2
              fmt3: {lr:part_lr, lr:part_lr}} format3
             """
-            rm_fmt = []
+            def find_range_can_push(lr_d, part_obj):
+                lr = lr_d.get_allow_lr(part_obj)  # l<=x<=r, lr_d[x] are None
+                if lr is None:
+                    return None
+                else:
+                    li, ri = lr
+                    Left = lr_d.next_None(li, prev_next=1)      # [Left, Right)
+                    Right = lr_d.next_None(ri, prev_next=-1)+1  # Right+1
+                    return Left, Right
+            rm_fmt = set()
             OK_fmts = {}
-            for fmt, my_od in fmt2myOD.items():
+            for fmt, lr_d in fmt2lrd.items():
                 skip = False    # append in rm_i
-                ok_fills = {}
+                ok_fills = {}   # lr -> [part_lr, ...]
                 for uup in self.unused_parts.subset['num']:
-                    lr = find_range_can_push(my_od, uup)
+                    lr = find_range_can_push(lr_d, uup)
                     if lr is None:
-                        rm_fmt.append(fmt)
+                        rm_fmt.add(fmt)
                         skip = True
                         break
                     else:
@@ -252,35 +286,50 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
                 else:
                     OK_fmts[fmt] = ok_fills
             for i in rm_fmt:    # remove find push range faild
-                fmt2myOD.pop(i)
+                fmt2lrd.pop(i)
             return OK_fmts
 
         def remove_lenlr_neq_Nplr(OK_fmts):
             # remove if len(lr) != num of part_lr, see fig2
-            rm_fmt = []
+            rm_fmt = set()
             for fmt, d_lr2plr in OK_fmts.items():
                 for lr, plrs in d_lr2plr.items():
                     dlr = lr[1]-lr[0]
                     n_plr = len(plrs)
                     if dlr != n_plr:
-                        rm_fmt.append(fmt)
+                        rm_fmt.add(fmt)
             for i in rm_fmt:
                 OK_fmts.pop(i)
 
-        def onlyone_format_fill(OK_fmts, date_p, fmt2myOD, nums):
-            assert len(OK_fmts) == 1
-            fmt = list(OK_fmts.keys())[0]
-            fills_dict = list(OK_fmts.values())[0]
-            mr_dict = mrange_dict(fills_dict)
-            mr_dict.fill(self.date_p, fmt2myOD[fmt])
+        def fill_myOD(self, ok_fills, myOD):
+            mr_dict = mrange_dict(ok_fills)
+            mr_dict.fill(self.date_p, myOD)
 
-        fmt2myOD = get_fmt2myOD(formats)
-        remove_unmatched_format(fmt2myOD)  # remove in fmt2myOD
-        OK_fmts = get_OK_fmts(fmt2myOD)
+        def onlyone_fmt_fill(self, OK_fmts):
+            fmt = list(OK_fmts.keys())[0]
+            ok_fills = list(OK_fmts.values())[0]
+            myOD = fmt2lrd[fmt]
+            fill_myOD(self, ok_fills, myOD)
+
+        def order_format_fill(self, OK_fmts, orders=formats):
+            assert len(OK_fmts) > 1
+            fmts = list(OK_fmts.keys())
+            order_i = min(map(lambda x: orders.index(x), fmts))
+            fmt_first = orders[order_i]
+            ok_fills = OK_fmts[fmt_first]
+            myOD = fmt2lrd[fmt_first]
+            fill_myOD(self, ok_fills, myOD)
+
+        fmt2lrd = get_fmt2lrd(formats)
+        remove_unmatched_format(fmt2lrd)  # remove in fmt2lrd
+        OK_fmts = get_OK_fmts(fmt2lrd)
         remove_lenlr_neq_Nplr(OK_fmts)     # remove in OK_fmts
-        if len(OK_fmts) == 1:
-            nums = self.unused_parts.subset['num']
-            onlyone_format_fill(OK_fmts, self.date_p, fmt2myOD, nums)
+        if len(OK_fmts) == 0:
+            return
+        elif len(OK_fmts) == 1:
+            onlyone_fmt_fill(self, OK_fmts)
+        else:
+            order_format_fill(self, OK_fmts, formats)
 
     def __repr__(self):
         ret = ''

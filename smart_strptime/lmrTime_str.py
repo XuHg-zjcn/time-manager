@@ -17,10 +17,10 @@ class lmrTime_str(My_str):
         self.time_p = BigPart(self, 'time', UxType['lmrTime'])
 
     def process(self):
-        self.__time_lmrs()
-        self.__get_AMPM()
+        self._time_lmrs()
+        self._get_AMPM()
 
-    def __time_lmrs(self):
+    def _time_lmrs(self):
         """Get time LL:MM:RR.subsec.
 
         Middle and Subsec can skip.
@@ -99,7 +99,7 @@ class lmrTime_str(My_str):
                 self.time_p[d_k] = self.time_p.pop(s_k)  # pop lmr to hms
         self.flags.add('set_time_p')
 
-    def __get_AMPM(self):
+    def _get_AMPM(self):
         apm = self._find_strs(ampm, 'AMPM')
         if apm is not None:
             self.time_p[UType.ampm] = apm

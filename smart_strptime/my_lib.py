@@ -31,25 +31,28 @@ class span(tuple):
         """Get end of span."""
         return self[1]
 
+
 class uiter:
     def __init__(self, iter_from, ud):
         self.skips = set()
         self.iter_from = iter_from
         self.ud = ud
+
     def __next__(self):
         try:
             n = next(self.iter_from)
-        except StopIteration:     #after iteration, remove skips
+        except StopIteration:     # after iteration, remove skips
             del self.ud.uiter
             for skip in self.skips:
                 self.ud.remove(skip)
             raise StopIteration
         return n[1]
 
+
 class udict(dict):
     def __init__(self, ssn=None, pare=None, nadd=None, check_add=True):
         if ssn is not None:
-            self.subset = {} #dict key:name, value:subset(udict)
+            self.subset = {}  # dict key:name, value:subset(udict)
             for name in ssn:
                 self.subset[name] = udict(pareset=self)
         else:
@@ -102,72 +105,75 @@ class udict(dict):
         self.subset[name] = subset
 
     def __contains__(self, part):
-        if not isinstance(part, Hashable) and isinstance(part, Iterable):
+        if not isinstance(part, Hashable):
             ptup = tuple(part)
         return super().__contains__(ptup)
 
-    def __iter__(self):  #iter dict value(Part objs)
+    def __iter__(self):   # iter dict value(Part objs)
         self.uiter = uiter(self.items().__iter__(), self)
         return self.uiter
 
-def strictly_increasing(L):
-    return all(x<y for x, y in zip(L, L[1:]))
 
-class my_odict(dict):
+def strictly_increasing(L):
+    return all(x<y for x,y in zip(L, L[1:]))
+
+
+class lr_dict(dict):
     def __init__(self):
         super().__init__()
         self.klst = []
+
     def __setitem__(self, k, v):
-        if isinstance(k, int):    #k as index
-            assert k<len(self.klst)
+        if isinstance(k, int):    # k as index
+            assert k < len(self.klst)
             k = self.klst[k]
         if k not in self:
             self.klst.append(k)
         super().__setitem__(k, v)
+
     def __getitem__(self, k):
-        if isinstance(k, int):    #k as index
+        if isinstance(k, int):    # k as index
             k = self.klst[k]
         return super().__getitem__(k)
+
     def get_allow_lr(self, part_obj):
         '''
         prev left ... right next
                 part_obj
-        
+
         prev and next are not None
         prev.end <= part_obj.start   and   part_obj.end <= next.start
         left = prev+1
         right = next-1
-        
+
         part_obj can add to left<=x<=right
         '''
-        left = None
-        right = None
-        for ni,k in enumerate(self.klst):
-            v = self[k]
-            if v is not None:
-                if left is None and v < part_obj:
-                    left = ni + 1  #prev = v
-                if left is not None and right is None and v > part_obj:
-                    right = ni - 1 #next = v
-                if not any([left,right]): #left and right are not None
+        left = 0
+        right = len(self.klst) - 1
+        for ni, k in enumerate(self.klst):
+            part_i = self[k]
+            if part_i is not None:
+                if part_i < part_obj:
+                    left = ni + 1   # prev = v
+                if part_i > part_obj:
+                    right = ni - 1  # next = v
                     break
-        if left is not None and right is None:
-            right = len(self.klst) - 1
-        if all([left,right]) and left > right:
-            return None
-        if not any([left,right]):
+        if left > right:
             return None
         return left, right
+
     def next_None(self, ki, prev_next):
-        l = len(self.klst)
-        ki = {1:0, -1:l-1}[prev_next] if ki is None else ki
-        sli = {1:(ki,l,1), -1:(ki,-1,-1)}[prev_next]
+        Nlen = len(self.klst)
+        ki = {1: 0, -1: Nlen-1}[prev_next] if ki is None else ki
+        sli = {1: (ki,Nlen,1), -1: (ki,-1,-1)}[prev_next]
         for i in range(*sli):
             if self[self.klst[i]] is None:
                 return i
         return sli[1]-prev_next
-    def pop():                    #don't delete item
+
+    def pop():                    # don't delete item
         raise NotImplementedError('my_odict delete is forbidden')
+
 
 class part_lr:
     def __init__(self, fmt, part, lr):
@@ -188,18 +194,20 @@ def intersection(i, j):
     if l>0:  return sta, end
     else:  return None
 
+
 class parts_insec:
     def __init__(self, part1, part2, insec):
         self.part1 = part1
         self.part2 = part2
         self.insec = insec
 
-class mrange_dict(dict): #dict[Part.tuple] = [plr1, plr2]
+
+class mrange_dict(dict):  # dict[Part.tuple] = [plr1, plr2]
     def __init__(self, from_dict):
         super().__init__(from_dict)
 
     def fill(self, date_p, my_odict):
-        for lr, plrs in self.items():  #a space can fill
+        for lr, plrs in self.items():  # a space can fill
             if lr[1] - lr[0] == len(plrs):
                 cp_plrs = plrs.copy()
                 cp_plrs.sort(key=lambda x: x.part)  # part

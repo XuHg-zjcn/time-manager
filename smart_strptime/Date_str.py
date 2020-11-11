@@ -5,7 +5,7 @@ Created on Tue Nov 10 13:30:37 2020
 """
 from enum import Enum                                    # L0 built-in model
 from smart_strptime.my_str import Part, BigPart, My_str  # L2 my_str
-from smart_strptime.my_str import sType, sType2re_c2
+from smart_strptime.my_str import sType
 from smart_strptime.basetime import UType, UxType        # L3 basetime define
 # level of the module is L4
 
@@ -33,15 +33,7 @@ class Date_str(My_str):
         super().__init__(in_str)
         self.date_p = BigPart(self, 'date', UxType['Date'])
 
-    def process(self):
-        self.__english_month_weekday()
-        self._get_allsType_parts(sType2re_c2)
-        self.__find_date(8)         # find YYYYMMDD
-        if ('time_found' in self.flags) or ('fd642' in self.flags):
-            self.__find_date(4)     # find YYYY, MMDD
-            self.__find_date(6)     # find YYYYMM, YYMMDD
-
-    def __english_month_weekday(self):
+    def _english_month_weekday(self):
         """find english str"""
         month = self._find_strs(month_short, puls1=True)
         weekday = self._find_strs(weekday_short, puls1=False)
@@ -50,7 +42,7 @@ class Date_str(My_str):
         if weekday is not None:
             self.date_p[UType.weekday] = weekday
 
-    def __find_date(self, digts):
+    def _find_date(self, digts):
         def num8(self, part, s, e, inti):
             if e-s == 8:
                 self.date_p[UType.year ] = Part(self, (s,   s+4), sType.num)
