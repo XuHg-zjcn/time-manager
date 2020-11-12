@@ -53,14 +53,25 @@ class PlanTime:
 
 
 class Plan:
-    def __init__(self, dbtype: int, name: str, p_time,
+    str_head = ' id |typ|name{}|{}start time{}~{}end time{}|finish'\
+               .format(*(' '*i for i in [12, 5, 5, 6, 5]))
+
+    def __init__(self, p_time, dbtype=0, name='untitled',
                  tree_i=None, finish=False, dbid=None):
+        """p_time can from sqlite SELECT *"""
+        if isinstance(p_time, tuple):
+            assert len(p_time) == 11
+            dbid = p_time[0]
+            dbtype = p_time[1]
+            name = p_time[2]
+            finish = p_time[10]
+            p_time = PlanTime(*p_time[6:10])
+        self.p_time = p_time
         self.dbtype = dbtype
         self.name = name
         if tree_i is None:
             tree_i = TreeItem()
         self.tree_i = tree_i
-        self.p_time = p_time
         self.dbid = dbid
         self.finish = finish
 
@@ -72,16 +83,40 @@ class Plan:
         return ret
 
     def __str__(self):
-        dt_obj = datetime.datetime.fromtimestamp(self.p_time.sta)
-        sta_str = dt_obj.strftime('%Y-%m-%d %H:%M:%S')
-        dt_obj = datetime.datetime.fromtimestamp(self.p_time.end)
-        end_str = dt_obj.strftime('%Y-%m-%d %H:%M:%S')
-        use_str = datetime.timedelta(seconds=self.p_time.use)
-        use_str = str(use_str)
-        sub_str = datetime.timedelta(seconds=self.p_time.sub)
-        sub_str = str(sub_str)
-        return 'name:{}, start:{}, end:{}, use:{}, sub:{}'\
-               .format(self.name, sta_str, end_str, use_str, sub_str)
+        #            id   type  name   sta     end   finish
+        ret_fmt = '{:>4}|{:>3}|{:<16}|{:>19} ~{:>14}|{:<6}'
+        sta_fmt = '%Y/%m/%d %H:%M:%S'
+        def end_fmt_n(n):
+            return ' '*(n*3) + '%Y/%m/%d %H:%M:%S'[n*3:]
+
+        sta_dt = datetime.datetime.fromtimestamp(self.p_time.sta_time)
+        end_dt = datetime.datetime.fromtimestamp(self.p_time.end_time)
+        last_same = 0
+        for ni, unit in enumerate(['year', 'month', 'day',
+                                   'hour', 'minute', 'second', 'microsecond']):
+            sta_u = getattr(sta_dt, unit)
+            end_u = getattr(end_dt, unit)
+            if sta_u != end_u:
+                last_same = ni
+                break
+        sta_str = sta_dt.strftime(sta_fmt)
+        end_str = end_dt.strftime(end_fmt_n(last_same))
+        dbid = self.dbid if self.dbid is not None else 0
+        ret_str = ret_fmt.format(dbid, self.dbtype, self.name,
+                                 sta_str, end_str, self.finish)
+        return ret_str
+
+    def __repr__(self):
+        sta_dt = datetime.datetime.fromtimestamp(self.p_time.sta_time)
+        end_dt = datetime.datetime.fromtimestamp(self.p_time.end_time)
+
+        ret = 'id={}, type={}, name={}\n'\
+              .format(self.dbid, self.dbtype, self.name)
+        ret += 'sta_time:{}\n'.format(sta_dt.strftime('%Y/%m/%d.%H:%M:%S'))
+        ret += 'end_time:{}\n'.format(end_dt.strftime('%Y/%m/%d.%H:%M:%S'))
+        ret += 'finish:{}'.format(self.finish)
+        return ret
+
 
 class TODO_db:
     def __init__(self, db_path='TODO.db'):
@@ -138,13 +173,16 @@ class TODO_db:
                 raise ValueError('key type invaild')
         sql = sql[:-4]
         res = self.c.execute(sql, paras)
-        # assert len(res) == 13
-        # return Plan(*res[:3], TreeItem(*res[3:5]), PlanTime(*res[5:]))
-        return res
-
+        res_plans = []
+        for tup in res:
+            res_plans.append(Plan(tup))
+        return res_plans
 
 # test code
 if __name__ == '__main__':
     tdb = TODO_db()
-    tdb.add_aitem(Plan(1, 'plan1', TreeItem(0), PlanTime('n', ('n', 10), 5)))
+    plan = Plan(PlanTime(1605026048.586921, 1605040451.1946993),
+                1, 'plan1', TreeItem(0))
+    tdb.add_aitem(plan)
+    print((str(plan)))
     tdb.get_aitem({'sta_time': (1604489926.0, 1604489926.9)})

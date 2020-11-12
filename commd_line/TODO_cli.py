@@ -37,7 +37,8 @@ elif op == '2':
     end_str = input('最早结束:')
     end = ti.input_str(end_str)
     res = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
+    print(Plan.str_head)
     for i in res:
-        print(i)
+        print(str(i))
 else:
     print('输入有误，请输入正确的序号1-4')
