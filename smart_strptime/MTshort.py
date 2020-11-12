@@ -125,6 +125,7 @@ class MTshort:
 
         @para in_x: datetime, time.struct_time or timestramp
         @para update: is update for next compare, false will keep current
+        @return: cleaned time string
         """
         dati_names = ['year', 'month', 'day',
                       'hour', 'minute', 'second']
