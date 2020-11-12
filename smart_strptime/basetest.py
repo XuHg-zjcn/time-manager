@@ -10,6 +10,7 @@ import traceback
 
 red = '\033[1;31m'
 green = '\033[1;32m'
+d_t = '\033[1;36m'
 end = '\033[00m'
 
 
@@ -18,11 +19,11 @@ class BaseTest:
         self.test_class = test_class
         self.test_ok = test_ok
         self.test_err = test_err
-        self.n_test = len(test_ok) + len(test_err)
 
-    def __test_a_list_str(self, test_list, expect_err=False,
+    def __test_a_list_str(self, test_list, should_err=False,
                           print_traceback=True):
         t_sum = 0
+        n_err = 0
         for i in test_list:
             tstr = self.test_class(i)
             t0 = time.time()
@@ -32,6 +33,7 @@ class BaseTest:
                 if print_traceback:
                     traceback.print_exc()
                 err = e
+                n_err += 1
             else:
                 err = None
             finally:
@@ -44,12 +46,24 @@ class BaseTest:
                 else:
                     print('{}no error{}'.format(green, end))
                 color_happ = red if err_happend else green
-                if err_happend != expect_err:
+                if err_happend != should_err:
                     print('error not correct, expect is {}, result is {}{}!!{}'
-                          .format(expect_err, color_happ, err_happend, end))
+                          .format(should_err, color_happ, err_happend, end))
                 print('process {:.3f}ms'.format((t1-t0)*1000))
             print()
-        return t_sum
+        t_sum *= 1000
+        n = len(test_list)
+        n_ok = n - n_err
+        print('{}tests, total {:.2f}ms, {}{:.3f}ms per test{}'
+              .format(n, t_sum, d_t, t_sum/n, end))
+        color_err = red if n_err != 0 else ''
+        color_ok = green if n_ok != 0 else ''
+        should = 'error' if should_err else 'OK'
+        color_should = red if should_err else green
+        print('{}err:{}{}{}, {}OK:{}{}{}, {}shoud all {}{}'
+              .format(color_err, red, n_err, end,
+                      color_ok, green, n_ok, end,
+                      color_should, should, end))
 
     def __test_quiet(self, test_list):
         t_sum = 0
@@ -73,22 +87,21 @@ class BaseTest:
             t_sum += self.__test_quiet(self.test_ok)
             t_sum += self.__test_quiet(self.test_err)
         t_sum *= 1000  # sec to ms
-        print('{:.2f}ms/({}*{})test, {:.3f}ms per test'
-              .format(t_sum, self.n_test, N_rep, t_sum/(self.n_test*N_rep)))
+        n = len(self.test_ok) + len(self.test_err)
+        per = t_sum/(n*N_rep)
+        print('{:.2f}ms/({}*{})test, {}{:.3f}ms per test{}'
+              .format(t_sum, n, N_rep, d_t, per, end))
 
     def test_debug(self):
-        t_sum = 0
         print('{}################Test_OK, should no error!!!!!!!!!!!!!!!!!!!{}'
               .format(green, end))
-        t_sum += self.__test_a_list_str(self.test_ok,
-                                        expect_err=False, print_traceback=True)
+        self.__test_a_list_str(self.test_ok,
+                               should_err=False, print_traceback=True)
+        print('------------------------------------------------------------')
         print('{}#########Test_Err, should happend error each item!!!!!!!!!{}'
               .format(red, end))
-        t_sum += self.__test_a_list_str(self.test_err,
-                                        expect_err=True, print_traceback=False)
-        t_sum *= 1000
-        print('{}tests, total {:.2f}ms, {:.3f}ms per test'
-              .format(self.n_test, t_sum, t_sum/self.n_test))
+        self.__test_a_list_str(self.test_err,
+                               should_err=True, print_traceback=False)
         print('------------------------------------------------------------')
 
     def test(self):
