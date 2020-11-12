@@ -4,6 +4,10 @@ from collections import Iterable
 from smart_strptime.my_lib import udict, oset, span  # L1 my_lib
 # level of the module is L2
 
+red = '\033[1;31m'    # errors
+green = '\033[1;32m'  # ok
+end = '\033[00m'      # end of color
+
 re_num = re.compile(r'\d+')
 re_eng = re.compile(r'[a-zA-Z]+')
 re_norm = re.compile(r'[-:,/ ]+')
@@ -540,9 +544,11 @@ class My_str:
             ret += 'str:|{}|\n     {}\n'.format(self.in_str, marks)
         else:
             ret += '     {}\nstr:|{}|\n'.format(marks, self.in_str)
+        color0 = red if len_str == 0 else ''
+        color1 = green if unused == 0 and n_used != 0 else red
         if not p_unused:
-            ret += 'str use status: total={}, used={}, unused={}\n'\
-                .format(len_str, n_used, unused)
+            ret += 'str use status: {}total={}, used={}, {}unused={}{}\n'\
+                .format(color0, len_str, n_used, color1, unused, end)
         return ret
 
     def __repr__(self):

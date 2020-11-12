@@ -8,6 +8,9 @@ from smart_strptime.lmrTime_str import lmrTime_str     # L4 time search type
 from smart_strptime.Date_str import Date_str
 # level of the module is L5, can use outside package
 
+d_t = '\033[36m'  # datetype
+end = '\033[0m'   # end of style
+
 
 class DateTime_str(lmrTime_str, Date_str):
     r"""Smart time str to datetime (strptime).
@@ -334,6 +337,6 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
     def __repr__(self):
         ret = ''
         ret += self.str_use_status('v')
-        ret += 'date:{}\n'.format(repr(self.date_p))
-        ret += 'time:{}'.format(repr(self.time_p))
+        ret += '{}date:{}{}\n'.format(d_t, end, repr(self.date_p))
+        ret += '{}time:{}{}'.format(d_t, end, repr(self.time_p))
         return ret

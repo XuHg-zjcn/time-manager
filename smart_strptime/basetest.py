@@ -5,9 +5,12 @@ Created on Sat Nov  7 16:04:48 2020
 test time_str model speed and errors
 """
 
-import os
 import time
 import traceback
+
+red = '\033[1;31m'
+green = '\033[1;32m'
+end = '\033[00m'
 
 
 class BaseTest:
@@ -37,12 +40,13 @@ class BaseTest:
                 print(tstr)
                 err_happend = err is not None
                 if err_happend:
-                    print('Error: ', err)
+                    print('{}Error: {}{}'.format(red, end, err))
                 else:
-                    print('no error')
+                    print('{}no error{}'.format(green, end))
+                color_happ = red if err_happend else green
                 if err_happend != expect_err:
-                    print('error not expect, expect is {}, but result is {}'
-                          .format(expect_err, err_happend))
+                    print('error not correct, expect is {}, result is {}{}!!{}'
+                          .format(expect_err, color_happ, err_happend, end))
                 print('process {:.3f}ms'.format((t1-t0)*1000))
             print()
         return t_sum
@@ -73,12 +77,13 @@ class BaseTest:
               .format(t_sum, self.n_test, N_rep, t_sum/(self.n_test*N_rep)))
 
     def test_debug(self):
-        os.system('clear')
         t_sum = 0
-        print('################Test_OK, should no error!!!!!!!!!!!!!!!!!!!!')
+        print('{}################Test_OK, should no error!!!!!!!!!!!!!!!!!!!{}'
+              .format(green, end))
         t_sum += self.__test_a_list_str(self.test_ok,
                                         expect_err=False, print_traceback=True)
-        print('##########Test_Err, should happend error each item!!!!!!!!!!')
+        print('{}#########Test_Err, should happend error each item!!!!!!!!!{}'
+              .format(red, end))
         t_sum += self.__test_a_list_str(self.test_err,
                                         expect_err=True, print_traceback=False)
         t_sum *= 1000

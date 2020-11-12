@@ -7,6 +7,8 @@ from smart_strptime.basetime import UType, UxType       # L3 basetime define
 from smart_strptime.lmrTime_str import lmrTime_str      # L4 time search type
 # level of the module is L5, can use outside package
 
+d_t = '\033[36m'  # datetype
+end = '\033[0m'       # end of style
 
 def re_comp_unit(name_spilt, allow_s=True):
     """Get re.compile for time_unit
@@ -213,11 +215,12 @@ class TimeDelta_str(lmrTime_str):
 
     def __repr__(self):
         ret = super().__repr__()
-        ret += 't_uints:{}\n'.format(repr(self.t_units))
-        ret += 'time_p :{}\n'.format(repr(self.time_p))
+        ret += '{}t_uint:{} {}\n'.format(d_t, end, repr(self.t_units))
+        ret += '{}time_p:{} {}\n'.format(d_t, end, repr(self.time_p))
         ret += '-------------------------------------------------\n'
         if 'process_check_ok' in self.flags:
             td = self.as_timedelta()
-            ret += 'time delta :{}\n'.format(td)
-            ret += 'total {}sec\n'.format(td.total_seconds())
+            ret += '{}time delta:{} {}\n'.format(d_t, end, td)
+            sec = td.total_seconds()
+            ret += '     {}total:{} {}sec\n'.format(d_t, end, sec)
         return ret[:-1]
