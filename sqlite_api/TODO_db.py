@@ -3,7 +3,11 @@ import os
 import time
 import datetime
 import numpy as np
+import sys
+sys.path.append('..')
+from smart_strptime.MTshort import MTshort
 
+mts = MTshort('%Y/%m/%d %H:%M:%S')
 
 class TreeItem:
     """Plan tree node."""
@@ -85,22 +89,8 @@ class Plan:
     def __str__(self):
         #            id   type  name   sta     end   finish
         ret_fmt = '{:>4}|{:>3}|{:<16}|{:>19} ~{:>14}|{:<6}'
-        sta_fmt = '%Y/%m/%d %H:%M:%S'
-        def end_fmt_n(n):
-            return ' '*(n*3) + '%Y/%m/%d %H:%M:%S'[n*3:]
-
-        sta_dt = datetime.datetime.fromtimestamp(self.p_time.sta_time)
-        end_dt = datetime.datetime.fromtimestamp(self.p_time.end_time)
-        last_same = 0
-        for ni, unit in enumerate(['year', 'month', 'day',
-                                   'hour', 'minute', 'second', 'microsecond']):
-            sta_u = getattr(sta_dt, unit)
-            end_u = getattr(end_dt, unit)
-            if sta_u != end_u:
-                last_same = ni
-                break
-        sta_str = sta_dt.strftime(sta_fmt)
-        end_str = end_dt.strftime(end_fmt_n(last_same))
+        sta_str = mts.strftime(self.p_time.sta_time, update=True)
+        end_str = mts.strftime(self.p_time.sta_time, update=False)
         dbid = self.dbid if self.dbid is not None else 0
         ret_str = ret_fmt.format(dbid, self.dbtype, self.name,
                                  sta_str, end_str, self.finish)
