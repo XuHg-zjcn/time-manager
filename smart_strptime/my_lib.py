@@ -1,12 +1,13 @@
 '''
 class and func for my_str, time_str
 '''
-from functools import cmp_to_key
-from collections import Hashable, Iterable
+from collections import Hashable
+
 
 class oset(set):
     def __init__(self, set0):
         super().__init__(set0)
+
     def __contains__(self, x):
         return not super().__contains__(x)
 
@@ -17,10 +18,10 @@ class span(tuple):
     def __new__(cls, sta, end):
         """Create span tuple."""
         return super().__new__(cls, (sta, end))
-    
+
     def len_ab(self):
         return self[1] - self[0]
-    
+
     @property
     def s(self):
         """Get start of span."""
@@ -182,24 +183,11 @@ class part_lr:
         self.lr = lr
         self.l = lr[0]
         self.r = lr[1]
+
     def __lt__(self, other):
         if max(self.l, other.l) > min(self.r, other.r):
             raise RuntimeError('part_lr overlapped')
         return self.l <= other.l or self.r <= other.r
-
-def intersection(i, j):
-    sta = max(i.l, j.l)
-    end = min(i.r, j.r)
-    l = end - sta
-    if l>0:  return sta, end
-    else:  return None
-
-
-class parts_insec:
-    def __init__(self, part1, part2, insec):
-        self.part1 = part1
-        self.part2 = part2
-        self.insec = insec
 
 
 class mrange_dict(dict):  # dict[Part.tuple] = [plr1, plr2]
