@@ -109,8 +109,9 @@ class Plan:
 
 
 class TODO_db:
-    def __init__(self, db_path='TODO.db'):
+    def __init__(self, db_path='TODO.db', commit_each=True):
         self.db_path = db_path
+        self.commit_each = commit_each
         if not os.path.exists(db_path):
             self.db_init()
         else:
@@ -132,7 +133,19 @@ class TODO_db:
         self.c = self.conn.cursor()
         sql = "INSERT INTO todo VALUES(NULL,?,?,?,?,?,?,?,?,?,?);"
         self.c.execute(sql, plan.db_item())
+        if self.commit_each:
+            self.conn.commit()
+
+    def commit(self):
+        if self.commit_each:
+            raise RuntimeWarning('commit each change is Enable')
         self.conn.commit()
+
+    def connect(self):
+        self.conn = sqlite3.connect(self.db_path)
+
+    def close(self):
+        self.conn.close()
 
     def get_aitem(self, cond_dict):
         self.conn = sqlite3.connect(self.db_path)

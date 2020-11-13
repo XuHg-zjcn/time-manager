@@ -3,7 +3,7 @@ from wtmp import wtmp_iter
 import sys
 sys.path.append('../')
 from sqlite_api.TODO_db import TODO_db, Plan, PlanTime
-tdb = TODO_db()
+tdb = TODO_db(commit_each=False)
 for i in wtmp_iter():
     print(i)
     try:
@@ -11,3 +11,6 @@ for i in wtmp_iter():
         tdb.add_aitem(plan)
     except ValueError as e:
         print(e)
+tdb.commit()
+tdb.close()
+print(tdb.conn)
