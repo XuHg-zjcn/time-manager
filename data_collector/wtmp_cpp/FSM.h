@@ -7,7 +7,6 @@ using namespace std;
 
 class tran{
     public:
-        tran(int i2[2]);
         tran(int i0, int i1);
         friend bool operator<(const tran &k1, const tran &k2);
     private:
@@ -17,19 +16,18 @@ class tran{
 typedef class map<tran, int> tab;
 typedef class pair<tran, int> pair_t;
 
-class FSM
-{
+class FSM{
     public:
         FSM(int stat0);
-        FSM(int stat0, tab table);
-        int trans(int act);
         virtual ~FSM();
+        int trans(int new_stat, long time, long &sta);
 
     protected:
 
     private:
         tab table;
         int stat;
+        long last_sta;
 };
 
 #endif // FSM_H
