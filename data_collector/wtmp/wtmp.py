@@ -1,5 +1,5 @@
 #!/bin/python
-from build import libwtmp_cpp as wtmp
+from wtmp.build import libwtmp_cpp as wtmp
 
 class wtmp_iter:
     def __iter__(self):
