@@ -1,8 +1,5 @@
 import datetime                                        # L0 built-in model
-from smart_strptime.my_lib import strictly_increasing  # L1 my_lib
-from smart_strptime.my_lib import lr_dict, mrange_dict
-from smart_strptime.my_lib import part_lr
-from smart_strptime.my_str import sType2re_c2
+from smart_strptime.my_str import sType2re_c2          # L2
 from smart_strptime.basetime import UType, Char2UType  # L3 basetime define
 from smart_strptime.lmrTime_str import lmrTime_str     # L4 time search type
 from smart_strptime.Date_str import Date_str
@@ -340,3 +337,89 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
         ret += '{}date:{}{}\n'.format(d_t, end, repr(self.date_p))
         ret += '{}time:{}{}'.format(d_t, end, repr(self.time_p))
         return ret
+
+
+class lr_dict(dict):
+    def __init__(self):
+        super().__init__()
+        self.klst = []
+
+    def __setitem__(self, k, v):
+        if isinstance(k, int):    # k as index
+            assert k < len(self.klst)
+            k = self.klst[k]
+        if k not in self:
+            self.klst.append(k)
+        super().__setitem__(k, v)
+
+    def __getitem__(self, k):
+        if isinstance(k, int):    # k as index
+            k = self.klst[k]
+        return super().__getitem__(k)
+
+    def get_allow_lr(self, part_obj):
+        '''
+        prev left ... right next
+                part_obj
+
+        prev and next are not None
+        prev.end <= part_obj.start   and   part_obj.end <= next.start
+        left = prev+1
+        right = next-1
+
+        part_obj can add to left<=x<=right
+        '''
+        left = 0
+        right = len(self.klst) - 1
+        for ni, k in enumerate(self.klst):
+            part_i = self[k]
+            if part_i is not None:
+                if part_i < part_obj:
+                    left = ni + 1   # prev = v
+                if part_i > part_obj:
+                    right = ni - 1  # next = v
+                    break
+        if left > right:
+            return None
+        return left, right
+
+    def next_None(self, ki, prev_next):
+        Nlen = len(self.klst)
+        ki = {1: 0, -1: Nlen-1}[prev_next] if ki is None else ki
+        sli = {1: (ki,Nlen,1), -1: (ki,-1,-1)}[prev_next]
+        for i in range(*sli):
+            if self[self.klst[i]] is None:
+                return i
+        return sli[1]-prev_next
+
+    def pop():                    # don't delete item
+        raise NotImplementedError('my_odict delete is forbidden')
+
+
+class part_lr:
+    def __init__(self, fmt, part, lr):
+        self.fmt = fmt
+        self.part = part
+        self.lr = lr
+        self.l = lr[0]
+        self.r = lr[1]
+
+    def __lt__(self, other):
+        if max(self.l, other.l) > min(self.r, other.r):
+            raise RuntimeError('part_lr overlapped')
+        return self.l <= other.l or self.r <= other.r
+
+
+class mrange_dict(dict):  # dict[Part.tuple] = [plr1, plr2]
+    def __init__(self, from_dict):
+        super().__init__(from_dict)
+
+    def fill(self, date_p, my_odict):
+        for lr, plrs in self.items():  # a space can fill
+            if lr[1] - lr[0] == len(plrs):
+                cp_plrs = plrs.copy()
+                cp_plrs.sort(key=lambda x: x.part)  # part
+                ut_i = lr[0]
+                for plr in cp_plrs:
+                    date_p[my_odict.klst[ut_i]] = plr.part
+                    ut_i += 1
