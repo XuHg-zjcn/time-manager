@@ -51,10 +51,10 @@ elif op == '2':
     assert no_overlappend
     date_min = int(min(sp)[0]+8*3600)//86400
     date_max = int(max(sp)[1]+8*3600)//86400
-    head = '\033[1;32m{:>2}\033[00m'
+    head = '\033[1;32m{:>2}\033[00m'  # Bold green month number
     for i in range(24):
-        head += '|{:<2} '.format(i)
-    head = head[:-1]
+        head += '|{:<2} '.format(i)   # normal font for hours
+    head = head[:-1]    # example: 11|0  |1  |2  |3  |4...
     n = 0
     for i in range(date_min, date_max+1):
         day = span(i*86400-8*3600, (i+1)*86400-8*3600)
