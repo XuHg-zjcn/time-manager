@@ -386,7 +386,7 @@ class lr_dict(dict):
     def next_None(self, ki, prev_next):
         Nlen = len(self.klst)
         ki = {1: 0, -1: Nlen-1}[prev_next] if ki is None else ki
-        sli = {1: (ki,Nlen,1), -1: (ki,-1,-1)}[prev_next]
+        sli = {1: (ki, Nlen, 1), -1: (ki, -1, -1)}[prev_next]
         for i in range(*sli):
             if self[self.klst[i]] is None:
                 return i
