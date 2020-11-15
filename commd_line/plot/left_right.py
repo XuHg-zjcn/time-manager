@@ -91,7 +91,7 @@ def Spans_out(Spans, Colors, defalut_color='k', end=80*8):
             colors.append(defalut_color)
         points.append(sp[1])
         colors.append(clr)
-    if points[-1] != end:
+    if len(points) == 0 or points[-1] != end:
         points.append(end)
         colors.append(defalut_color)
     return sync_output(points, colors)

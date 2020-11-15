@@ -90,7 +90,7 @@ class Plan:
         #            id   type  name   sta     end   finish
         ret_fmt = '{:>4}|{:>3}|{:<16}|{:>19} ~{:>14}|{:<6}'
         sta_str = mts.strftime(self.p_time.sta_time, update=True)
-        end_str = mts.strftime(self.p_time.sta_time, update=False)
+        end_str = mts.strftime(self.p_time.end_time, update=False)
         dbid = self.dbid if self.dbid is not None else 0
         ret_str = ret_fmt.format(dbid, self.dbtype, self.name,
                                  sta_str, end_str, self.finish)

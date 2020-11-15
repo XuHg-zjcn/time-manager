@@ -51,14 +51,21 @@ elif op == '2':
     assert no_overlappend
     date_min = int(min(sp)[0]+8*3600)//86400
     date_max = int(max(sp)[1]+8*3600)//86400
+    head = '\033[1;32m{:>2}\033[00m'
+    for i in range(24):
+        head += '|{:<2} '.format(i)
+    head = head[:-1]
+    n = 0
     for i in range(date_min, date_max+1):
         day = span(i*86400-8*3600, (i+1)*86400-8*3600)
         dati = datetime.fromtimestamp(day[0])
+        if n == 0 or dati.day == 1:
+            print(head.format(dati.month))
         sp_in_day = sp & day
         sp_in_day = (sp_in_day - day[0])*(768/86400)
         sp_in_day = sp_in_day.as_int()
-        day_str = dati.strftime('%m-%d')
         bar = Spans_out(sp_in_day, ['r']*len(sp_in_day), end=768)
-        print(day_str+bar)
+        print('{:>2}{}'.format(dati.day, bar))
+        n += 1
 else:
     print('输入有误，请输入正确的序号1-4')
