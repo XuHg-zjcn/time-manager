@@ -16,7 +16,7 @@ class Syncer:
     IntervalTree's data: color name, see _color1
     """
 
-    def __init__(self, ivtree, defalut_color='m', space_color='k', end=96*8):
+    def __init__(self, ivtree, defalut_color='b', space_color='k', end=96*8):
         """
         Init Syncer.
 
@@ -43,7 +43,7 @@ class Syncer:
                 iv.data = defalut_color
 
     def _insert_space(self, space_color):
-        iv0 = Interval(0, self.tree.begin(), space_color)
+        iv0 = Interval(0, 0, space_color)
         for iv1 in sorted(self.tree):
             if iv1.begin != iv0.end:
                 self.tree[iv0.end:iv1.begin] = space_color
@@ -95,8 +95,8 @@ class Syncer:
 
     def gray_show(self, in8, o8):
         insec = IvTree2(in8) & Iv2(o8, o8+8)
-        M = max(insec, key=lambda x: x.span())
-        n_gray = (M.span()+1)//2
+        M = max(insec, key=lambda x: x.length())
+        n_gray = (M.length() + 1)//2
         gray_char = gray[n_gray]
         self._color1(1, M.data, gray_char)
 
