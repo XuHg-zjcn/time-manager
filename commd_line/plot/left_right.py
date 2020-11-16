@@ -1,5 +1,6 @@
 from intervaltree import Interval, IntervalTree
 from .colors import style_code
+from .base import gray
 import sys
 sys.path.append('../../')
 from my_libs.ivtree2 import IvTree2
@@ -15,7 +16,7 @@ class Syncer:
     IntervalTree's data: color name, see _color1
     """
 
-    def __init__(self, ivtree, defalut_color='r', space_color='k', end=96*8):
+    def __init__(self, ivtree, defalut_color='m', space_color='k', end=96*8):
         """
         Init Syncer.
 
@@ -30,8 +31,9 @@ class Syncer:
             raise ValueError('IntervalTree end{} > fill end{}'
                              .format(ivtree.end(), end))
         self.tree = ivtree
+        self._end = end
         self._apply_defalut_color(defalut_color)
-        self._insert_space(space_color, end)
+        self._insert_space(space_color)
         self._out_str = ''          # len(out_str) include contral chara
         self._outn = 0              # blocks in out_str
 
@@ -40,35 +42,63 @@ class Syncer:
             if iv.data is None:
                 iv.data = defalut_color
 
-    def _insert_space(self, space_color, end):
+    def _insert_space(self, space_color):
         iv0 = Interval(0, self.tree.begin(), space_color)
         for iv1 in sorted(self.tree):
             if iv1.begin != iv0.end:
                 self.tree[iv0.end:iv1.begin] = space_color
             iv0 = iv1
-        if iv0.end != end:
-            self.tree[iv0.end:end] = space_color
+        if iv0.end != self._end:
+            self.tree[iv0.end:self._end] = space_color
 
     def fill(self):
         """Fill IntervalTree to output string."""
         while True:
             o8 = self._outn*8
-            in8 = self.tree[o8:o8+8]
+            in8 = sorted(self.tree[o8:o8+8])
             if len(in8) == 0:
                 break
             elif len(in8) == 1:
-                in8 = list(in8)[0]
+                in8 = in8[0]
                 n = (in8.end - o8)//8
                 if n == 0:
                     break
                 self._color1(n, in8.data)
             elif len(in8) == 2:
-                in8 = sorted(in8)
-                assert in8[0].end == in8[1].begin
+                # assert in8[0].end == in8[1].begin  after insert_space
                 spt = in8[0].end % 8
                 self._color2(spt, in8[0].data, in8[1].data)
             else:
-                break
+                if len(in8) == 3:
+                    left = in8[0].end
+                    right = in8[1].end
+                    if left < 8-right and left <= 2:
+                        left_border = o8
+                        # modify 0 end and 1 begin to right_border
+                        self._change_border(in8[0], in8[1], left_border)
+                    elif left > 8-right and 8-right <= 2:
+                        right_border = o8 + 8
+                        # modify 1 end and 2 begin to right_border
+                        self._change_border(in8[1], in8[2], right_border)
+                    elif left <= 1 and 8-right <= 1:
+                        pass
+                    else:
+                        self.gray_show(in8, o8)
+                else:
+                    self.gray_show(in8, o8)
+
+    def _change_border(self, iv0, iv1, new_border):
+        self.tree.remove(iv0)
+        self.tree.remove(iv1)
+        self.tree.addi(iv0.begin, new_border, iv0.data)
+        self.tree.addi(new_border, iv1.end, iv1.data)
+
+    def gray_show(self, in8, o8):
+        insec = IvTree2(in8) & Iv2(o8, o8+8)
+        M = max(insec, key=lambda x: x.span())
+        n_gray = (M.span()+1)//2
+        gray_char = gray[n_gray]
+        self._color1(1, M.data, gray_char)
 
     def _color2(self, spt, c1, c2):
         """
@@ -82,11 +112,11 @@ class Syncer:
         assert 0 <= len(c1) <= 1
         assert 0 <= len(c2) <= 1
         stycd = style_code(c1.upper()+c2.lower())
-        unicode = left_black[spt]
+        char = left_black[spt]
         self._outn += 1
-        self._out_str += stycd+unicode+fend
+        self._out_str += stycd + char #+ fend
 
-    def _color1(self, n, c):
+    def _color1(self, n, c, char='█'):
         """
         Append blocks same color to output string.
 
@@ -96,9 +126,8 @@ class Syncer:
         """
         assert n > 0
         stycd = style_code(c.upper())
-        unicode = '█' * n
         self._outn += n
-        self._out_str += stycd+unicode
+        self._out_str += stycd + char*n
 
     def get(self):
         """Get output string."""
