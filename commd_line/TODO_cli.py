@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from time_input import Time_input
-from plot.left_right import Spans_out
+from intervaltree import IntervalTree
+import time
+
+from plot.left_right import sync_ivtree
 
 import sys
 sys.path.append("..")
 from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
-from smart_strptime.my_lib import span, Spans
+from my_libs.ivtree2 import IvTree2, Iv2
 
 tdb = TODO_db()
 ti = Time_input()
@@ -39,32 +42,34 @@ elif op == '2':
     end_str = input('最早结束:')
     end = ti.input_str(end_str)
     res = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
-    sp = Spans()
-    clrs = []
+    ivtree = IntervalTree()
     clr_tab = ['k', 'r', 'y', 'g', 'c', 'b', 'm']
     print(Plan.str_head)
     for plan in res:
         print(plan)
-        sp.append((plan.p_time.sta_time, plan.p_time.end_time))
-        clrs.append(clr_tab[plan.dbtype])
-    no_overlappend = sp.merge_insec(merge=False)
-    assert no_overlappend
-    date_min = int(min(sp)[0]+8*3600)//86400
-    date_max = int(max(sp)[1]+8*3600)//86400
+        sta = plan.p_time.sta_time
+        end = plan.p_time.end_time
+        ivtree[sta:end] = clr_tab[plan.dbtype]
+    date_min = int(ivtree.begin()+8*3600)//86400
+    date_max = int(ivtree.end()+8*3600)//86400
     head = '\033[1;32m{:>2}\033[00m'  # Bold green month number
     for i in range(24):
         head += '|{:<2} '.format(i)   # normal font for hours
     head = head[:-1]    # example: 11|0  |1  |2  |3  |4...
     n = 0
     for i in range(date_min, date_max+1):
-        day = span(i*86400-8*3600, (i+1)*86400-8*3600)
-        dati = datetime.fromtimestamp(day[0])
+        day_sta = i*86400-8*3600
+        day_end = (i+1)*86400-8*3600
+        dati = datetime.fromtimestamp(day_sta)
         if n == 0 or dati.day == 1:
             print(head.format(dati.month))
-        sp_in_day = sp & day
-        sp_in_day = (sp_in_day - day[0])*(768/86400)
-        sp_in_day = sp_in_day.as_int()
-        bar = Spans_out(sp_in_day, ['r']*len(sp_in_day), end=768)
+        sp_in_day = IvTree2(ivtree[day_sta:day_end]) & Iv2(day_sta, day_end)
+        sp_in_day = (sp_in_day - day_sta)*(768/86400)
+        sp_in_day = sp_in_day.apply_each_interval(lambda x:int(x))
+        t0 = time.perf_counter()
+        bar = sync_ivtree(sp_in_day, end=768)
+        t1 = time.perf_counter()
+        print(t1-t0)
         print('{:>2}{}'.format(dati.day, bar))
         n += 1
 else:
