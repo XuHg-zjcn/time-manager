@@ -1,10 +1,10 @@
 import re                                               # L0 built-in model
 from datetime import timedelta
-from smart_strptime.my_lib import udict                 # L1 my_lib
-from smart_strptime.my_lib import strictly_increasing
-from smart_strptime.my_str import Part, BigPart, sType  # L2 my_str
-from smart_strptime.basetime import UType, UxType       # L3 basetime define
-from smart_strptime.lmrTime_str import lmrTime_str      # L4 time search type
+from .my_lib import udict                 # L1 my_lib
+from .my_lib import strictly_increasing
+from .my_str import Part, BigPart, sType  # L2 my_str
+from .basetime import UType               # L3 basetime define
+from .lmrTime_str import lmrTime_str      # L4 time search type
 # level of the module is L5, can use outside package
 
 d_t = '\033[36m'  # datetype
