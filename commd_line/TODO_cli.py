@@ -15,7 +15,7 @@ from my_libs.ivtree2 import IvTree2, Iv2
 tdb = TODO_db()
 ti = Time_input()
 
-
+timezone = time.timezone
 def fixed():
     name = input('名称:')
     sta_str = input('开始时间:')
@@ -49,17 +49,17 @@ elif op == '2':
         print(plan)
         sta = plan.p_time.sta_time
         end = plan.p_time.end_time
-        ivtree[sta:end] = clr_tab[plan.dbtype]
-    date_min = int(ivtree.begin()+8*3600)//86400
-    date_max = int(ivtree.end()+8*3600)//86400
+        ivtree[sta:end] = clr_tab[plan.dbtype]  # show color
+    date_min = int(ivtree.begin() - timezone)//86400
+    date_max = int(ivtree.end() - timezone)//86400
     head = '\033[1;32m{:>2}\033[00m'  # Bold green month number
     for i in range(24):
         head += '|{:<2} '.format(i)   # normal font for hours
     head = head[:-1]    # example: 11|0  |1  |2  |3  |4...
     n = 0
     for i in range(date_min, date_max+1):
-        day_sta = i*86400-8*3600
-        day_end = (i+1)*86400-8*3600
+        day_sta = i*86400 + timezone
+        day_end = (i+1)*86400 + timezone
         dati = datetime.fromtimestamp(day_sta)
         if n == 0 or dati.day == 1:
             print(head.format(dati.month))
