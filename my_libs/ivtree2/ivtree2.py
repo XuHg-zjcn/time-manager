@@ -23,9 +23,10 @@ class IvTree2(IntervalTree):
     def apply_each_interval(self, func):
         ret = IvTree2()
         for iv in self:
-            ret.addi(func(iv.begin),
-                     func(iv.end),
-                     iv.data)
+            begin = func(iv.begin)
+            end = func(iv.end)
+            if begin < end:
+                ret.addi(begin, end, iv.data)
         return ret
 
     def copy(self):
