@@ -103,6 +103,17 @@ class IvTree2(IntervalTree):
             ret._chops(~other)
         return ret
 
+    def __iand__(self, other):
+        """In some time fast."""
+        self._chops(~other)
+        return self
+
+    def __ior__(self, other):
+        """In some time fast."""
+        self.update(other)
+        self.merge_overlaps()
+        return self
+
     def __or__(self, other):
         """Merge other, data will None if overlap."""
         ret = self.copy()
