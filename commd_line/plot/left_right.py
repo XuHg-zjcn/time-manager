@@ -51,7 +51,7 @@ class Syncer:
         if iv0.end != self._end:
             self.tree[iv0.end:self._end] = space_color
 
-    def fill(self):
+    def fill(self, toomany_color='r'):
         """Fill IntervalTree to output string."""
         while True:
             o8 = self._outn*8
@@ -68,24 +68,33 @@ class Syncer:
                 # assert in8[0].end == in8[1].begin  after insert_space
                 spt = in8[0].end % 8
                 self._color2(spt, in8[0].data, in8[1].data)
-            else:
-                if len(in8) == 3:
-                    left = in8[0].end
-                    right = in8[1].end
-                    if left < 8-right and left <= 2:
-                        left_border = o8
-                        # modify 0 end and 1 begin to right_border
-                        self._change_border(in8[0], in8[1], left_border)
-                    elif left > 8-right and 8-right <= 2:
-                        right_border = o8 + 8
-                        # modify 1 end and 2 begin to right_border
-                        self._change_border(in8[1], in8[2], right_border)
-                    elif left <= 1 and 8-right <= 1:
-                        pass
-                    else:
-                        self.gray_show(in8, o8)
+            elif len(in8) == 3:
+                left = in8[0].end
+                right = in8[1].end
+                if left < 8-right and left <= 2:
+                    left_border = o8
+                    # modify 0 end and 1 begin to right_border
+                    self._change_border(in8[0], in8[1], left_border)
+                elif left > 8-right and 8-right <= 2:
+                    right_border = o8 + 8
+                    # modify 1 end and 2 begin to right_border
+                    self._change_border(in8[1], in8[2], right_border)
+                elif left <= 1 and 8-right <= 1:
+                    pass
                 else:
                     self.gray_show(in8, o8)
+            elif len(in8) == 4:
+                self.gray_show(in8, o8)
+            else:
+                if len(in8) < 10:
+                    char = str(len(in8))
+                else:
+                    char = '+'
+                M = self._most_iv(in8, o8)
+                # M.data to backgroud, toomany_color to foreground
+                stycd = style_code(M.data.lower()+toomany_color.upper())
+                self._outn += 1
+                self._out_str += stycd + char
 
     def _change_border(self, iv0, iv1, new_border):
         self.tree.remove(iv0)
@@ -93,9 +102,12 @@ class Syncer:
         self.tree.addi(iv0.begin, new_border, iv0.data)
         self.tree.addi(new_border, iv1.end, iv1.data)
 
-    def gray_show(self, in8, o8):
+    def _most_iv(self, in8, o8):
         insec = IvTree2(in8) & Iv2(o8, o8+8)
-        M = max(insec, key=lambda x: x.length())
+        return max(insec, key=lambda x: x.length())
+
+    def _gray_show(self, in8, o8):
+        M = self._most_iv(in8, o8)
         n_gray = (M.length() + 1)//2
         gray_char = gray[n_gray]
         self._color1(1, M.data, gray_char)
@@ -114,7 +126,7 @@ class Syncer:
         stycd = style_code(c1.upper()+c2.lower())
         char = left_black[spt]
         self._outn += 1
-        self._out_str += stycd + char #+ fend
+        self._out_str += stycd + char + fend
 
     def _color1(self, n, c, char='█'):
         """
