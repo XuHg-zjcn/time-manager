@@ -16,17 +16,17 @@ tdb = TODO_db(db_path='firefox_history.db', commit_each=False)
 db_path = 'places.sqlite'
 conn = sqlite3.connect(db_path)
 c = conn.cursor()
-sql = 'SELECT visit_date FROM moz_historyvisits'
+sql = 'SELECT visit_date/1000000 FROM moz_historyvisits'
 res = c.execute(sql)
 
 n = 0
 prev = next(res)[0]
 last_start = prev
 for curr, in res:
-    if curr - prev > 15*60*1e6:
-        if prev - last_start > 15*60*1e6:
+    if curr - prev > 15*60:
+        if prev - last_start > 15*60:
             try:
-                plan = Plan(PlanTime(last_start/1e6, prev/1e6), 1, 'firefox')
+                plan = Plan(PlanTime(last_start, prev), 1, 'firefox')
                 tdb.add_aitem(plan)
             except ValueError as e:
                 print(e)
