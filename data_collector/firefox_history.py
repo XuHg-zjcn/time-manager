@@ -26,7 +26,7 @@ for curr, in res:
     if curr - prev > 15*60*1e6:
         if prev - last_start > 15*60*1e6:
             try:
-                plan = Plan(PlanTime(last_start/1e6, prev/1e6), 'firefox')
+                plan = Plan(PlanTime(last_start/1e6, prev/1e6), 1, 'firefox')
                 tdb.add_aitem(plan)
             except ValueError as e:
                 print(e)
