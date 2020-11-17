@@ -1,4 +1,5 @@
 *.db
+*sqlite*
 *.png
 __pycache__
 build

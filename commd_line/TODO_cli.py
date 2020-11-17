@@ -7,7 +7,7 @@ sys.path.append("..")
 from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
 from my_libs.ivtree2 import IvTree2
 
-tdb = TODO_db()
+tdb = TODO_db(db_path='firefox_history.db')
 ti = Time_input()
 
 def fixed():
@@ -43,7 +43,7 @@ elif op == '2':
         print(plan)
         sta = plan.p_time.sta_time
         end = plan.p_time.end_time
-        ivtree[sta:end] = clr_tab[plan.dbtype]  # show color
+        ivtree[sta:end] = 'b' # clr_tab[plan.dbtype]  # show color
     Time2D(ivtree)
 else:
     print('输入有误，请输入正确的序号1-4')
