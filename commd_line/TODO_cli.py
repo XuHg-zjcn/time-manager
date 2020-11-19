@@ -5,11 +5,14 @@ from plot.time2d import Time2D
 import sys
 sys.path.append("..")
 from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
-from my_libs.ivtree2 import IvTree2
 from Qt_GUI.gui import update
+from commd_line.init_config import init_config
 
+
+conf = init_config()
 tdb = TODO_db(db_path='browser.db', table_name='firefox')
 ti = Time_input()
+
 
 def fixed():
     name = input('名称:')
@@ -36,15 +39,12 @@ elif op == '2':
     sta = ti.input_str(sta_str)
     end_str = input('最早结束:')
     end = ti.input_str(end_str)
-    res = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
-    ivtree = IvTree2()
-    clr_tab = ['k', 'r', 'y', 'g', 'c', 'b', 'm']
-    print(Plan.str_head)
-    for plan in res:
-        print(plan)
-        sta = plan.p_time.sta_time
-        end = plan.p_time.end_time
-        ivtree[sta:end] = 'b' # clr_tab[plan.dbtype]  # show color
-    update(ivtree)
+    plans = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
+    print(plans)
+    ivtree = plans.get_ivtree()
+    if conf['show']['type'] == 'unicode':
+        Time2D(ivtree)
+    if conf['show']['type'] == 'pyqtgraph':
+        update(ivtree)
 else:
     print('输入有误，请输入正确的序号1-4')

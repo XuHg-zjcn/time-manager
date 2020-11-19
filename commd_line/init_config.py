@@ -15,10 +15,15 @@ cfg_path = 'config.conf'               # don't change, else can't find
 conf = configparser.ConfigParser()
 
 
+# TODO: char_hour, force_bar
 def create():
-    conf['init'] = {'dir': '.',        # work dir
-                    'plot': 'cli',     # plot date-time2d
-                    'print_max': 50}   # print output max items
+    conf['init'] = {'dir': '.'}         # work dir
+    conf['show'] = {'type': 'unicode',  # plot date-time2d
+                    'char_hour': 4,     # char per hour
+                    'print_minN': 5,    # print N found min items
+                    'print_max': 50,    # print output max item
+                    'print_side': 20,   # print over max item, middle use '...'
+                    'force_bar': 20}    # force print each item
     conf.write(open(cfg_path, 'w'))
 
 

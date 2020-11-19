@@ -10,22 +10,27 @@ import math
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph as pg
+from commd_line.init_config import init_config
 
-pg.setConfigOptions(imageAxisOrder='row-major')
-app = QtGui.QApplication([])
 
-## Create window with ImageView widget
-win = QtGui.QMainWindow()
-win.resize(800,800)
-imv = pg.ImageView()
-win.setCentralWidget(imv)
-win.show()
-win.setWindowTitle('time-manager Date-Time 2D Image')
+conf = init_config()
+if conf['show']['type'] == 'pyqtgraph':
+    pg.setConfigOptions(imageAxisOrder='row-major')
+    app = QtGui.QApplication([])
 
-y20 = datetime(2020, 1, 1).timestamp()
-y21 = datetime(2021, 1, 1).timestamp()
-olen = int((y21-y20)/(60*5))
+    ## Create window with ImageView widget
+    win = QtGui.QMainWindow()
+    win.resize(800, 800)
+    imv = pg.ImageView()
+    win.setCentralWidget(imv)
+    win.show()
+    win.setWindowTitle('time-manager Date-Time 2D Image')
+
+
 def update(ivtree):
+    y20 = datetime(2020, 1, 1).timestamp()
+    y21 = datetime(2021, 1, 1).timestamp()
+    olen = int((y21-y20)/(60*5))
     img = np.zeros(olen)
     for iv in ivtree:
         sta = iv.begin

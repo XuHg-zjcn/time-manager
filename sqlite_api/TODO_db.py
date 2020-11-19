@@ -5,9 +5,13 @@ import datetime
 import numpy as np
 import sys
 sys.path.append('..')
+from my_libs.ivtree2 import IvTree2
 from smart_strptime.MTshort import MTshort
+from commd_line.init_config import init_config
 
+conf = init_config()
 mts = MTshort('%Y/%m/%d %H:%M:%S')
+
 
 class TreeItem:
     """Plan tree node."""
@@ -57,9 +61,6 @@ class PlanTime:
 
 
 class Plan:
-    str_head = ' id |typ|name{}|{}start time{}~{}end time{}|finish'\
-               .format(*(' '*i for i in [12, 5, 5, 6, 5]))
-
     def __init__(self, p_time, dbtype=0, name='untitled',
                  tree_i=None, finish=False, dbid=None):
         """p_time can from sqlite SELECT *"""
@@ -106,6 +107,44 @@ class Plan:
         ret += 'end_time:{}\n'.format(end_dt.strftime('%Y/%m/%d.%H:%M:%S'))
         ret += 'finish:{}'.format(self.finish)
         return ret
+
+
+class Plans(list):
+    str_head = ' id |typ|name{}|{}start time{}~{}end time{}|finish\n'\
+           .format(*(' '*i for i in [12, 5, 5, 6, 5]))
+
+    def __init__(self, iterable):  # sqlite3.Cursor
+        super().__init__()
+        for tup in iterable:
+            self.append(Plan(tup))
+
+    def __repr__(self):
+        ret = ''
+        ret += Plans.str_head
+        if len(self) <= int(conf['show']['print_max']):
+            for plan in self:
+                ret += str(plan) + '\n'
+        else:
+            side = int(conf['show']['print_side'])
+            for plan in self[:side]:
+                ret += str(plan) + '\n'
+            N_skips = len(self) - 2*side
+            ret += '{:-^68}\n'.format(' {} skips '.format(N_skips))
+            for plan in self[-side:]:
+                ret += str(plan) + '\n'
+        if len(self) >= int(conf['show']['print_max']):
+            ret += '{:-^68}\n'.format('{} plans found'.format(len(self)))
+        return ret
+
+    __str__ = __repr__
+
+    def get_ivtree(self):
+        ivtree = IvTree2()
+        for plan in self:
+            sta = plan.p_time.sta_time
+            end = plan.p_time.end_time
+            ivtree[sta:end] = 'b'  # clr_tab[plan.dbtype]  # show color
+        return ivtree
 
 
 class TODO_db:
@@ -182,10 +221,7 @@ class TODO_db:
                 raise ValueError('key type invaild')
         sql = sql[:-4]
         res = cur.execute(sql, paras)
-        res_plans = []
-        for tup in res:
-            res_plans.append(Plan(tup))
-        return res_plans
+        return Plans(res)
 
 
 # test code
