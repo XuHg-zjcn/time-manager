@@ -3,7 +3,7 @@ from wtmp import wtmp_iter
 import sys
 sys.path.append('../')
 from sqlite_api.TODO_db import TODO_db, Plan, PlanTime
-tdb = TODO_db(commit_each=False)
+tdb = TODO_db(db_path='linux.db', table_name='wtmp', commit_each=False)
 for i in wtmp_iter():
     print(i)
     try:

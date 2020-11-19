@@ -8,11 +8,12 @@ Created on Tue Nov 17 14:37:07 2020
 
 import sqlite3
 import sys
-sys.path.append('../')
+sys.path.append('../../')
 from sqlite_api.TODO_db import TODO_db, Plan, PlanTime
 
-def browser_history(browser_db_path, my_db_path,
-                    sql, plan_name='browser history', plan_dbtype=1):
+def browser_history(browser_db_path, my_db_path, sql,
+                    table_name='browser', plan_name='visit',
+                    plan_dbtype=1):
     """Use browser history export to my db.
 
     browser_db_path:
@@ -29,7 +30,8 @@ def browser_history(browser_db_path, my_db_path,
     c = conn.cursor()
     res = c.execute(sql)
 
-    tdb = TODO_db(db_path=my_db_path, commit_each=False)  # my db
+    tdb = TODO_db(db_path=my_db_path,
+                  table_name=table_name, commit_each=False)  # my db
     n = 0
     prev = next(res)[0]
     last_start = prev

@@ -8,7 +8,7 @@ from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
 from my_libs.ivtree2 import IvTree2
 from Qt_GUI.gui import update
 
-tdb = TODO_db(db_path='firefox_history.db')
+tdb = TODO_db(db_path='browser.db', table_name='firefox')
 ti = Time_input()
 
 def fixed():

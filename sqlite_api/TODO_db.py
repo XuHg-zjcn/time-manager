@@ -109,30 +109,37 @@ class Plan:
 
 
 class TODO_db:
-    def __init__(self, db_path='TODO.db', commit_each=True):
+    def __init__(self, db_path='TODO.db', table_name='TODO', commit_each=True):
+        self.table_name = table_name
         self.db_path = db_path
         self.commit_each = commit_each
         if not os.path.exists(db_path):
-            self.db_init()
+            self.create_table()
         else:
             self.conn = sqlite3.connect(self.db_path)
+            cur = self.conn.cursor()
+            sql = 'SELECT name FROM sqlite_sequence;'
+            table_exists = cur.execute(sql)
+            if (self.table_name,) not in table_exists:
+                self.create_table()
 
-    def db_init(self):
+    def create_table(self):
         self.conn = sqlite3.connect(self.db_path)
-        self.c = self.conn.cursor()
-        sql = '''CREATE TABLE todo(
+        cur = self.conn.cursor()
+        sql = '''CREATE TABLE {}(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             type     INT,   name     TEXT,
             pares    BLOB,  subs     BLOB,  reqs     BLOB,
             sta_time REAL,  end_time REAL,  use_time REAL,  sub_time REAL,
-            finish   BOOL);'''
-        self.c.execute(sql)
+            finish   BOOL);'''.format(self.table_name)
+        cur.execute(sql)
         self.conn.commit()
 
     def add_aitem(self, plan):
-        self.c = self.conn.cursor()
-        sql = "INSERT INTO todo VALUES(NULL,?,?,?,?,?,?,?,?,?,?);"
-        self.c.execute(sql, plan.db_item())
+        cur = self.conn.cursor()
+        sql = "INSERT INTO {} VALUES(NULL,?,?,?,?,?,?,?,?,?,?);"\
+              .format(self.table_name)
+        cur.execute(sql, plan.db_item())
         if self.commit_each:
             self.conn.commit()
 
@@ -148,9 +155,8 @@ class TODO_db:
         self.conn.close()
 
     def get_aitem(self, cond_dict):
-        self.conn = sqlite3.connect(self.db_path)
-        self.c = self.conn.cursor()
-        sql = 'SELECT * FROM todo WHERE '
+        cur = self.conn.cursor()
+        sql = 'SELECT * FROM {} WHERE '.format(self.table_name)
         paras = []
         allow_filed = {'id', 'type', 'name', 'sta_time', 'end_time',
                        'use_time', 'sub_time', 'finish'}
@@ -175,11 +181,12 @@ class TODO_db:
             else:
                 raise ValueError('key type invaild')
         sql = sql[:-4]
-        res = self.c.execute(sql, paras)
+        res = cur.execute(sql, paras)
         res_plans = []
         for tup in res:
             res_plans.append(Plan(tup))
         return res_plans
+
 
 # test code
 if __name__ == '__main__':
