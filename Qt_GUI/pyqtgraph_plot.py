@@ -50,17 +50,16 @@ class dt2dplot:
         bottom = self.pv.getAxis('bottom')
         bottom.setTicks([[(x,m) for x,m in doys]])
         bottom.setStyle(tickLength=5)
-        
 
     def update_show(self):
         print('update show')
         self.ii.setImage(self.arr.reshape([-1, 288, 3]).transpose([1,0,2]))
 
-    def update_ivtree(self, ivtree):
+    def update_ivtree(self, ivtree, color=(255, 0, 0)):
         for iv in ivtree:
             sta = iv.begin
             end = iv.end
-            self[sta:end] = (255, 0, 0)
+            self[sta:end] = color
         self.update_show()
 
     def __setitem__(self, time, color):
@@ -70,8 +69,8 @@ class dt2dplot:
             e = (time.stop - ts0)//300
             self.arr[int(s):int(e)] = color
         else:
-            t = (time - ts0)/300
-            self.arr[t] = color
+            t = (time - ts0)//300
+            self.arr[int(t)] = color
 
 conf = init_config()
 if conf['show']['type'] == 'pyqtgraph':
@@ -84,9 +83,7 @@ if conf['show']['type'] == 'pyqtgraph':
     ui = Ui_MainWindow()
     ui.setupUi(win)
     dt2p = dt2dplot(ui.PlotView, 2020)
-    #ui.lineEdit.returnPressed.connect(dt2p.update)
     win.show()
-    #sys.exit(app.exec_())
 
 def hold():
     sys.exit(app.exec_())
