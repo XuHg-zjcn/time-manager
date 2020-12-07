@@ -11,14 +11,16 @@ for path in finds:
         break
 if not found:
     raise FileNotFoundError("user_data not found.")
-cfg_path = 'config.conf'               # don't change, else can't find
+cfg_path = 'config.ini'               # don't change, else can't find
 conf = configparser.ConfigParser()
 
 
 # TODO: char_hour, force_bar
 def create():
-    conf['init'] = {'dir': '.'}         # work dir
-    conf['show'] = {'type': 'unicode',  # plot date-time2d
+    conf['init'] = {'dir': '.',
+                    'db_path':'browser.db',
+                    'table_name':'firefox'}  # work dir
+    conf['show'] = {'type': 'pyqtgraph',  # plot date-time2d
                     'char_hour': 4,     # char per hour
                     'print_minN': 5,    # print N found min items
                     'print_max': 50,    # print output max item

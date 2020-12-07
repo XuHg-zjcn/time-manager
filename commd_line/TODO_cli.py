@@ -10,7 +10,9 @@ from commd_line.init_config import init_config
 
 
 conf = init_config()
-tdb = TODO_db(db_path='browser.db', table_name='firefox')
+db_path = conf['init']['db_path']
+table_name = conf['init']['table_name']
+tdb = TODO_db(db_path=db_path, table_name=table_name)
 ti = Time_input()
 
 
