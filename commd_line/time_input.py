@@ -8,40 +8,22 @@ re_c = re.compile('^(n(ow)?)?([+-])?')
 
 
 class Time_input:
-    def __init__(self):
-        self.last_value = None
+    def __init__(self, output_type='sec', init_value=None):
+        """
+        :output_type: 'sec' or 'datetime'.
+        :init_value: the init value, if None first input can't use relative time.
+        """
+        self.output_type = output_type
+        self.last_value = init_value
 
-    def print_help(self):
-        print('''\
-时间输入法:
-n(ow):当前时间
-n+,n-:与当前时间加减
-+,-  :与上次输入的时间加减
-无前置符号:输入完整时间
-h:帮助, e:退出
-''')
-
-    def input_str(self, in_str):
-        """Input str and return timestamp."""
-        while True:
-            if in_str in {'help', 'h'}:
-                self.print_help()
-                in_str = input('请重新输入:')
-                continue
-            if in_str in {'e', 'exit'}:
-                return None
-            if in_str.upper() in {'NONE', 'NULL'}:
-                return None
-            try:
-                value = self._process(in_str)
-            except Exception as e:
-                print('Error:', e)
-                in_str = input('请重新输入, h:帮助, e:退出:')
-                if in_str in {'e', 'exit'}:
-                    return None
-                continue
-            else:
-                return value
+    def __call__(self, in_str):
+        """Input str and return output."""
+        try:
+            value = self._process(in_str)
+        except:
+            return None
+        else:
+            return value
 
     def _process(self, in_str):
         self.in_str = in_str
@@ -91,3 +73,32 @@ h:帮助, e:退出
         dtstr.process_check()
         dt_obj = dtstr.as_datetime()
         return dt_obj.timestamp()
+
+class CLI_Inputer(Time_input):
+    def print_help(self):
+        print('时间输入法:\n'
+              'n(ow):当前时间\n'
+              'n+,n-:与当前时间加减\n'
+              '+,-  :与上次输入的时间加减\n'
+              '无前置符号:输入完整时间\n'
+              'h:帮助, e:退出\n')
+    def __call__(self, info):
+        """Input str and return timestamp."""
+        while True:
+            in_str = input(info)
+            # input controls
+            if in_str.upper() in {'HELP', 'H'}:
+                self.print_help()
+                info = '请重新输入:'
+                continue      # after print help
+            if in_str.upper() in {'E', 'EXIT', 'NONE', 'NULL'}:
+                return None   # exit
+            # process
+            try:
+                value = self._process(in_str)
+            except Exception as e:
+                print(e)
+                info = '请重新输入:'
+                continue      # error happend
+            else:
+                return value  # OK
