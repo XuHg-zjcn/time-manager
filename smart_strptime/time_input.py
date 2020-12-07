@@ -1,3 +1,5 @@
+from datetime import datetime
+from enum import Enum
 import time
 import re
 import sys
@@ -7,8 +9,13 @@ import smart_strptime as sspt
 re_c = re.compile('^(n(ow)?)?([+-])?')
 
 
+class OutType(Enum):
+    sec = 0
+    datetime = 1
+    string = 2
+
 class Time_input:
-    def __init__(self, output_type='sec', init_value=None):
+    def __init__(self, output_type=OutType.sec, init_value=None):
         """
         :output_type: 'sec' or 'datetime'.
         :init_value: the init value, if None first input can't use relative time.
@@ -20,7 +27,8 @@ class Time_input:
         """Input str and return output."""
         try:
             value = self._process(in_str)
-        except:
+        except Exception as e:
+            print(e)
             return None
         else:
             return value
@@ -29,7 +37,10 @@ class Time_input:
         self.in_str = in_str
         now, char = self._now_char()
         if now is True:            # now[+/-]  n+ n-, n
-            value = time.time()
+            if self.output_type is OutType.sec:
+                value = time.time()
+            elif self.output_type is OutType.datetime:
+                value = datetime.now()
             value = self._puls_sub_char(char, value)
         elif char is not None:     # (last)[+/-]  + -
             if self.last_value is None:
@@ -38,7 +49,6 @@ class Time_input:
             value = self._puls_sub_char(char, value)
         else:                      # re not match
             value = self._get_datetime()
-        assert 1e9 < value < 2.5e9  # check value year 2001<x<2049
         self.last_value = value
         return value
 
@@ -66,7 +76,10 @@ class Time_input:
     def _get_timedelta(self):
         tdstr = sspt.TimeDelta_str(self.in_str)
         tdstr.process_check()
-        return tdstr.as_sec()
+        if self.output_type is OutType.sec:
+            return time.time()
+        elif self.output_type is OutType.datetime:
+            return datetime.now()
 
     def _get_datetime(self):
         dtstr = sspt.DateTime_str(self.in_str)

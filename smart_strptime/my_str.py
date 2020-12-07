@@ -1,7 +1,7 @@
 import re                                            # L0 built-in model
 from enum import Enum
 from collections import Iterable
-from smart_strptime.my_lib import udict, oset, span  # L1 my_lib
+from .my_lib import udict, oset, span  # L1 my_lib
 # level of the module is L2
 
 red = '\033[1;31m'    # errors
