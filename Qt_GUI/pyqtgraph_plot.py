@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 from PyQt5.QtWidgets import QApplication, QPushButton, QVBoxLayout, QMainWindow, QWidget
 from PyQt5.QtCore import QRectF
-from layout import Ui_MainWindow
+from .layout import Ui_MainWindow
+from commd_line.init_config import init_config
 import pyqtgraph as pg
 import numpy as np
 from datetime import datetime
@@ -21,9 +22,8 @@ class dt2dplot:
         self.set_xaixs()
         self.set_yaxis(6)
 
-        arr = np.random.normal(0, 1, [self.days*288, 3])
-        self.arr = np.cumsum(arr, axis=0)
-        self.ii = pg.ImageItem(self.arr.reshape([-1, 288, 3]))
+        self.arr = np.zeros([self.days*288, 3])
+        self.ii = pg.ImageItem(self.arr.reshape([-1, 288, 3]).transpose([1,0,2]))
         self.ii.setRect(QRectF(0, 0, self.days, 24.0))
         self.pv.addItem(self.ii)
 
@@ -52,26 +52,41 @@ class dt2dplot:
         bottom.setStyle(tickLength=5)
         
 
-    def update(self):
-        print('event update')
-        self.ii.setImage(self.arr.reshape([-1, 288, 3]))
+    def update_show(self):
+        print('update show')
+        self.ii.setImage(self.arr.reshape([-1, 288, 3]).transpose([1,0,2]))
+
+    def update_ivtree(self, ivtree):
+        for iv in ivtree:
+            sta = iv.begin
+            end = iv.end
+            self[sta:end] = (255, 0, 0)
+        self.update_show()
 
     def __setitem__(self, time, color):
         ts0 = self.d11.timestamp()
         if isinstance(time, slice):
-            b = (time.begin - ts0)/300
-            e = (time.end - ts0)/300
-            self.arr[b:e] = color
+            s = (time.start - ts0)//300
+            e = (time.stop - ts0)//300
+            self.arr[int(s):int(e)] = color
         else:
             t = (time - ts0)/300
             self.arr[t] = color
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    MainWindow = QMainWindow()
+conf = init_config()
+if conf['show']['type'] == 'pyqtgraph':
+    pg.setConfigOptions(imageAxisOrder='row-major')
+    app = QApplication([])
+
+    ## Create window with ImageView widget
+    win = QMainWindow()
+    win.setWindowTitle('time-manager Date-Time 2D Image')
     ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
+    ui.setupUi(win)
     dt2p = dt2dplot(ui.PlotView, 2020)
-    ui.lineEdit.returnPressed.connect(dt2p.update)
-    MainWindow.show()
+    #ui.lineEdit.returnPressed.connect(dt2p.update)
+    win.show()
+    #sys.exit(app.exec_())
+
+def hold():
     sys.exit(app.exec_())

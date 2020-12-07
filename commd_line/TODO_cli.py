@@ -5,7 +5,7 @@ from plot.time2d import Time2D
 import sys
 sys.path.append("..")
 from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
-from Qt_GUI.gui import update
+from Qt_GUI.pyqtgraph_plot import dt2p, hold
 from commd_line.init_config import init_config
 
 
@@ -45,6 +45,7 @@ elif op == '2':
     if conf['show']['type'] == 'unicode':
         Time2D(ivtree)
     if conf['show']['type'] == 'pyqtgraph':
-        update(ivtree)
+        dt2p.update_ivtree(ivtree)
+        hold()
 else:
     print('输入有误，请输入正确的序号1-4')
