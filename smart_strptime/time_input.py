@@ -1,3 +1,4 @@
+from numbers import Number
 from datetime import datetime, timedelta
 from enum import Enum
 import re
@@ -14,13 +15,13 @@ class OutType(Enum):
     string = 2
 
 class Time_input:
-    def __init__(self, output_type=OutType.datetime, init_value=None):
+    def __init__(self, output_type=OutType.datetime, last_value=None):
         """
         :output_type: 'sec' or 'datetime'.
         :init_value: the init value, if None first input can't use relative time.
         """
         self.output_type = output_type
-        self.last_value = init_value
+        self.last_value = last_value
 
     def __call__(self, in_str):
         """Input str and return output."""
@@ -84,6 +85,52 @@ class Time_input:
         dtstr.process_check()
         dt_obj = dtstr.as_datetime()
         return dt_obj
+
+    def _op(self, other, append):
+        if isinstance(other, timedelta):
+            ret = other
+        elif self.output_type == OutType.timestamp\
+            and isinstance(other, Number):
+            ret = timedelta(seconds=other)
+        else:
+            return NotImplemented
+        if append:
+            self.last_value += ret
+            return self
+        else:
+            return self.last_value + ret
+
+    def __add__(self, other):
+        return self._op(other, False)
+
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        if isinstance(other, datetime):
+            return self.last_value - other
+        elif isinstance(other, Number):
+            return self.timestamp() - other
+        else:
+            return self._op(-other, False)
+
+    def __rsub__(self, other):
+        return -(self-other)
+
+    def __iadd__(self, other):
+        return self._op(other, True)
+
+    def __isub__(self, other):
+        return self._op(other, True)
+
+    def __repr__(self):
+        return "{}.{}(last_value={}, output_type={})"\
+                .format(self.__class__.__module__,
+                        self.__class__.__qualname__,
+                        self.last_value,
+                        str(self.output_type))
+
+    def __str__(self):
+        return "last_value={}".format(self.last_value)
 
 class CLI_Inputer(Time_input):
     def print_help(self):
