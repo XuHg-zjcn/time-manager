@@ -2,12 +2,9 @@
 # -*- coding: utf-8 -*-
 from PyQt5.QtWidgets import QApplication, QPushButton, QVBoxLayout, QMainWindow, QWidget
 from PyQt5.QtCore import QRectF
-from .layout import Ui_MainWindow
-from commd_line.init_config import init_config
 import pyqtgraph as pg
 import numpy as np
 from datetime import datetime
-import sys
 
 
 class dt2dplot:
@@ -23,6 +20,7 @@ class dt2dplot:
         self.set_yaxis(6)
 
         self.arr = np.zeros([self.days*288, 3])
+        pg.setConfigOptions(imageAxisOrder='row-major')
         self.ii = pg.ImageItem(self.arr.reshape([-1, 288, 3]).transpose([1,0,2]))
         self.ii.setRect(QRectF(0, 0, self.days, 24.0))
         self.pv.addItem(self.ii)
@@ -71,19 +69,3 @@ class dt2dplot:
         else:
             t = (time - ts0)//300
             self.arr[int(t)] = color
-
-conf = init_config()
-if conf['show']['type'] == 'pyqtgraph':
-    pg.setConfigOptions(imageAxisOrder='row-major')
-    app = QApplication([])
-
-    ## Create window with ImageView widget
-    win = QMainWindow()
-    win.setWindowTitle('time-manager Date-Time 2D Image')
-    ui = Ui_MainWindow()
-    ui.setupUi(win)
-    dt2p = dt2dplot(ui.PlotView, 2020)
-    win.show()
-
-def hold():
-    sys.exit(app.exec_())
