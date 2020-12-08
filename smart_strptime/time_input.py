@@ -1,6 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
-import time
 import re
 import sys
 sys.path.append("..")
@@ -10,12 +9,12 @@ re_c = re.compile('^(n(ow)?)?([+-])?')
 
 
 class OutType(Enum):
-    sec = 0
-    datetime = 1
+    datetime = 0
+    timestamp = 1
     string = 2
 
 class Time_input:
-    def __init__(self, output_type=OutType.sec, init_value=None):
+    def __init__(self, output_type=OutType.datetime, init_value=None):
         """
         :output_type: 'sec' or 'datetime'.
         :init_value: the init value, if None first input can't use relative time.
@@ -27,30 +26,32 @@ class Time_input:
         """Input str and return output."""
         try:
             value = self._process(in_str)
+            value = self._convert_output_type(value)
         except Exception as e:
             print(e)
             return None
         else:
             return value
 
+    def _convert_output_type(self, datetime_obj):
+        if self.output_type == OutType.datetime:
+            return datetime_obj
+        elif self.output_type == OutType.timestamp:
+            return datetime_obj.timestamp()
+        elif self.output_type == OutType.string:
+            return datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
+
     def _process(self, in_str):
         self.in_str = in_str
         now, char = self._now_char()
-        if now is True:            # now[+/-]  n+ n-, n
-            if self.output_type is OutType.sec:
-                value = time.time()
-            elif self.output_type is OutType.datetime:
-                value = datetime.now()
-            value = self._puls_sub_char(char, value)
-        elif char is not None:     # (last)[+/-]  + -
-            if self.last_value is None:
-                raise ValueError('use last value in first input')
-            value = self.last_value
-            value = self._puls_sub_char(char, value)
-        else:                      # re not match
-            value = self._get_datetime()
-        self.last_value = value
-        return value
+        if now is True:                  # now[+-]* n
+            self.last_value = datetime.now()
+        elif char is None:               # datetime
+            self.last_value = self._get_datetime()
+        else:                            # last[+-]*
+            pass
+        self.last_value += self._puls_sub_char(char)
+        return self.last_value
 
     def _now_char(self):
         match = re_c.match(self.in_str)
@@ -65,27 +66,24 @@ class Time_input:
             puls_sub = None
         return now, puls_sub
 
-    def _puls_sub_char(self, char, value):
-        if char is None:
-            return value
-        elif char == '+':
-            return value + self._get_timedelta()
-        elif char == '-':
-            return value - self._get_timedelta()
+    def _puls_sub_char(self, char):
+        ret = {None:0, '+':1, '-':-1}[char]
+        if ret != 0:
+            ret *= self._get_timedelta()
+        else:
+            ret = timedelta(0)
+        return ret
 
     def _get_timedelta(self):
         tdstr = sspt.TimeDelta_str(self.in_str)
         tdstr.process_check()
-        if self.output_type is OutType.sec:
-            return time.time()
-        elif self.output_type is OutType.datetime:
-            return datetime.now()
+        return tdstr.as_timedelta()
 
     def _get_datetime(self):
         dtstr = sspt.DateTime_str(self.in_str)
         dtstr.process_check()
         dt_obj = dtstr.as_datetime()
-        return dt_obj.timestamp()
+        return dt_obj
 
 class CLI_Inputer(Time_input):
     def print_help(self):
@@ -95,6 +93,7 @@ class CLI_Inputer(Time_input):
               '+,-  :与上次输入的时间加减\n'
               '无前置符号:输入完整时间\n'
               'h:帮助, e:退出\n')
+
     def __call__(self, info):
         """Input str and return timestamp."""
         while True:
@@ -109,6 +108,7 @@ class CLI_Inputer(Time_input):
             # process
             try:
                 value = self._process(in_str)
+                value = self._convert_output_type(value)
             except Exception as e:
                 print(e)
                 info = '请重新输入:'

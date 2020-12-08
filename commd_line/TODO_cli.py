@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from time_input import CLI_Inputer
 from plot.time2d import Time2D
 import sys
 sys.path.append("..")
 from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
 from Qt_GUI.pyqtgraph_plot import dt2p, hold
 from commd_line.init_config import init_config
-
+from smart_strptime.time_input import CLI_Inputer, OutType
 
 conf = init_config()
 db_path = conf['init']['db_path']
 table_name = conf['init']['table_name']
 tdb = TODO_db(db_path=db_path, table_name=table_name)
-ti = CLI_Inputer()
+cti = CLI_Inputer(output_type=OutType.timestamp)
 
 
 def fixed():
     name = input('名称:')
-    sta_time = ti('开始时间:')
-    end_time = ti('结束时间:')
+    sta_time = cti('开始时间:')
+    end_time = cti('结束时间:')
     use_time = end_time - sta_time
     pt = PlanTime(sta_time, end_time, use_time)
     p = Plan(pt, 1, name)
@@ -35,8 +34,8 @@ op = input('''请输入要进行的操作:
 if op == '1':
     fixed()
 elif op == '2':
-    sta = ti('开始时间:')
-    end = ti('结束时间:')
+    sta = cti('开始时间:')
+    end = cti('结束时间:')
     plans = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
     print(plans)
     ivtree = plans.get_ivtree()
