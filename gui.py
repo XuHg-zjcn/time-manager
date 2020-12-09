@@ -56,7 +56,6 @@ class controller:
         # set current year
         year = datetime.now().year
         self.ui.year.setValue(year)
-        self.change_year()
 
     def change_year(self):
         year = self.ui.year.value()
