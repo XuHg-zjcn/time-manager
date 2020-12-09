@@ -188,9 +188,18 @@ class sDateTime(datetime):
         if len(args) == 1:
             arg = args[0]
             if isinstance(arg, Number):
+                if 0 <= arg <= 9999:
+                    # raise Error, required month and day
+                    return super().__new__(cls, arg)
+                elif arg < 5e8 or arg > 5e9:
+                    print("Waring: timestamp {} mean {}, "
+                          "maybe isn't a unix timestamp"
+                          .format(arg, datetime.fromtimestamp(arg)))
                 return super().fromtimestamp(arg)
             elif isinstance(arg, datetime):
-                return arg
+                return super().__new__(cls, arg.year, arg.month, arg.day,
+                                       arg.hour, arg.minute, arg.second,
+                                       arg.microsecond)
             elif isinstance(arg, struct_time):  # not suggest use
                 return super().__new__(cls, arg.tm_year, arg.tm_mon, arg.tm_mday,
                                        arg.tm_hour, arg.tm_min, arg.tm_sec)
@@ -243,11 +252,10 @@ class sTimeRange:
             begin = end + begin
         else:
             raise TypeError('unsupported sTimeRange combine')
-        if all([begin, end]) and begin > end:
-            raise ValueError('begin after end')
         self = object.__new__(cls)
         self._begin = begin
         self._end = end
+        self._check_cmp()
         return self
 
     @property
@@ -257,6 +265,19 @@ class sTimeRange:
     @property
     def end(self):
         return self._end
+
+    def _check_cmp(self, isRaise=True, notNone=False):
+        if all((self._begin, self._end)):
+            ret = self._begin <= self._end  # True OK
+        else:
+            ret = None
+        if isRaise:
+            if ret is False:
+                raise ValueError('begin{} after end{}'
+                                 .format(self._begin, self._end))
+            elif notNone and ret is None:
+                raise ValueError('not allow None here')
+        return ret
 
     @classmethod
     def M(cls, year, month=None, day=None, hour=None, minute=None, second=None):
@@ -285,9 +306,11 @@ class sTimeRange:
         return "sTimeRange:\n{}\n{}".format(str(self._begin), str(self._end))
 
     def datetime_tuple(self):
+        self._check_cmp()
         return (self._begin, self._end)
 
     def timestamp_tuple(self):
+        self._check_cmp()
         return (self._begin.timestamp(), self._end.timestamp())
 
     def length(self):
