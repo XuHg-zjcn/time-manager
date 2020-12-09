@@ -63,10 +63,7 @@ class controller:
         tR = sTimeRange.M(year)
         self.start.setRange(tR)
         self.stop.setRange(tR)
-        t_range = tR.timestamp_tuple()
-        plans = tdb.get_aitem({'sta_time': t_range, 'end_time': t_range})
-        ivtree = plans.get_ivtree()
-        dt2p.update_ivtree(ivtree)
+        self.update_view()
 
     def update_view(self):
         start = self.start.timestamp_tuple()
