@@ -53,7 +53,9 @@ class dt2dplot:
         print('update show')
         self.ii.setImage(self.arr.reshape([-1, 288, 3]).transpose([1,0,2]))
 
-    def update_ivtree(self, ivtree, color=(255, 0, 0)):
+    def update_ivtree(self, ivtree, color=(255, 0, 0), clear=True):
+        if clear is True:
+            self.arr[:] = 0
         for iv in ivtree:
             sta = iv.begin
             end = iv.end
