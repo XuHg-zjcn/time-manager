@@ -66,7 +66,7 @@ class PlanTime:
 
 class Plan:
     def __init__(self, p_time=None, dbtype=0, name='untitled', num=0,
-                 tree_i=None, finish=False, dbid=None, color=None):
+                 tree_i=None, finish=False, dbid=None, color=None, db=None):
         """
         p_time can from sqlite SELECT * tuple
         p_time defalut is current time
@@ -79,6 +79,7 @@ class Plan:
             dbtype = p_time[1]
             name = p_time[2]
             finish = p_time[11]
+            color = p_time[12]
             p_time = PlanTime(*p_time[7:11])
         self.p_time = p_time
         self.dbtype = dbtype
@@ -89,7 +90,13 @@ class Plan:
         self.tree_i = tree_i
         self.dbid = dbid
         self.finish = finish
-        self.color = color
+        self.color_flag = color is not None
+        if self.color_flag:
+            self.color = color
+        elif db is not None:
+            self.color = db.find_color(dbtype)
+        else:
+            self.color = None
 
     def db_item(self):
         ret = [self.dbtype, self.name, self.num]
@@ -125,10 +132,10 @@ class Plans(list):
     str_head = ' id |typ|name{}|{}start time{}~{}end time{}|finish\n'\
            .format(*(' '*i for i in [12, 5, 5, 6, 5]))
 
-    def __init__(self, iterable):  # sqlite3.Cursor
+    def __init__(self, iterable, db):  # sqlite3.Cursor
         super().__init__()
         for tup in iterable:
-            self.append(Plan(tup))
+            self.append(Plan(tup, db=db))
 
     def __repr__(self):
         ret = ''
@@ -156,7 +163,7 @@ class Plans(list):
             sta = plan.p_time.sta_time
             end = plan.p_time.end_time
             if sta < end:
-                ivtree[sta:end] = 'b'  # clr_tab[plan.dbtype]  # show color
+                ivtree[sta:end] = plan.color
         return ivtree
 
 
@@ -236,7 +243,20 @@ class TODO_db:
                 raise ValueError('key type invaild')
         sql = sql[:-4]
         res = cur.execute(sql, paras)
-        return Plans(res)
+        return Plans(res, self)
+
+    def find_color(self, dbtype):
+        cur = self.conn.cursor()
+        # type1 is foloder
+        sql = "SELECT color FROM {} WHERE type=1 AND num=?".format(self.table_name)
+        res = cur.execute(sql, [dbtype])
+        res = list(res)
+        if len(res) == 0:
+            return None
+        elif len(res) == 1:
+            return res[0][0]
+        else:
+            raise ValueError('find more than one dbtype color'.format(dbtype))
 
 
 # test code
