@@ -32,11 +32,12 @@ class Syncer:
                              .format(ivtree.end(), end))
         self.tree = ivtree
         self._end = end
-        self._apply_defalut_color(defalut_color)
+        # self._apply_defalut_color(defalut_color)
         self._insert_space(space_color)
         self._out_str = ''          # len(out_str) include contral chara
         self._outn = 0              # blocks in out_str
 
+    # AttributeError: can't set attribute
     def _apply_defalut_color(self, defalut_color):
         for iv in self.tree:
             if iv.data is None:

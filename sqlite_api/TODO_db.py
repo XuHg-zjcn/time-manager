@@ -59,32 +59,44 @@ class PlanTime:
     def db_nums(self):
         return self.sta_time, self.end_time, self.use_time, self.sub_time
 
+    @classmethod
+    def now(cls):
+        t = time.time()
+        return cls(t, t)
 
 class Plan:
-    def __init__(self, p_time, dbtype=0, name='untitled',
-                 tree_i=None, finish=False, dbid=None):
-        """p_time can from sqlite SELECT *"""
+    def __init__(self, p_time=None, dbtype=0, name='untitled', num=0,
+                 tree_i=None, finish=False, dbid=None, color=None):
+        """
+        p_time can from sqlite SELECT * tuple
+        p_time defalut is current time
+        """
+        if p_time is None:
+            p_time = PlanTime.now()
         if isinstance(p_time, tuple):
-            assert len(p_time) == 11
+            assert len(p_time) == 13
             dbid = p_time[0]
             dbtype = p_time[1]
             name = p_time[2]
-            finish = p_time[10]
-            p_time = PlanTime(*p_time[6:10])
+            finish = p_time[11]
+            p_time = PlanTime(*p_time[7:11])
         self.p_time = p_time
         self.dbtype = dbtype
         self.name = name
+        self.num = num
         if tree_i is None:
             tree_i = TreeItem()
         self.tree_i = tree_i
         self.dbid = dbid
         self.finish = finish
+        self.color = color
 
     def db_item(self):
-        ret = [self.dbtype, self.name]
+        ret = [self.dbtype, self.name, self.num]
         ret += self.tree_i.db_BLOBs()
         ret += self.p_time.db_nums()
         ret.append(self.finish)
+        ret.append(self.color.ARGB if self.color is not None else None)
         return ret
 
     def __str__(self):
@@ -143,12 +155,13 @@ class Plans(list):
         for plan in self:
             sta = plan.p_time.sta_time
             end = plan.p_time.end_time
-            ivtree[sta:end] = 'b'  # clr_tab[plan.dbtype]  # show color
+            if sta < end:
+                ivtree[sta:end] = 'b'  # clr_tab[plan.dbtype]  # show color
         return ivtree
 
 
 class TODO_db:
-    def __init__(self, db_path='TODO.db', table_name='TODO', commit_each=True):
+    def __init__(self, db_path, table_name, commit_each=True):
         self.table_name = table_name
         self.db_path = db_path
         self.commit_each = commit_each
@@ -167,17 +180,19 @@ class TODO_db:
         cur = self.conn.cursor()
         sql = '''CREATE TABLE {}(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type     INT,   name     TEXT,
+            type     INT,   name     TEXT,  num      NUMERIC,
             pares    BLOB,  subs     BLOB,  reqs     BLOB,
             sta_time REAL,  end_time REAL,  use_time REAL,  sub_time REAL,
-            finish   BOOL);'''.format(self.table_name)
+            finish   BOOL,  color);'''.format(self.table_name)
         cur.execute(sql)
+        self.add_aitem(Plan(None, -1, 'root'))  # add root item
         self.conn.commit()
 
     def add_aitem(self, plan):
         cur = self.conn.cursor()
-        sql = "INSERT INTO {} VALUES(NULL,?,?,?,?,?,?,?,?,?,?);"\
-              .format(self.table_name)
+        sql = 'INSERT INTO {}(type, name, num, pares, subs, reqs, '\
+              'sta_time, end_time, use_time, sub_time, finish, color)'\
+              'VALUES(?,?,?,?,?,?,?,?,?,?,?,?);'.format(self.table_name)
         cur.execute(sql, plan.db_item())
         if self.commit_each:
             self.conn.commit()
