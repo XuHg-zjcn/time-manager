@@ -130,7 +130,7 @@ str :{}\ndate:{}\ntime:{}'.format(self.in_str,
                 dt_paras[6] = int(d[U.ss].value*1e6)
             # AM or PM found
             if U.ampm in d:
-                if d[U.ampm].value == 1:
+                if d[U.ampm].value == 2:
                     dt_paras[3] += 12
             return d, dt_paras
 
