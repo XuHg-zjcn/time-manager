@@ -62,6 +62,7 @@ class PlanTime:
         t = time.time()
         return cls(t, t)
 
+
 class Plan:
     def __init__(self, p_time=None, dbtype=0, name='untitled', num=0,
                  tree_i=None, finish=False, dbid=None, color=None, db=None):

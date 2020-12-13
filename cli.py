@@ -5,6 +5,7 @@ from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
 from sqlite_api.colors import ARGB
 from commd_line.init_config import init_config
 from smart_strptime.time_input import CLI_Inputer, OutType
+from data_collector import auto_collect
 
 conf = init_config()
 db_path = conf['init']['db_path']
@@ -29,7 +30,7 @@ def add_task():
 op = input('请输入要进行的操作:\n'
            '1. 添加任务\n'
            '2. 列出任务\n'
-           '3. 删除任务\n'
+           '3. 收集数据\n'
            '4. 修改任务\n')
 if op == '1':
     add_task()
@@ -40,5 +41,7 @@ elif op == '2':
     print(plans)
     ivtree = plans.get_ivtree()
     Time2D(ivtree)
+elif op == '3':
+    auto_collect.cli()
 else:
     print('输入有误，请输入正确的序号1-4')

@@ -19,6 +19,7 @@ db_path = conf['init']['db_path']
 table_name = conf['init']['table_name']
 tdb = TODO_db(db_path=db_path, table_name=table_name)
 
+
 class QTimeRange(sTimeRange):
     def __new__(cls, widget_begin, widget_end):
         self = super().__new__(QTimeRange, None, None)
@@ -46,6 +47,7 @@ class QTimeRange(sTimeRange):
         self.widget_begin.setDateTime(self._begin)
         self.widget_end.setDateTime(self._end)
 
+
 class controller:
     def __init__(self, ui):
         self.ui = ui
@@ -70,6 +72,7 @@ class controller:
         plans = tdb.get_aitem({'sta_time': start, 'end_time': end})
         ivtree = plans.get_ivtree()
         dt2p.update_ivtree(ivtree)
+
 
 app = QApplication([])
 win = QMainWindow()
