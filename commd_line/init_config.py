@@ -18,8 +18,8 @@ conf = configparser.ConfigParser()
 # TODO: char_hour, force_bar
 def create():
     conf['init'] = {'dir': '.',
-                    'db_path':'browser.db',
-                    'table_name':'firefox'}  # work dir
+                    'db_path': 'browser.db',
+                    'table_name': 'firefox'}  # work dir
     conf['show'] = {'type': 'pyqtgraph',  # plot date-time2d
                     'char_hour': 4,     # char per hour
                     'print_minN': 5,    # print N found min items

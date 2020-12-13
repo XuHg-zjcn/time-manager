@@ -19,6 +19,7 @@ from numbers import Number
 from intervaltree import Interval
 from intervaltree import IntervalTree
 
+
 class IvTree2(IntervalTree):
     def apply_each_interval(self, func):
         ret = IvTree2()

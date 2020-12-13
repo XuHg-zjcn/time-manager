@@ -19,6 +19,7 @@ from numbers import Number
 from intervaltree import Interval
 from .ivtree2 import IvTree2
 
+
 class Iv2(Interval):
     def __contains__(self, num):
         return self.contains_point(num)
