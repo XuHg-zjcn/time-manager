@@ -10,9 +10,8 @@ from numbers import Number
 from datetime import date, datetime, timedelta
 from time import struct_time
 from .datetime_str import DateTime_str
-import sys
-sys.path.append('..')
 from my_libs.ivtree2.iv2 import Iv2
+
 
 class sTimeDelta(timedelta):
     def __new__(cls, days=0, seconds=0, microseconds=0, months=0,
@@ -92,16 +91,16 @@ class sTimeDelta(timedelta):
             raise ValueError("delta months must 0")
 
     def __floordiv__(self, other):
-        return self._no_months(lambda x:x.__floordiv__(other))
+        return self._no_months(lambda x: x.__floordiv__(other))
 
     def __truediv__(self, other):
-        return self._no_months(lambda x:x.__truediv__(other))
+        return self._no_months(lambda x: x.__truediv__(other))
 
     def __mod__(self, other):
-        return self._no_months(lambda x:x.__mod__(other))
+        return self._no_months(lambda x: x.__mod__(other))
 
     def __divmod__(self, other):
-        return self._no_months(lambda x:x.__divmod__(other))
+        return self._no_months(lambda x: x.__divmod__(other))
 
     def _getstate(self):
         return (self.days, self.seconds, self.microseconds, self._months)
@@ -127,9 +126,9 @@ class sTimeDelta(timedelta):
         else:
             raise TypeError("unsupport type '{}' compare with sTimeDelta"
                             .format(type(other)))
-        if lmax<rmin:
+        if lmax < rmin:
             value = 1
-        elif rmax<lmin:
+        elif rmax < lmin:
             value = -1
         else:
             value = 0
@@ -168,7 +167,7 @@ class sTimeDelta(timedelta):
         if self.seconds:
             args.append("seconds=%d" % self.seconds)
         if self.microseconds:
-            args.append("microseconds=%d" % self.microseconds)  
+            args.append("microseconds=%d" % self.microseconds)
         if not args:
             args.append('0')
         return "%s.%s(%s)" % (self.__class__.__module__,
@@ -182,6 +181,7 @@ class sTimeDelta(timedelta):
                 return n, abs(n) != 1 and "s" or ""
             ret = '%d month%s, ' % plural(self._months) + ret
         return ret
+
 
 class sDateTime(datetime):
     def __new__(cls, *args, **kwargs):
@@ -227,16 +227,17 @@ class sDateTime(datetime):
         return NotImplemented
 
     def __add__(self, other):
-        return self._op_with_months(other, lambda x,y: x.__add__(y))
+        return self._op_with_months(other, lambda x, y: x.__add__(y))
 
     def __sub__(self, other):
-        return self._op_with_months(other, lambda x,y: x.__sub__(y))
+        return self._op_with_months(other, lambda x, y: x.__sub__(y))
 
     def __int__(self):
         return int(self.timestamp())
 
     def __float__(self):
         return self.timestamp()
+
 
 class sTimeRange:
     @classmethod
@@ -285,13 +286,13 @@ class sTimeRange:
         name_paras = ['years', 'months', 'days', 'hours', 'minutes', 'seconds']
         maxi = paras.index(None)
         name = name_paras[maxi-1]
-        if maxi<6 and len(set(paras[maxi:]))>1:  # not same
+        if maxi < 6 and len(set(paras[maxi:])) > 1:  # not same
             raise ValueError('rangeM can only continuous None in end')
         paras_begin = paras[:maxi]
         while len(paras_begin) < 3:
             paras_begin.append(1)
         begin = sDateTime(*paras_begin)
-        d1 = sTimeDelta(**{name:1})
+        d1 = sTimeDelta(**{name: 1})
         return cls(begin, begin+d1)
 
     def get_iv(self, data=None):
