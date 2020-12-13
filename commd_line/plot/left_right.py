@@ -75,7 +75,7 @@ class Syncer:
                 else:
                     self.gray_show(in8, o8)
             elif len(in8) == 4:
-                self.gray_show(in8, o8)
+                self._gray_show(in8, o8)
             else:
                 if len(in8) < 10:
                     char = str(len(in8))

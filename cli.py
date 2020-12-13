@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from commd_line.plot.time2d import Time2D
+from commd_line.plot.time2d import Time2D_AutoSize
 from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
 from sqlite_api.argb import ARGB
 from commd_line.init_config import init_config
@@ -40,7 +40,7 @@ elif op == '2':
     plans = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
     print(plans)
     ivtree = plans.get_ivtree()
-    Time2D(ivtree)
+    Time2D_AutoSize(ivtree)
 elif op == '3':
     auto_collect.cli()
 else:
