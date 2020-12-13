@@ -6,7 +6,7 @@ import numpy as np
 from my_libs.ivtree2 import IvTree2
 from smart_strptime.MTshort import MTshort
 from commd_line.init_config import init_config
-from .colors import ARGB
+from .argb import ARGB
 
 conf = init_config()
 mts = MTshort('%Y/%m/%d %H:%M:%S')

@@ -4,7 +4,7 @@ from PyQt5.QtCore import QRectF
 import pyqtgraph as pg
 import numpy as np
 from datetime import datetime
-from sqlite_api.colors import ARGB
+
 
 class dt2dplot:
     def __init__(self, pv, year):
@@ -55,7 +55,6 @@ class dt2dplot:
     def update_ivtree(self, ivtree, color=(255, 0, 0), clear=True):
         if clear is True:
             self.arr[:] = 0
-        print(ivtree)
         for iv in ivtree:
             sta = iv.begin
             end = iv.end

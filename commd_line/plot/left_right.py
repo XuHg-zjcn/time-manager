@@ -1,8 +1,5 @@
-from intervaltree import Interval, IntervalTree
 from .colors import style_code
 from .base import gray
-import sys
-sys.path.append('../../')
 from my_libs.ivtree2 import IvTree2
 from my_libs.ivtree2 import Iv2
 resv = '\033[7m'
@@ -37,7 +34,7 @@ class Syncer:
         self._outn = 0              # blocks in out_str
 
     def _insert_space(self, space_color):
-        iv0 = Interval(0, 0, space_color)
+        iv0 = Iv2(0, 0, space_color)
         for iv1 in sorted(self.tree):
             if iv1.begin != iv0.end:
                 self.tree[iv0.end:iv1.begin] = space_color

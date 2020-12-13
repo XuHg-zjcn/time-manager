@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from commd_line.plot.time2d import Time2D
 from sqlite_api.TODO_db import TODO_db, PlanTime, Plan
-from sqlite_api.colors import ARGB
+from sqlite_api.argb import ARGB
 from commd_line.init_config import init_config
 from smart_strptime.time_input import CLI_Inputer, OutType
 from data_collector import auto_collect
