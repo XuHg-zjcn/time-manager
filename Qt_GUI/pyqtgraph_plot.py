@@ -59,7 +59,7 @@ class dt2dplot:
         for iv in ivtree:
             sta = iv.begin
             end = iv.end
-            self[sta:end] = ARGB.fromARGB(iv.data).RGB()
+            self[sta:end] = iv.data.RGB()
         self.update_show()
 
     def __setitem__(self, time, color):

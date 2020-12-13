@@ -86,7 +86,7 @@ class Syncer:
                     char = '+'
                 M = self._most_iv(in8, o8)
                 # M.data to backgroud, toomany_color to foreground
-                stycd = style_code(M.data.lower()+toomany_color.upper())
+                stycd = style_code(toomany_color, M.data)
                 self._outn += 1
                 self._out_str += stycd + char
 
@@ -115,9 +115,7 @@ class Syncer:
         c2: right side color
         """
         assert 0 < spt < 8
-        assert 0 <= len(c1) <= 1
-        assert 0 <= len(c2) <= 1
-        stycd = style_code(c1.upper()+c2.lower())
+        stycd = style_code(c1, c2)
         char = left_black[spt]
         self._outn += 1
         self._out_str += stycd + char + fend
@@ -131,7 +129,7 @@ class Syncer:
         'r', 'g', 'b', 'c', 'm', 'y', 'k', 'w'
         """
         assert n > 0
-        stycd = style_code(c.upper())
+        stycd = style_code(c, None)
         self._outn += n
         self._out_str += stycd + char*n
 

@@ -6,6 +6,7 @@ import numpy as np
 from my_libs.ivtree2 import IvTree2
 from smart_strptime.MTshort import MTshort
 from commd_line.init_config import init_config
+from .colors import ARGB
 
 conf = init_config()
 mts = MTshort('%Y/%m/%d %H:%M:%S')
@@ -162,7 +163,7 @@ class Plans(list):
             sta = plan.p_time.sta_time
             end = plan.p_time.end_time
             if sta < end:
-                ivtree[sta:end] = plan.color
+                ivtree[sta:end] = ARGB.fromARGB(plan.color)
         return ivtree
 
 
