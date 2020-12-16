@@ -2,7 +2,7 @@
 import os
 import configparser
 
-finds = map(lambda x: '../'*x + 'user_data', range(4))
+finds = map(lambda x: '../'*x + 'time-manager', range(4))
 found = False
 for path in finds:
     if os.path.exists(path):
@@ -10,7 +10,12 @@ for path in finds:
         os.chdir(path)
         break
 if not found:
-    raise FileNotFoundError("user_data not found.")
+    raise FileNotFoundError("'time-manager' dir not found, "
+                            "please don't change project dir name.")
+if not os.path.exists('user_data'):
+    os.mkdir('user_data')  # create 'user_data' foloder
+os.chdir('user_data')
+
 cfg_path = 'config.ini'               # don't change, else can't find
 conf = configparser.ConfigParser()
 

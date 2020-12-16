@@ -103,7 +103,7 @@ class Plan:
         ret += self.tree_i.db_BLOBs()
         ret += self.p_time.db_nums()
         ret.append(self.finish)
-        ret.append(self.color.ARGB if self.color is not None else None)
+        ret.append(self.color.ARGBi() if self.color is not None else None)
         return ret
 
     def __str__(self):
