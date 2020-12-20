@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sqlite3
 import os
-
+from . import defaults
 
 class Collecter:
     def __init__(self, coll_id, name, enable,
@@ -61,14 +61,16 @@ def cli():
     db_path = conf['init']['db_path']
     colls = Collecters(db_path)
     while True:
-        inp = input('c:添加, q:退出')
-        if inp == 'c':
+        inp = input('a:添加, b:添加预设, q:退出')
+        if inp == 'a':
             colls.add_item(input('name:'),
                            input('enable:').upper() in {'T', 'TRUE', 'Y', 'YES'},
                            input('table_name:'),
                            int(input('dbtype:')),
                            input('source_path:'),
                            input('srcipt:'))
+        elif inp == 'b':
+           defaults.add_default(defaults.input_chooise(), colls)
         elif inp == 'q':
             break
         else:
