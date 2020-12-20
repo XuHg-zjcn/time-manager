@@ -50,6 +50,10 @@ def Time2D(ivtree, char_per_h=4):
 
 
 def Time2D_AutoSize(ivtree):
-    cols = os.get_terminal_size().columns
-    char_per_h = (cols-2)//24
+    try:
+        cols = os.get_terminal_size().columns
+    except OSError:
+        char_per_h = 4
+    else:
+        char_per_h = (cols-2)//24
     Time2D(ivtree, char_per_h)
