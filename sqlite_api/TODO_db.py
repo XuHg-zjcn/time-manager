@@ -168,7 +168,7 @@ class Plans(list):
 
 
 class TODO_db:
-    def __init__(self, db_path, table_name, commit_each=True):
+    def __init__(self, db_path, table_name, commit_each=False):
         self.table_name = table_name
         self.db_path = db_path
         self.commit_each = commit_each

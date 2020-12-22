@@ -1,88 +1,92 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import sqlite3
-import os
-from . import defaults
-
-class Collecter:
-    def __init__(self, coll_id, name, enable,
-                 table_name, dbtype, source_path, srcipt):
-        self.coll_id = coll_id
-        self.name = name
-        self.enable = enable
-        self.command = srcipt + (' --table_name {} --dbtype {} '
-            '--source_path {}').format(table_name, dbtype, source_path)
-
-    def run_commd(self):
-        os.system(self.command)
-        print('{} updated'.format(self.name))
+import time
+from pickle import dumps, loads
 
 
-class Collecters(list):
-    def __init__(self, db_path):
-        self.db_path = db_path
-        self.conn = sqlite3.connect(self.db_path)
-        cur = self.conn.cursor()
-        sql = ('CREATE TABLE IF NOT exists collecters('
-               'id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, enable BOOL, '
-               'table_name TEXT, dbtype INT, source_path TEXT, srcipt TEXT);')
+class Collector:
+    dbtype = 1000
+    table_name = 'browser'
+
+    def __init__(self, source_path, plan_name='collect'):
+        self.source_path = source_path
+        self.plan_name = plan_name
+
+    def write_log(self, tdb, cid, t_min, t_max, items):
+        cur = tdb.conn.cursor()
+        cur.execute('UPDATE collectors SET runs=runs+1, items=items+? WHERE id=?', (items, cid))
+        run_i, name = list(cur.execute('SELECT runs, name FROM collectors WHERE id=?',(cid,)))[0]
+        cur.execute('INSERT INTO colls_log (cid, run_i, run_time, t_min, t_max, items) VALUES(?,?,?,?,?,?)',
+                    (cid, run_i, time.time(), t_min, t_max, items))
+        print('{} {} items updated'.format(name, items))
+        tdb.conn.commit()
+
+    def run(self, tdb, cid):
+        self.write_log(tdb, cid, None, None, 0)
+        pass
+
+
+class Collectors:
+    def __init__(self, tdb):
+        self.tdb = tdb
+        cur = self.tdb.conn.cursor()
+        sql = ('CREATE TABLE IF NOT exists collectors('
+               'id INTEGER PRIMARY KEY AUTOINCREMENT,'
+               'name TEXT, enable BOOL, dump BLOB, runs INT, items INT);')
         cur.execute(sql)
-        self.conn.commit()
-        cur = self.conn.cursor()
-        sql = ('SELECT id, name, enable, table_name, dbtype, '
-               'source_path, srcipt FROM collecters;')
-        res = cur.execute(sql)
-        super().__init__()
-        for coll_para in res:
-            self.append(Collecter(*coll_para))
+        sql = ('CREATE TABLE IF NOT exists colls_log('
+               'id INTEGER PRIMARY KEY AUTOINCREMENT,'
+               'cid INT, run_i INT, run_time REAL, t_min REAL, t_max REAL, items INT);')
+        cur.execute(sql)
+        self.tdb.conn.commit()
 
+    # TODO: check is already add in sqlite, use a table collect history
     def run_enable(self):
-        for coll in self:
-            if coll.enable:
-                coll.run_commd()
+        cur = self.tdb.conn.cursor()
+        res = cur.execute('SELECT id, dump FROM collectors WHERE enable=1')
+        for cid, dump in res:
+            coll = loads(dump)
+            coll.run(self.tdb, cid)
 
-    def add_item(self, name, enable, table_name, dbtype, source_path, srcipt):
-        cur = self.conn.cursor()
-        sql = ('INSERT INTO collecters'
-               '(name, enable, table_name, dbtype, source_path, srcipt)'
-               'VALUES(?,?,?,?,?,?);')
-        cur.execute(sql, (name, enable, table_name,
-                          dbtype, source_path, srcipt))
-        self.append(Collecter(None, name, enable, table_name,
-                              dbtype, source_path, srcipt))
-        self.conn.commit()
+    def add_item(self, name, enable, coll):
+        cur = self.tdb.conn.cursor()
+        sql = 'INSERT INTO collectors (name, enable, dump, runs, items) VALUES(?,?,?,0,0);'
+        cur.execute(sql, (name, enable, dumps(coll)))
+        sql = 'SELECT last_insert_rowid() FROM collectors WHERE id=1'
+        cid = list(cur.execute(sql))[0]
+        self.tdb.conn.commit()
 
+    @classmethod
+    def input_enable(cls):
+        while True:
+            enable = input('enable:').upper()
+            if enable in {'Y', 'YES', 'T', 'TRUE'}:
+                return True
+            elif enable in {'N', 'NO', 'F', 'FALSE'}:
+                return False
+            else:
+                continue
 
-def cli():
-    import sys
-    sys.path.append('../')
-    from commd_line.init_config import init_config
-    conf = init_config()
-    db_path = conf['init']['db_path']
-    colls = Collecters(db_path)
-    while True:
-        inp = input('a:添加, b:添加预设, q:退出')
-        if inp == 'a':
-            colls.add_item(input('name:'),
-                           input('enable:').upper() in {'T', 'TRUE', 'Y', 'YES'},
-                           input('table_name:'),
-                           int(input('dbtype:')),
-                           input('source_path:'),
-                           input('srcipt:'))
-        elif inp == 'b':
-           defaults.add_default(defaults.input_chooise(), colls)
-        elif inp == 'q':
-            break
-        else:
-            print('错误, 请重新输入')
-            continue
-    while True:
-        inp = input('u:更新, q:退出')
-        if inp == 'u':
-            colls.run_enable()
-            break
-        elif inp == 'q':
-            break
-        else:
-            print('错误, 请重新输入')
-            continue
+    def cli(self):
+        from . import defaults
+        while True:
+            inp = input('a:添加预设, q:退出')
+            if inp == 'a':
+                coll = defaults.input_choose_coll()
+                enable = self.input_enable()
+                self.add_item(coll.coll_name, enable, coll)
+            elif inp == 'q':
+                break
+            else:
+                print('错误, 请重新输入')
+                continue
+        while True:
+            inp = input('u:更新, q:退出')
+            if inp == 'u':
+                self.run_enable()
+                break
+            elif inp == 'q':
+                break
+            else:
+                print('错误, 请重新输入')
+                continue

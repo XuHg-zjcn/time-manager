@@ -13,6 +13,8 @@ table_name = conf['init']['table_name']
 tdb = TODO_db(db_path=db_path, table_name=table_name)
 cti = CLI_Inputer(output_type=OutType.timestamp)
 
+ac = auto_collect.Collectors(tdb)
+ac.run_enable()
 
 def add_task():
     name = input('名称:')
@@ -42,6 +44,6 @@ elif op == '2':
     ivtree = plans.get_ivtree()
     Time2D_AutoSize(ivtree)
 elif op == '3':
-    auto_collect.cli()
+    ac.cli()
 else:
     print('输入有误，请输入正确的序号1-4')

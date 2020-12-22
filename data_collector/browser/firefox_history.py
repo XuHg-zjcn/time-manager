@@ -5,23 +5,26 @@ Created on Tue Nov 17 02:17:41 2020
 
 @author: xrj
 """
-from browser_history import browser_history
-from commd_line.init_config import init_config
-import argparse
+import os
+import glob
+from .browser_history import BrowserHistory
 
-conf = init_config()
-my_db_path = conf['init']['db_path']
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--table_name", required=True)
-parser.add_argument("--dbtype", required=True)
-parser.add_argument("--source_path", required=True)
-args = parser.parse_args()
 
 sql = 'SELECT visit_date/1000000 FROM moz_historyvisits'
 
-browser_history(args.source_path,
-                my_db_path, sql,
-                table_name=args.table_name,
-                plan_name='firefox visit',
-                plan_dbtype=args.dbtype)
+class FirefoxHistory(BrowserHistory):
+    sql = 'SELECT visit_date/1000000 FROM moz_historyvisits'
+    dbtype = 1001
+    coll_name = 'firefox history'
+
+    def __init__(self, source_path=None, plan_name='firefox history'):
+        if source_path is None:
+            paths = glob.glob(os.path.join(os.environ['HOME'], '.mozilla/firefox/*.default-release/places.sqlite'))
+            if len(paths) == 0:
+                raise FileNotFoundError("firefox history file 'places.sqlite' no found")
+            elif len(paths) == 1:
+                source_path = paths[0]
+            else:
+                inp = input('请选择:' + '\n'.join(paths) + '\n')
+                source_path = paths[int(inp)]
+            super().__init__(source_path, plan_name)

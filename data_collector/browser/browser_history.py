@@ -8,48 +8,52 @@ Created on Tue Nov 17 14:37:07 2020
 
 import sqlite3
 import sys
+
+from ..auto_collect import Collector
+
 sys.path.append('../')
 sys.path.append('../../')
 from sqlite_api.TODO_db import TODO_db, Plan, PlanTime
 
 
-def browser_history(browser_db_path, my_db_path, sql,
-                    table_name='browser', plan_name='visit',
-                    plan_dbtype=1):
-    """Use browser history export to my db.
+class BrowserHistory(Collector):
+    sql = None
+    dbtype = 1001
+    table_name = 'browser'
+    coll_name = 'browser history'
 
-    browser_db_path:
-        Firefox 'places.sqlite'
-        Chrome 'History'
-    my_db_path: output db path
-    sql: execute sql to get visits unix stamp:
-        Firefox: 'SELECT visit_date/1000000 FROM moz_historyvisits'
-        Chorme: 'SELECT visit_time/1000000-11644473600 FROM visits'
-    plan_name: name to creat plan
-    plan_dbtype: type to creat plan
-    """
-    conn = sqlite3.connect(browser_db_path)  # browser db
-    c = conn.cursor()
-    res = c.execute(sql)
+    def __init__(self, source_path, plan_name='browser visit'):
+        self.source_path = source_path
+        self.plan_name = plan_name
+        super().__init__(source_path, plan_name)
 
-    tdb = TODO_db(db_path=my_db_path,
-                  table_name=table_name, commit_each=False)  # my db
-    n = 0
-    prev = next(res)[0]
-    last_start = prev
-    for curr, in res:
-        if curr - prev > 15*60:
-            if prev - last_start > 15*60:
-                try:
-                    plan = Plan(PlanTime(last_start, prev),
-                                plan_dbtype, plan_name)
-                    tdb.add_aitem(plan)
-                except ValueError as e:
-                    print(e)
-                else:
-                    n += 1
-            last_start = curr
-        prev = curr
-    print('browser history {} found'.format(n))
-    tdb.commit()
-    tdb.close()
+    def run(self, tdb, cid):
+        conn = sqlite3.connect(self.source_path)
+        cur = conn.cursor()
+        res = cur.execute(self.sql)
+
+        items = 0
+        try:
+            prev = next(res)[0]
+        except StopIteration:
+            self.write_log(tdb, cid, None, None, 0)
+            return
+        t_min = prev
+        last_start = prev
+        for curr, in res:
+            if curr - prev > 15*60:
+                if prev - last_start > 15*60:
+                    try:
+                        plan = Plan(PlanTime(last_start, prev),
+                                    self.dbtype, self.plan_name)
+                        tdb.add_aitem(plan)
+                    except ValueError as e:
+                        print(e)
+                    else:
+                        items += 1
+                last_start = curr
+            prev = curr
+        t_max = prev
+
+        tdb.commit()
+        self.write_log(tdb, cid, t_min, t_max, items)
