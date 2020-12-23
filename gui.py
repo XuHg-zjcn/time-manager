@@ -67,19 +67,21 @@ class controller:
         self.update_view()
 
     def update_view(self):
+        year = self.ui.year.value()
         start = self.start.timestamp_tuple()
-        end = self.start.timestamp_tuple()
-        plans = tdb.get_aitem({'sta_time': start, 'end_time': end})
+        stop = self.stop.timestamp_tuple()
+        plans = tdb.get_aitem({'sta_time': start, 'end_time': stop})
         ivtree = plans.get_ivtree()
-        dt2p.update_ivtree(ivtree)
+        dt2p.update_ivtree(ivtree, year)
 
 
-app = QApplication([])
-win = QMainWindow()
-win.setWindowTitle('time-manager Date-Time 2D Image')
-ui = Ui_MainWindow()
-ui.setupUi(win)
-dt2p = dt2dplot(ui.PlotView, 2020)
-win.show()
-controller(ui)
-sys.exit(app.exec_())
+if __name__ == '__main__':
+    app = QApplication([])
+    win = QMainWindow()
+    win.setWindowTitle('time-manager Date-Time 2D Image')
+    ui = Ui_MainWindow()
+    ui.setupUi(win)
+    dt2p = dt2dplot(ui.PlotView)
+    win.show()
+    controller(ui)
+    sys.exit(app.exec_())
