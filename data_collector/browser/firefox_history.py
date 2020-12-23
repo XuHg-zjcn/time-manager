@@ -27,4 +27,4 @@ class FirefoxHistory(BrowserHistory):
             else:
                 inp = input('请选择:' + '\n'.join(paths) + '\n')
                 source_path = paths[int(inp)]
-            super().__init__(source_path, plan_name)
+        super().__init__(source_path, plan_name)

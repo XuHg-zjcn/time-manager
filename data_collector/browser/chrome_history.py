@@ -21,4 +21,4 @@ class ChromeHistory(BrowserHistory):
                 source_path = path
             else:
                 raise FileNotFoundError("chrome history file 'History' no found")
-            super().__init__(source_path, plan_name)
+        super().__init__(source_path, plan_name)

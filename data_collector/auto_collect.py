@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import time
+import glob
 from pickle import dumps, loads
 
 
 class Collector:
     dbtype = 1000
     table_name = 'browser'
+    coll_name = 'Collector'
 
     def __init__(self, source_path, plan_name='collect'):
         self.source_path = source_path
         self.plan_name = plan_name
 
     def write_log(self, tdb, cid, t_min, t_max, items):
+        """run once d=-1"""
         cur = tdb.conn.cursor()
         cur.execute('UPDATE collectors SET runs=runs+1, items=items+? WHERE id=?', (items, cid))
-        run_i, name = list(cur.execute('SELECT runs, name FROM collectors WHERE id=?',(cid,)))[0]
+        try:
+            run_i, name = list(cur.execute('SELECT runs, name FROM collectors WHERE id=?',(cid,)))[0]
+        except IndexError:
+            run_i = -1
+            name = self.coll_name
         cur.execute('INSERT INTO colls_log (cid, run_i, run_time, t_min, t_max, items) VALUES(?,?,?,?,?,?)',
                     (cid, run_i, time.time(), t_min, t_max, items))
         print('{} {} items updated'.format(name, items))
@@ -70,11 +77,19 @@ class Collectors:
     def cli(self):
         from . import defaults
         while True:
-            inp = input('a:添加预设, q:退出')
+            inp = input('a:添加预设, b:一次性, q:退出')
             if inp == 'a':
-                coll = defaults.input_choose_coll()
+                coll_obj = defaults.input_choose_coll()()
                 enable = self.input_enable()
-                self.add_item(coll.coll_name, enable, coll)
+                self.add_item(coll_obj.coll_name, enable, coll_obj)
+            elif inp == 'b':
+                coll_cls = defaults.input_choose_coll()
+                path_glob = input('数据源路径(Glob):')
+                paths = glob.glob(path_glob)
+                for p in paths:
+                    print('Glob matched {}'.format(p))
+                    coll_obj = coll_cls(source_path=p)
+                    coll_obj.run(self.tdb, -1)
             elif inp == 'q':
                 break
             else:
