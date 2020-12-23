@@ -167,7 +167,7 @@ class Plans(list):
         return ivtree
 
 
-class TODO_db:
+class TaskDB:
     def __init__(self, db_path, table_name, commit_each=False):
         self.table_name = table_name
         self.db_path = db_path
@@ -257,13 +257,3 @@ class TODO_db:
             return res[0][0]
         else:
             raise ValueError('find more than one dbtype color'.format(dbtype))
-
-
-# test code
-if __name__ == '__main__':
-    tdb = TODO_db()
-    plan = Plan(PlanTime(1605026048.586921, 1605040451.1946993),
-                1, 'plan1', TreeItem(0))
-    tdb.add_aitem(plan)
-    print((str(plan)))
-    tdb.get_aitem({'sta_time': (1604489926.0, 1604489926.9)})

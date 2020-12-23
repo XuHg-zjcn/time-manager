@@ -13,7 +13,7 @@ from ..auto_collect import Collector
 
 sys.path.append('../')
 sys.path.append('../../')
-from sqlite_api.TODO_db import TODO_db, Plan, PlanTime
+from sqlite_api.task_db import Plan, PlanTime
 
 
 class BrowserHistory(Collector):

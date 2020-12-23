@@ -11,13 +11,13 @@ from Qt_GUI.layout import Ui_MainWindow
 from Qt_GUI.pyqtgraph_plot import dt2dplot
 from datetime import datetime
 from commd_line.init_config import init_config
-from sqlite_api.TODO_db import TODO_db
+from sqlite_api.task_db import TaskDB
 from smart_strptime.my_datetime import sTimeRange
 
 conf = init_config()
 db_path = conf['init']['db_path']
 table_name = conf['init']['table_name']
-tdb = TODO_db(db_path=db_path, table_name=table_name)
+tdb = TaskDB(db_path=db_path, table_name=table_name)
 
 
 class QTimeRange(sTimeRange):
