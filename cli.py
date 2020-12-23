@@ -22,7 +22,7 @@ def add_task():
     sta_time = cti('开始时间:')
     end_time = cti('结束时间:')
     num = int(input('整数参数:'))
-    color = ARGB.fromStr(input('颜色:'))
+    color = ARGB.from_str(input('颜色:'))
     use_time = end_time - sta_time
     pt = PlanTime(sta_time, end_time, use_time)
     p = Plan(pt, dbtype, name, num, color=color)

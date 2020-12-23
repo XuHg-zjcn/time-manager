@@ -163,7 +163,7 @@ class Plans(list):
             sta = plan.p_time.sta_time
             end = plan.p_time.end_time
             if sta < end:
-                ivtree[sta:end] = ARGB.fromARGB(plan.color)
+                ivtree[sta:end] = ARGB.from_argb(plan.color)
         return ivtree
 
 

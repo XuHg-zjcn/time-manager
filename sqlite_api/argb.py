@@ -27,6 +27,17 @@ dict_char2str={
 'w': 'white'}
 
 
+def _out_int(func):
+    def warp(paras):
+        tup = func(paras)
+        ret = 0
+        for i in tup:
+            ret = (ret << 8) + i
+        return ret
+
+    return warp
+
+
 class ARGB:
     def __new__(cls, R, G, B, A=0xFF):
         self = object.__new__(cls)
@@ -35,15 +46,6 @@ class ARGB:
         self.B = B
         self.A = A
         return self
-
-    def _out_int(func):
-        def warp(paras):
-            tup = func(paras)
-            ret = 0
-            for i in tup:
-                ret = (ret << 8) + i
-            return ret
-        return warp
 
     def ARGB(self):
         return self.A, self.R, self.G, self.G
@@ -67,36 +69,35 @@ class ARGB:
         return self.RGB()
 
     @classmethod
-    def fromRGB(cls, rgb, A=0xFF):
-        return cls((rgb>>16)&0xff, (rgb>>8)&0xff, rgb&0xff, A)
+    def from_rgb(cls, rgb, a=0xFF):
+        return cls.__new__(cls, (rgb>>16)&0xff, (rgb>>8)&0xff, rgb&0xff, a)
 
     @classmethod
-    def fromARGB(cls, argb):
+    def from_argb(cls, argb):
         if argb is not None:
-            return cls.fromRGB(argb%(1<<24), (argb>>24)&0xff)
+            return cls.from_rgb(argb%(1<<24), (argb>>24)&0xff)
         else:
-            return cls(255, 255, 0)  # default
+            return cls.__new__(cls, 255, 255, 0)  # default
 
     @classmethod
-    def name2ARGB(cls, x, A=0xFF):
+    def _from_name(cls, x, a=0xFF):
         if len(x) == 1:
             x = dict_char2str[x]
         rgb = dict_str2RGB[x]
-        return cls.fromRGB(rgb, A)
+        return cls.from_rgb(rgb, a)
 
     @classmethod
-    def fromStr(cls, x):
+    def from_str(cls, x):
         if x[0] == 't':
-            return cls.name2ARGB(x[1:], 0x7F)
+            return cls._from_name(x[1:], 0x7F)
         elif x[0] == '#':
-            return cls.fromRGB(int(x[1:], 16))
+            return cls.from_rgb(int(x[1:], 16))
         else:
-            return cls.name2ARGB(x)
+            return cls._from_name(x)
 
     def __repr__(self):
         return "ARGB(R={}, G={}, B={}, A={})"\
                .format(self.R, self.G, self.B, self.A)
 
     def __str__(self):
-        print(hex(self.RGB))
-        return "#{:06x} {:>3.0%}".format(self.RGB, self.A/255)
+        return "#{:06x} {:>3.0%}".format(self.RGBi(), self.A/255)
