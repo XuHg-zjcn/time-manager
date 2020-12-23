@@ -27,6 +27,7 @@ def add_task():
     pt = PlanTime(sta_time, end_time, use_time)
     p = Plan(pt, dbtype, name, num, color=color)
     tdb.add_aitem(p)
+    tdb.conn.commit()
 
 
 op = input('请输入要进行的操作:\n'
