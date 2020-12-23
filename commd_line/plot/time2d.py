@@ -19,7 +19,7 @@ def gen_head(char_per_h, month):
     return head.format(month)
 
 
-def Time2D(ivtree, char_per_h=4):
+def time_2d(ivtree, char_per_h=4):
     """
     Plot time2d view.
 
@@ -47,11 +47,11 @@ def Time2D(ivtree, char_per_h=4):
         n += 1
 
 
-def Time2D_AutoSize(ivtree):
+def time2d_autosize(ivtree):
     try:
         cols = os.get_terminal_size().columns
     except OSError:
         char_per_h = 4
     else:
         char_per_h = (cols-2)//24
-    Time2D(ivtree, char_per_h)
+    time_2d(ivtree, char_per_h)

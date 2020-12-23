@@ -1,5 +1,7 @@
 q4_16 = ' ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█'
 q2_4 = ' ▀▄█'
+
+
 def q4(pix4):
     num = 0
     assert len(pix4) == 4
@@ -8,4 +10,3 @@ def q4(pix4):
         num = num*2 + i
     assert 0 <= num < 16
     return q4_16[num]
-

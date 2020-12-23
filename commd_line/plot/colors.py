@@ -31,7 +31,3 @@ def style_code(fore, back):
     if back is not None:
         nums += strARGB2nums(fore, True)
     return style_str(nums)
-
-# tests
-if __name__ == '__main__':
-    print(style_code('rW'), 12345, fend)  # rW = red bg, White fg
