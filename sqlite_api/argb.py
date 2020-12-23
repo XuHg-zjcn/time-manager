@@ -75,7 +75,7 @@ class ARGB:
     @classmethod
     def fromARGB(cls, argb):
         if argb is not None:
-            return cls.fromRGB(argb>>8, (argb>>24)&0xff)
+            return cls.fromRGB(argb%(1<<24), (argb>>24)&0xff)
         else:
             return cls(255, 255, 0)  # default
 
