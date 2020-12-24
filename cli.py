@@ -42,7 +42,7 @@ elif op == '2':
     end = cti('结束时间:')
     plans = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
     print(plans)
-    ivtree = plans.get_ivtree()
+    ivtree = plans.get_ivtree(lambda p:p.color)
     time2d_autosize(ivtree)
 elif op == '3':
     ac.cli()

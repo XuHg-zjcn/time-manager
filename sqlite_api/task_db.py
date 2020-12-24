@@ -81,6 +81,8 @@ class Plan:
             finish = p_time[11]
             color = p_time[12]
             p_time = PlanTime(*p_time[7:11])
+        if isinstance(color, int):
+            color = ARGB.from_argb(color)
         self.p_time = p_time
         self.dbtype = dbtype
         self.name = name
@@ -157,13 +159,19 @@ class Plans(list):
 
     __str__ = __repr__
 
-    def get_ivtree(self):
+    def get_ivtree(self, data_func):
+        """
+        para data_func: a func get plan, return will be ivtree data
+        example:
+            lambda p:p        # plan as ivtree data, used in GUI
+            lambda p:p.color  # color of plan as ivtree data, used in CLI
+        """
         ivtree = IvTree2()
         for plan in self:
             sta = plan.p_time.sta_time
             end = plan.p_time.end_time
             if sta < end:
-                ivtree[sta:end] = ARGB.from_argb(plan.color)
+                ivtree[sta:end] = data_func(plan)
         return ivtree
 
 
@@ -254,6 +262,6 @@ class TaskDB:
         if len(res) == 0:
             return None
         elif len(res) == 1:
-            return res[0][0]
+            return ARGB.from_argb(res[0][0])
         else:
             raise ValueError('find more than one dbtype color'.format(dbtype))

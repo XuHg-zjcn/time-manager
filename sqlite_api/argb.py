@@ -75,6 +75,7 @@ class ARGB:
     @classmethod
     def from_argb(cls, argb):
         if argb is not None:
+            argb = int(argb)  # allow use int string argb value, sqlite maybe return string
             return cls.from_rgb(argb%(1<<24), (argb>>24)&0xff)
         else:
             return cls.__new__(cls, 255, 255, 0)  # default

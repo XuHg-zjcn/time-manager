@@ -71,7 +71,7 @@ class controller:
         start = self.start.timestamp_tuple()
         stop = self.stop.timestamp_tuple()
         plans = tdb.get_aitem({'sta_time': start, 'end_time': stop})
-        ivtree = plans.get_ivtree()
+        ivtree = plans.get_ivtree(lambda p:p)
         dt2p.update_ivtree(ivtree, year)
 
 

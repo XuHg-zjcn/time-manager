@@ -13,7 +13,7 @@ class Syncer:
     IntervalTree's data: color name, see _color1
     """
 
-    def __init__(self, ivtree, defalut_color='b', space_color='k', end=96*8):
+    def __init__(self, ivtree, space_color='k', end=96*8):
         """
         Init Syncer.
 
@@ -73,7 +73,7 @@ class Syncer:
                 elif left <= 1 and 8-right <= 1:
                     pass
                 else:
-                    self.gray_show(in8, o8)
+                    self._gray_show(in8, o8)
             elif len(in8) == 4:
                 self._gray_show(in8, o8)
             else:
@@ -122,7 +122,7 @@ class Syncer:
         Append blocks same color to output string.
 
         n: number of blocks
-        c: color of blocks, color name char, allow above:
+        c: color of blocks, color name char(above) or ARGB object:
         'r', 'g', 'b', 'c', 'm', 'y', 'k', 'w'
         """
         assert n > 0

@@ -5,6 +5,7 @@ from PyQt5 import QtCore, QtGui
 
 class DateTime2DItem(pg.GraphicsObject):
     def __init__(self, ivtree=None, year=None):
+        self.ivtree = ivtree
         self.year = year
         self.picture = QtGui.QPicture()
         if ivtree is not None and year is not None:
@@ -32,13 +33,14 @@ class DateTime2DItem(pg.GraphicsObject):
     def _draw_iv(self, p, iv):
         BEG = datetime.fromtimestamp(iv.begin) - self.d11
         END = datetime.fromtimestamp(iv.end) - self.d11
-        color = QtGui.QColor.fromRgb(*iv.data.RGBA())
+        color = QtGui.QColor.fromRgb(*iv.data.color.RGBA())
         for doy in range(max(0, BEG.days), min(END.days, self.max_doy)+1):
             beg_sec = BEG.seconds if doy == BEG.days else 0
             end_sec = END.seconds if doy == END.days else 86399
             self._draw_rect(p, doy, beg_sec, end_sec, color)
 
     def draw_ivtree(self, ivtree, year):
+        self.ivtree = ivtree
         self.year = year
         self.picture = QtGui.QPicture()
         self.d11 = datetime(year, 1, 1)
