@@ -29,5 +29,5 @@ def style_code(fore, back):
     if fore is not None:
         nums += strARGB2nums(fore, False)
     if back is not None:
-        nums += strARGB2nums(fore, True)
+        nums += strARGB2nums(back, True)
     return style_str(nums)
