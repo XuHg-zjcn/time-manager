@@ -9,8 +9,8 @@ from commd_line.init_config import init_config
 from .argb import ARGB
 
 conf = init_config()
-mts = MTshort()
-
+mts1 = MTshort('? Y-? m-? d % H:%0M:%0S')
+mts2 = MTshort('? m-? d % H:%0M:%0S')
 
 class TreeItem:
     """Plan tree node."""
@@ -111,9 +111,9 @@ class Plan:
 
     def __str__(self):
         #            id   type  name   sta     end   finish
-        ret_fmt = '{:>4}|{:>3}|{:<16}|{:>19} ~{:>14}|{:<6}'
-        sta_str = mts.strftime(datetime.fromtimestamp(self.p_time.sta), update=True)
-        end_str = mts.strftime(datetime.fromtimestamp(self.p_time.end), update=False)
+        ret_fmt = '{:>6}|{:>4}|{:<25}| {:>19} | {:^14} |{}'
+        sta_str = mts1.strftime(datetime.fromtimestamp(self.p_time.sta))
+        end_str = mts2.strftime(datetime.fromtimestamp(self.p_time.end))
         dbid = self.dbid if self.dbid is not None else 0
         ret_str = ret_fmt.format(dbid, self.dbtype, self.name,
                                  sta_str, end_str, self.finish)
@@ -132,8 +132,8 @@ class Plan:
 
 
 class Plans(list):
-    str_head = ' id |typ|name{}|{}start time{}~{}end time{}|finish\n'\
-           .format(*(' '*i for i in [12, 5, 5, 6, 5]))
+    str_head = '   id | typ| name{}|{}start time{}|{}end time{}|fin\n'\
+           .format(*(' '*i for i in [20, 6, 5, 4, 4]))
 
     def __init__(self, iterable, db):  # sqlite3.Cursor
         super().__init__()
@@ -151,11 +151,11 @@ class Plans(list):
             for plan in self[:side]:
                 ret += str(plan) + '\n'
             N_skips = len(self) - 2*side
-            ret += '{:-^68}\n'.format(' {} skips '.format(N_skips))
+            ret += '{:-^80}\n'.format(' {} skips '.format(N_skips))
             for plan in self[-side:]:
                 ret += str(plan) + '\n'
         if len(self) >= int(conf['show']['print_max']):
-            ret += '{:-^68}\n'.format('{} plans found'.format(len(self)))
+            ret += '{:-^80}\n'.format('{} plans found'.format(len(self)))
         return ret
 
     __str__ = __repr__

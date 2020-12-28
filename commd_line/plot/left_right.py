@@ -90,8 +90,10 @@ class Syncer:
     def _change_border(self, iv0, iv1, new_border):
         self.tree.remove(iv0)
         self.tree.remove(iv1)
-        self.tree.addi(iv0.begin, new_border, iv0.data)
-        self.tree.addi(new_border, iv1.end, iv1.data)
+        if iv0.begin != new_border:
+            self.tree.addi(iv0.begin, new_border, iv0.data)
+        if new_border != iv1.end:
+            self.tree.addi(new_border, iv1.end, iv1.data)
 
     def _most_iv(self, in8, o8):
         insec = IvTree2(in8) & Iv2(o8, o8+8)
