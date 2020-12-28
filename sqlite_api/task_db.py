@@ -1,7 +1,7 @@
 import sqlite3
 import os
 import time
-import datetime
+from datetime import datetime
 import numpy as np
 from my_libs.ivtree2 import IvTree2
 from smart_strptime.MTshort import MTshort
@@ -9,7 +9,7 @@ from commd_line.init_config import init_config
 from .argb import ARGB
 
 conf = init_config()
-mts = MTshort('%Y/%m/%d %H:%M:%S')
+mts = MTshort()
 
 
 class TreeItem:
@@ -112,16 +112,16 @@ class Plan:
     def __str__(self):
         #            id   type  name   sta     end   finish
         ret_fmt = '{:>4}|{:>3}|{:<16}|{:>19} ~{:>14}|{:<6}'
-        sta_str = mts.strftime(self.p_time.sta, update=True)
-        end_str = mts.strftime(self.p_time.end, update=False)
+        sta_str = mts.strftime(datetime.fromtimestamp(self.p_time.sta), update=True)
+        end_str = mts.strftime(datetime.fromtimestamp(self.p_time.end), update=False)
         dbid = self.dbid if self.dbid is not None else 0
         ret_str = ret_fmt.format(dbid, self.dbtype, self.name,
                                  sta_str, end_str, self.finish)
         return ret_str
 
     def __repr__(self):
-        sta_dt = datetime.datetime.fromtimestamp(self.p_time.sta)
-        end_dt = datetime.datetime.fromtimestamp(self.p_time.end)
+        sta_dt = datetime.fromtimestamp(self.p_time.sta)
+        end_dt = datetime.fromtimestamp(self.p_time.end)
 
         ret = 'id={}, type={}, name={}\n'\
               .format(self.dbid, self.dbtype, self.name)
