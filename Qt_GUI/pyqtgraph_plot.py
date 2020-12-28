@@ -5,14 +5,18 @@ from .cluster import Cluster
 
 
 class dt2dplot:
-    def __init__(self, pv, db):
-        self.pv = pv
+    def __init__(self, pw, db):
+        self.pw = pw
         self.db = db
         self.item = DateTime2DItem()
         self.scatter = pg.ScatterPlotItem()
-        self.pv.addItem(self.item)
-        self.pv.addItem(self.scatter)
-        self.pv.invertY()
+        self.pw.addItem(self.item)
+        self.pw.addItem(self.scatter)
+        self.vLine = pg.InfiniteLine(angle=90, movable=False, )
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, )
+        self.pw.addItem(self.vLine)
+        self.pw.addItem(self.hLine)
+        self.pw.invertY()
         self.set_yaxis(6)
         pg.setConfigOptions(imageAxisOrder='row-major')
 
@@ -24,7 +28,7 @@ class dt2dplot:
         """
         if 24 % n1 != 0 or 24 % n2 != 0:
             raise ValueError("n can't div by 24")
-        left = self.pv.getAxis('left')
+        left = self.pw.getAxis('left')
         t_text = [(i, str(i)) for i in range(0, 25, 24//n1)]
         t_no = [(i, '') for i in range(0, 25, 24//n2)]
         left.setTicks([t_text, t_no])
@@ -36,7 +40,7 @@ class dt2dplot:
             dx1 = datetime(y, m, 1)
             doy = (dx1 - self.item.d11).days  # day_of_year
             doys.append((doy, m))
-        bottom = self.pv.getAxis('bottom')
+        bottom = self.pw.getAxis('bottom')
         bottom.setTicks([[(x, m) for x, m in doys]])
         bottom.setStyle(tickLength=5)
 

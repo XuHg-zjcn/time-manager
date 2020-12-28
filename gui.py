@@ -81,7 +81,7 @@ if __name__ == '__main__':
     win.setWindowTitle('time-manager Date-Time 2D Image')
     ui = Ui_MainWindow()
     ui.setupUi(win)
-    dt2p = dt2dplot(ui.PlotView, tdb)
+    dt2p = dt2dplot(ui.PlotWidget, tdb)
     win.show()
     controller(ui)
     sys.exit(app.exec_())
