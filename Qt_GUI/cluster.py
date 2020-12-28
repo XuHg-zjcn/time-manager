@@ -1,9 +1,9 @@
 from collections import namedtuple
 from datetime import datetime
-from PyQt5.QtGui import QPainterPath, QFont, QTransform
+from PyQt5.QtGui import QPainterPath, QFont, QTransform, QColor
 from sklearn.cluster import MeanShift
 from threading import Thread
-import pyqtgraph as pg
+from sqlite_api.task_db import Plan
 
 
 TextSymbol = namedtuple("TextSymbol", "label symbol scale")
@@ -38,7 +38,7 @@ class Cluster:
         self.db = db
         self.day_div = day_div
         self.dbt2plst = {}
-        self.dbt2text = {}
+        self.dbt2dbtp = {}
         self.before()
         thr = Thread(target=self.thread, args=(scatter,))
         thr.start()
@@ -64,19 +64,24 @@ class Cluster:
                 self.dbt2plst[iv.data.dbtype] = PlanList(self.d11, self.day_div)
             self.dbt2plst[iv.data.dbtype].append(iv.data)
         for dbtype in self.dbt2plst.keys():
-            dbt = self.db.find_dbtype(dbtype)
-            self.dbt2text[dbtype] = dbt.name if dbt is not None else 'dbtype{}'.format(dbtype)
+            type_plan = self.db.find_dbtype(dbtype)
+            if type_plan is None:
+                type_plan = Plan(name='dbtype{}'.format(dbtype), color=0xffffff00)
+            self.dbt2dbtp[dbtype] = type_plan
 
     def thread(self, scatter):
         print('thread')
         spots = []
         for dbtype, plst in self.dbt2plst.items():
-            text = self.dbt2text[dbtype]
+            tp = self.dbt2dbtp[dbtype]
+            text = tp.name
+            inv_color = QColor(*tp.color.inv_bin().RGB())
             ms = MeanShift(bandwidth=5)
             ms.fit(plst)
             centers = ms.cluster_centers_
             centers[:,0] *= self.day_div
             for c in centers:
                 label = self.create_label(text, 0)
-                spots.append({'pos': c, 'data': 1, 'symbol': label.symbol, 'size': label.scale*10})
+                spots.append({'pos': c, 'data': 1, 'pen':inv_color, 'brush': inv_color,
+                              'symbol': label.symbol, 'size': label.scale*10})
         scatter.setData(spots)

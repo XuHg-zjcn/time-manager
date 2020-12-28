@@ -96,6 +96,14 @@ class ARGB:
         else:
             return cls._from_name(x)
 
+    def inv_bin(self):
+        rgb = self.RGB()
+        if 0x65<sum(rgb)/3<0x95 and (max(rgb)-min(rgb))/max(rgb)<0.25:
+            bw = self.R*0.299 + self.G*0.587 + self.B*0.114 < 128
+            bw *= 255
+            return ARGB(bw, bw, bw)
+        return ARGB(*map(lambda x: (x<128)*255, self.RGB()))
+
     def __repr__(self):
         return "ARGB(R={}, G={}, B={}, A={})"\
                .format(self.R, self.G, self.B, self.A)
