@@ -26,7 +26,7 @@ class PlanList(list):
         """
         :para pobj: Plan obj
         """
-        ts = (lambda x:(x.sta_time + x.end_time)/2)(pobj.p_time)
+        ts = (lambda x: (x.sta + x.end) / 2)(pobj.p_time)
         xy = self.time2xy(ts)
         super().append(xy)
 

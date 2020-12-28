@@ -50,13 +50,13 @@ class PlanTime:
         use_sub = use_time + sub_time if all([use_time, sub_time]) else None
         if all([use_sub, length]) and use_sub > length:
             raise ValueError('use + sub > time range length')
-        self.sta_time = sta_time
-        self.end_time = end_time
-        self.use_time = use_time
-        self.sub_time = sub_time
+        self.sta = sta_time
+        self.end = end_time
+        self.use = use_time
+        self.sub = sub_time
 
     def db_nums(self):
-        return self.sta_time, self.end_time, self.use_time, self.sub_time
+        return self.sta, self.end, self.use, self.sub
 
     @classmethod
     def now(cls):
@@ -112,16 +112,16 @@ class Plan:
     def __str__(self):
         #            id   type  name   sta     end   finish
         ret_fmt = '{:>4}|{:>3}|{:<16}|{:>19} ~{:>14}|{:<6}'
-        sta_str = mts.strftime(self.p_time.sta_time, update=True)
-        end_str = mts.strftime(self.p_time.end_time, update=False)
+        sta_str = mts.strftime(self.p_time.sta, update=True)
+        end_str = mts.strftime(self.p_time.end, update=False)
         dbid = self.dbid if self.dbid is not None else 0
         ret_str = ret_fmt.format(dbid, self.dbtype, self.name,
                                  sta_str, end_str, self.finish)
         return ret_str
 
     def __repr__(self):
-        sta_dt = datetime.datetime.fromtimestamp(self.p_time.sta_time)
-        end_dt = datetime.datetime.fromtimestamp(self.p_time.end_time)
+        sta_dt = datetime.datetime.fromtimestamp(self.p_time.sta)
+        end_dt = datetime.datetime.fromtimestamp(self.p_time.end)
 
         ret = 'id={}, type={}, name={}\n'\
               .format(self.dbid, self.dbtype, self.name)
@@ -169,8 +169,8 @@ class Plans(list):
         """
         ivtree = IvTree2()
         for plan in self:
-            sta = plan.p_time.sta_time
-            end = plan.p_time.end_time
+            sta = plan.p_time.sta
+            end = plan.p_time.end
             if sta < end:
                 ivtree[sta:end] = data_func(plan)
         return ivtree
