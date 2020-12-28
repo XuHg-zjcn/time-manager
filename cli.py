@@ -40,7 +40,7 @@ if op == '1':
 elif op == '2':
     sta = cti('开始时间:')
     end = cti('结束时间:')
-    plans = tdb.get_aitem({'sta_time': (sta, end), 'end_time': (sta, end)})
+    plans = tdb.get_plans_cond({'sta_time': (sta, end), 'end_time': (sta, end)})
     print(plans)
     ivtree = plans.get_ivtree(lambda p:p.color)
     time2d_autosize(ivtree)

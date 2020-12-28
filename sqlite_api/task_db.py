@@ -40,15 +40,15 @@ class TreeItem:
 
 class PlanTime:
     def __init__(self, sta_time, end_time, use_time=0, sub_time=0):
-        if sta_time > end_time:
+        if all([sta_time, end_time]) and sta_time > end_time:
             raise ValueError('start time later than end time')
-        if use_time < 0:
+        if use_time and use_time < 0:
             raise ValueError('use time < 0')
-        if sub_time < 0:
+        if sub_time and sub_time < 0:
             raise ValueError('sub time < 0')
-        length = end_time - sta_time
-        use_sub = use_time + sub_time
-        if use_sub > length:
+        length = end_time - sta_time if all([end_time, sta_time]) else None
+        use_sub = use_time + sub_time if all([use_time, sub_time]) else None
+        if all([use_sub, length]) and use_sub > length:
             raise ValueError('use + sub > time range length')
         self.sta_time = sta_time
         self.end_time = end_time
@@ -81,7 +81,7 @@ class Plan:
             finish = p_time[11]
             color = p_time[12]
             p_time = PlanTime(*p_time[7:11])
-        if isinstance(color, int):
+        if type(color) in [int, str]:
             color = ARGB.from_argb(color)
         self.p_time = p_time
         self.dbtype = dbtype
@@ -96,7 +96,8 @@ class Plan:
         if self.color_flag:
             self.color = color
         elif db is not None:
-            self.color = db.find_color(dbtype)
+            dbt = db.find_dbtype(dbtype)
+            self.color = dbt.color if dbt is not None else None
         else:
             self.color = None
 
@@ -223,45 +224,42 @@ class TaskDB:
     def close(self):
         self.conn.close()
 
-    def get_aitem(self, cond_dict):
+    def get_plans_cond(self, cond_dict):
+        """
+        Get Plans matched conditions.
+        :para cond_dict: {'field1':value, 'field2':(min, max), 'field3':('<', value), ...}
+        """
         cur = self.conn.cursor()
         sql = 'SELECT * FROM {} WHERE '.format(self.table_name)
         paras = []
-        allow_filed = {'id', 'type', 'name', 'sta_time', 'end_time',
-                       'use_time', 'sub_time', 'finish'}
         assert len(cond_dict) > 0
         for key in cond_dict.keys():
-            assert key in allow_filed
             value = cond_dict[key]
             if value is None:
                 continue
-            elif type(value) in [bool, int, float]:               # x == ?
-                sql += '{}=? and'.format(key)
+            elif type(value) in [bool, int, float]:             # x == ?
+                sql += '{}=? and '.format(key)
                 paras.append(value)
             elif isinstance(value, tuple) and len(value) == 2:  # a <= x < b
                 if type(value[0]) in [int, float]:
-                    sql += '?<={0} and {0}<? and'.format(key)
-                    paras.append(value[0])
+                    sql += '?<={0} and {0}<? and '.format(key)
+                    paras += value
+                elif value[0] in ['<', '>', '>=', '<=', '=', '==', '!=']:
+                    sql += '{}{}? and '.format(key, value[0])
                     paras.append(value[1])
-                elif value[0] in ['<', '>']:
-                    sql += '{}{} and'.format(key, value[0])
                 else:
                     raise ValueError('tuple invaild')
             else:
                 raise ValueError('key type invaild')
-        sql = sql[:-4]
+        sql = sql[:-5] # remove end of str ' and '
         res = cur.execute(sql, paras)
         return Plans(res, self)
 
-    def find_color(self, dbtype):
-        cur = self.conn.cursor()
-        # type1 is foloder
-        sql = "SELECT color FROM {} WHERE type=1 AND num=?".format(self.table_name)
-        res = cur.execute(sql, [dbtype])
-        res = list(res)
-        if len(res) == 0:
+    def find_dbtype(self, dbtype):
+        plans = self.get_plans_cond({'type':1, 'num':dbtype})
+        if len(plans) == 0:
             return None
-        elif len(res) == 1:
-            return ARGB.from_argb(res[0][0])
+        elif len(plans) == 1:
+            return plans[0]
         else:
-            raise ValueError('find more than one dbtype color'.format(dbtype))
+            raise ValueError('find more than one dbtype'.format(dbtype))

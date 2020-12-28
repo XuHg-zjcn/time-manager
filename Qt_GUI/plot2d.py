@@ -15,6 +15,12 @@ class DateTime2DItem(pg.GraphicsObject):
             self.max_doy = None
         super().__init__()
 
+    def time2xy(self, time):
+        if isinstance(time, float) or isinstance(time, int):
+            time = datetime.fromtimestamp(time)
+        dt = time - self.d11
+        return dt.days, dt.seconds + dt.microseconds/1e6
+
     def _draw_rect(self, p, doy, begin, end, color):
         """
         :para doy: int, day of year, 0-365, 0 is Jan 1
@@ -31,12 +37,12 @@ class DateTime2DItem(pg.GraphicsObject):
         p.drawRect(rect)
 
     def _draw_iv(self, p, iv):
-        BEG = datetime.fromtimestamp(iv.begin) - self.d11
-        END = datetime.fromtimestamp(iv.end) - self.d11
+        BEG = self.time2xy(iv.begin)
+        END = self.time2xy(iv.end)
         color = QtGui.QColor.fromRgb(*iv.data.color.RGBA())
-        for doy in range(max(0, BEG.days), min(END.days, self.max_doy)+1):
-            beg_sec = BEG.seconds if doy == BEG.days else 0
-            end_sec = END.seconds if doy == END.days else 86399
+        for doy in range(max(0, BEG[0]), min(END[0], self.max_doy)+1):
+            beg_sec = BEG[1] if doy == BEG[0] else 0
+            end_sec = END[1] if doy == END[0] else 86399
             self._draw_rect(p, doy, beg_sec, end_sec, color)
 
     def draw_ivtree(self, ivtree, year):

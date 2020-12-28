@@ -27,9 +27,9 @@ class dt2dplot:
         left.setTicks([t_text, t_no])
         left.setStyle(tickLength=5)  # Positive tick outside
 
-    def set_xaixs(self):
+    def set_xaixs(self, year):
         doys = []
-        for y, m in [(self.year, i) for i in range(1, 13)]+[(self.year+1, 1)]:
+        for y, m in [(year, i) for i in range(1, 13)]+[(year+1, 1)]:
             dx1 = datetime(y, m, 1)
             doy = (dx1 - self.item.d11).days  # day_of_year
             doys.append((doy, m))
@@ -38,6 +38,5 @@ class dt2dplot:
         bottom.setStyle(tickLength=5)
 
     def update_ivtree(self, ivtree, year):
-        self.year = year
         self.item.draw_ivtree(ivtree, year)
-        self.set_xaixs()
+        self.set_xaixs(year)
