@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui
 
@@ -20,6 +20,9 @@ class DateTime2DItem(pg.GraphicsObject):
             time = datetime.fromtimestamp(time)
         dt = time - self.d11
         return dt.days, dt.seconds + dt.microseconds/1e6
+
+    def xy2time(self, x:int, y:float):
+        return self.d11 + timedelta(days=x, seconds=y)
 
     def _draw_rect(self, p, doy, begin, end, color):
         """

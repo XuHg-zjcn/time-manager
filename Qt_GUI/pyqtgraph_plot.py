@@ -18,6 +18,8 @@ class dt2dplot:
         self.pw.addItem(self.hLine)
         self.pw.invertY()
         self.set_yaxis(6)
+        self.pw.scene().sigMouseMoved.connect(self.mouse_move_slot)
+        self.pw.scene().sigMouseClicked.connect(self.mouse_click_slot)
         pg.setConfigOptions(imageAxisOrder='row-major')
 
     def set_yaxis(self, n1=6, n2=24):
@@ -48,3 +50,19 @@ class dt2dplot:
         self.item.draw_ivtree(ivtree, year)
         self.set_xaixs(year)
         Cluster(ivtree, self.item.d11, self.db, self.scatter)
+
+    def mouse_move_slot(self, pos):
+        if self.pw.sceneBoundingRect().contains(pos):
+            point = self.pw.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
+            self.vLine.setPos(point.x())
+            self.hLine.setPos(point.y())
+
+    def mouse_click_slot(self, event):
+        pos = event._scenePos
+        if self.pw.sceneBoundingRect().contains(pos):
+            point = self.pw.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
+            doy = int(point.x())
+            sec = point.y()*3600
+            t = self.item.xy2time(doy, sec).timestamp()
+            print(self.item.ivtree[t])
+        pass

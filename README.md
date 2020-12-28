@@ -6,8 +6,6 @@ show name in pyqtgraph plot
 auto collect data from linux wtmp, chrome and firefox browser. (will add more)  
 
 # improve
-vhLine follow mouse in plot2d  
-select task in plot2d  
 show multi-task in same time  
 filter tasks  
 notify to gnome-shell  
