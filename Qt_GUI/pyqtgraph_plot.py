@@ -63,6 +63,10 @@ class dt2dplot:
             point = self.pw.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
             doy = int(point.x())
             sec = point.y()*3600
-            t = self.item.xy2time(doy, sec).timestamp()
-            print(self.item.ivtree[t])
+            dati = self.item.xy2time(doy, sec)
+            select = list(map(lambda x: x.data, self.item.ivtree[dati.timestamp()]))
+            print('found {} plans at {}'.format(len(select), dati.strftime('%Y-%m-%d %H:%M:%S')))
+            for p in select:
+                print(p)
+            print('')
         pass
