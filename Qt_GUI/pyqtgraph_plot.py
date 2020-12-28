@@ -1,14 +1,17 @@
 from datetime import datetime
 import pyqtgraph as pg
 from .plot2d import DateTime2DItem
+from .cluster import Cluster
 
 
 class dt2dplot:
-    def __init__(self, pv):
+    def __init__(self, pv, db):
         self.pv = pv
+        self.db = db
         self.item = DateTime2DItem()
-
+        self.scatter = pg.ScatterPlotItem()
         self.pv.addItem(self.item)
+        self.pv.addItem(self.scatter)
         self.pv.invertY()
         self.set_yaxis(6)
         pg.setConfigOptions(imageAxisOrder='row-major')
@@ -40,3 +43,4 @@ class dt2dplot:
     def update_ivtree(self, ivtree, year):
         self.item.draw_ivtree(ivtree, year)
         self.set_xaixs(year)
+        Cluster(ivtree, self.item.d11, self.db, self.scatter)
