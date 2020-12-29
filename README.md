@@ -6,6 +6,7 @@ show name in pyqtgraph plot
 auto collect data from linux wtmp, chrome and firefox browser. (will add more)  
 
 # improve
+show current running tasks on terminal  
 show multi-task in same time  
 filter tasks  
 notify to gnome-shell  
@@ -23,6 +24,6 @@ auto classify things use NLP
 | firefox    |  OK  | visit time            |
 | linux wtmp |  OK  | boot and shutdown     |
 | git        |  no  | git commit time       |
-| IDE        |  no  | user change time      |
+| IDE        |  no  |                       |
 | walk step  |  no  | Android phone         |
 | x(t) signal | no  | any physical quantity |
