@@ -2,11 +2,11 @@
 force close network by time algh.  
 CLI and GUI  (will add web UI)  
 plot date-time 2d in terminal UNICODE or pyqtgraph GUI.  
-show name in pyqtgraph plot  
-auto collect data from linux wtmp, chrome and firefox browser. (will add more)  
+sklearn cluster and show name in pyqtgraph plot  
+auto collect data from linux wtmp, chrome and firefox browser. (will add more)
+show current running tasks on terminal  
 
 # improve
-show current running tasks on terminal  
 show multi-task in same time  
 filter tasks  
 notify to gnome-shell  

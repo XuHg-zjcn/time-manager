@@ -22,14 +22,16 @@ def add_task():
     sta_time = cti('开始时间:')
     end_time = cti('结束时间:')
     num = int(input('整数参数:'))
+    state = int(input('状态:'))
     color = ARGB.from_str(input('颜色:'))
     use_time = end_time - sta_time
     pt = PlanTime(sta_time, end_time, use_time)
-    p = Plan(pt, dbtype, name, num, color=color)
+    p = Plan(pt, dbtype, name, num, state=state, color=color)
     tdb.add_aitem(p)
     tdb.conn.commit()
 
 
+tdb.print_doings()
 op = input('请输入要进行的操作:\n'
            '1. 添加任务\n'
            '2. 列出任务\n'

@@ -66,10 +66,12 @@ class PlanTime:
 
 class Plan:
     def __init__(self, p_time=None, dbtype=0, name='untitled', num=0,
-                 tree_i=None, finish=False, dbid=None, color=None, db=None):
+                 tree_i=None, state=0, dbid=None, color=None, db=None):
         """
         p_time can from sqlite SELECT * tuple
         p_time defalut is current time
+
+        :para state: 0 will do, 1 doing, 2 finish
         """
         if p_time is None:
             p_time = PlanTime.now()
@@ -78,7 +80,7 @@ class Plan:
             dbid = p_time[0]
             dbtype = p_time[1]
             name = p_time[2]
-            finish = p_time[11]
+            state = p_time[11]
             color = p_time[12]
             p_time = PlanTime(*p_time[7:11])
         if type(color) in [int, str]:
@@ -91,7 +93,7 @@ class Plan:
             tree_i = TreeItem()
         self.tree_i = tree_i
         self.dbid = dbid
-        self.finish = finish
+        self.state = state
         self.color_flag = color is not None
         if self.color_flag:
             self.color = color
@@ -105,18 +107,18 @@ class Plan:
         ret = [self.dbtype, self.name, self.num]
         ret += self.tree_i.db_BLOBs()
         ret += self.p_time.db_nums()
-        ret.append(self.finish)
+        ret.append(self.state)
         ret.append(self.color.ARGBi() if self.color is not None else None)
         return ret
 
     def __str__(self):
-        #            id   type  name   sta     end   finish
+        #            id   type  name   sta     end   state
         ret_fmt = '{:>6}|{:>4}|{:<25}| {:>19} | {:^14} |{}'
         sta_str = mts1.strftime(datetime.fromtimestamp(self.p_time.sta))
         end_str = mts2.strftime(datetime.fromtimestamp(self.p_time.end))
         dbid = self.dbid if self.dbid is not None else 0
         ret_str = ret_fmt.format(dbid, self.dbtype, self.name,
-                                 sta_str, end_str, self.finish)
+                                 sta_str, end_str, self.state)
         return ret_str
 
     def __repr__(self):
@@ -127,13 +129,13 @@ class Plan:
               .format(self.dbid, self.dbtype, self.name)
         ret += 'sta_time:{}\n'.format(sta_dt.strftime('%Y/%m/%d.%H:%M:%S'))
         ret += 'end_time:{}\n'.format(end_dt.strftime('%Y/%m/%d.%H:%M:%S'))
-        ret += 'finish:{}'.format(self.finish)
+        ret += 'state:{}'.format(self.state)
         return ret
 
 
 class Plans(list):
-    str_head = '   id | typ| name{}|{}start time{}|{}end time{}|fin\n'\
-           .format(*(' '*i for i in [20, 6, 5, 4, 4]))
+    str_head = '   id | typ| name{}|{}start time{}|{}end time{}|stat\n'\
+           .format(*(' '*i for i in [20, 6, 5, 4, 3]))
 
     def __init__(self, iterable, db):  # sqlite3.Cursor
         super().__init__()
@@ -199,7 +201,7 @@ class TaskDB:
             type     INT,   name     TEXT,  num      NUMERIC,
             pares    BLOB,  subs     BLOB,  reqs     BLOB,
             sta_time REAL,  end_time REAL,  use_time REAL,  sub_time REAL,
-            finish   BOOL,  color);'''.format(self.table_name)
+            state    INT,  color);'''.format(self.table_name)
         cur.execute(sql)
         self.add_aitem(Plan(None, -1, 'root'))  # add root item
         self.conn.commit()
@@ -207,7 +209,7 @@ class TaskDB:
     def add_aitem(self, plan):
         cur = self.conn.cursor()
         sql = 'INSERT INTO {}(type, name, num, pares, subs, reqs, '\
-              'sta_time, end_time, use_time, sub_time, finish, color)'\
+              'sta_time, end_time, use_time, sub_time, state, color)'\
               'VALUES(?,?,?,?,?,?,?,?,?,?,?,?);'.format(self.table_name)
         cur.execute(sql, plan.db_item())
         if self.commit_each:
@@ -263,3 +265,11 @@ class TaskDB:
             return plans[0]
         else:
             raise ValueError('find more than one dbtype'.format(dbtype))
+
+    def print_doings(self):
+        plans = self.get_plans_cond({'state':1})
+        print('{} plans doing'.format(len(plans)))
+        if len(plans) != 0:
+            print(plans)
+        else:
+            print('')

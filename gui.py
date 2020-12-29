@@ -76,6 +76,7 @@ class controller:
 
 
 if __name__ == '__main__':
+    tdb.print_doings()
     app = QApplication([])
     win = QMainWindow()
     win.setWindowTitle('time-manager Date-Time 2D Image')
