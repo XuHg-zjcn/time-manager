@@ -48,7 +48,7 @@ class ARGB:
         return self
 
     def ARGB(self):
-        return self.A, self.R, self.G, self.G
+        return self.A, self.R, self.G, self.B
 
     def RGBA(self):
         return self.R, self.G, self.B, self.A
