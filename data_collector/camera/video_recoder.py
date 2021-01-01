@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import signal
 import time
 import subprocess as sp
 from ffmpy3 import FFmpeg
@@ -12,8 +13,11 @@ class Recoder:
     def __init__(self):
         fn = time.strftime('record_%Y%m%d_%H%M%S.mp4')
         ff = FFmpeg(inputs={'pipe:0': '-f rawvideo -pix_fmt bgr24 -s:v 640x480'},
-                    outputs={fn: '-c:v h264 -b:v 500k'})
+                    outputs={fn: '-c:v hevc -crf 30'})
         self.p = sp.Popen(ff._cmd, stdin=sp.PIPE)
 
     def write_frame(self, frame):
         self.p.stdin.write(frame.tostring())
+
+    def stop(self):
+        self.p.send_signal(signal.SIGINT)

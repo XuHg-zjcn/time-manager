@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
-import time
 import cv2
 from mtcnn import MTCNN
-from video_recoder import Recoder
+from ..timer import RepeatingTimer
+from .video_recoder import Recoder
 from commd_line.init_config import init_config
 
 conf = init_config()
@@ -19,17 +19,19 @@ def points_X2(src):
 def point_X2(src):
     return tuple(map(lambda x: 2*x, src))
 
-if __name__ == '__main__':
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-    cap = cv2.VideoCapture(0)
-    detector = MTCNN(steps_threshold=[0.4,0.5,0.5])
-    rec = Recoder()
-    while 1:
-        ret, frame = cap.read()
-        t0 = time.time()
+
+class MTCNNFace:
+    def __init__(self):
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        self.cap = cv2.VideoCapture(0)
+        self.rec = Recoder()
+        self.det = MTCNN(steps_threshold=[0.4,0.5,0.5])
+        self.tim = RepeatingTimer(0.5, self.a_frame)
+
+    def a_frame(self):
+        _, frame = self.cap.read()
         half = cv2.resize(frame, dsize=None, fx=1/2, fy=1/2)
-        result = detector.detect_faces(half)
-        t1 = time.time()
+        result = self.det.detect_faces(half)
         if len(result) > 0:
             bounding_box = point_X2(result[0]['box'])
             keypoints = points_X2(result[0]['keypoints'])
@@ -45,9 +47,14 @@ if __name__ == '__main__':
             cv2.circle(frame, (keypoints['mouth_left']), 2, (0, 155, 255), 2)
             cv2.circle(frame, (keypoints['mouth_right']), 2, (0, 155, 255), 2)
 
-        rec.write_frame(frame)
-        cv2.imshow("cap", frame)
-        if cv2.waitKey(100) & 0xff == ord('q'):
-            break
-    cap.release()
-    cv2.destroyAllWindows()
+        self.rec.write_frame(frame)
+        cv2.imshow("cap", frame)  # move to main thread
+
+    def start(self):
+        self.tim.start()
+
+    def stop(self):
+        self.tim.stop()
+        self.cap.release()
+        self.rec.stop()
+        cv2.destroyAllWindows()
