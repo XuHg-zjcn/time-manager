@@ -23,14 +23,18 @@ conf = configparser.ConfigParser()
 # TODO: char_hour, force_bar
 def create():
     conf['init'] = {'dir': '.',
-                    'db_path': 'browser.db',
-                    'table_name': 'firefox'}  # work dir
+                    'db_path': 'tasks.db',
+                    'table_name': 'real_record'}  # work dir
     conf['show'] = {'type': 'pyqtgraph',  # plot date-time2d
                     'char_hour': 4,     # char per hour
                     'print_minN': 5,    # print N found min items
                     'print_max': 50,    # print output max item
                     'print_side': 20,   # print over max item, middle use '...'
                     'force_bar': 20}    # force print each item
+    conf['camera'] = {'period': 0.5,
+                      'face_detector': 'MTCNN',  # unused
+                      'codec': 'hevc',
+                      'crf': 30}        # don't use constant bitrate!, because quality not balance.
     conf.write(open(cfg_path, 'w'))
 
 

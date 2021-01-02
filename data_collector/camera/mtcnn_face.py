@@ -17,16 +17,19 @@ def points_X2(src):
     return ret
 
 def point_X2(src):
-    return tuple(map(lambda x: 2*x, src))
+    return tuple(map(lambda x: 2 * x, src))
 
 
 class MTCNNFace:
-    def __init__(self):
+    def __init__(self, period=float(conf['camera']['period']),
+                       codec=conf['camera']['codec'],
+                       crf=int(conf['camera']['crf'])):
+        # don't use CUDA, start is slow, run speed nearly CPU.
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         self.cap = cv2.VideoCapture(0)
-        self.rec = Recoder()
+        self.rec = Recoder(codec, crf)
         self.det = MTCNN(steps_threshold=[0.4,0.5,0.5])
-        self.tim = RepeatingTimer(0.5, self.a_frame)
+        self.tim = RepeatingTimer(period, self.a_frame)
 
     def a_frame(self):
         _, frame = self.cap.read()
