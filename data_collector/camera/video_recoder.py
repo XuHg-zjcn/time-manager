@@ -19,4 +19,5 @@ class Recoder:
         self.p.stdin.write(frame.tostring())
 
     def stop(self):
-        self.p.send_signal(signal.SIGINT)
+        # don't kill subprocess, else video file maybe broken!
+        self.p.stdin.write('q'.encode('ascii'))
