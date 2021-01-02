@@ -34,7 +34,8 @@ def create():
     conf['camera'] = {'period': 0.5,
                       'face_detector': 'MTCNN',  # unused
                       'codec': 'hevc',
-                      'crf': 30}        # don't use constant bitrate!, because quality not balance.
+                      'crf': 30,  # don't use constant bitrate!, because quality not balance.
+                      'face_area_warn': 10000}
     conf.write(open(cfg_path, 'w'))
 
 

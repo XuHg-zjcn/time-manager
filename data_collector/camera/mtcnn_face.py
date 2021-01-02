@@ -9,6 +9,7 @@ from .video_recoder import Recoder
 from commd_line.init_config import init_config
 from .sqlite_face import FaceDB
 from .face import Face
+from checks.face_check import FaceCheckers
 
 conf = init_config()
 
@@ -26,6 +27,7 @@ class MTCNNFace:
         self.fdb = FaceDB(db_path) if db_path else None
         prepare = self.fdb.auto_create_table if self.fdb else None
         self.tim = RepeatingTimer(period, self.a_frame, prepare=prepare)
+        self.checker = FaceCheckers()
         self.frames = 0
 
     def a_frame(self):
@@ -36,9 +38,10 @@ class MTCNNFace:
         result = self.det.detect_faces(half)
         for res_d in result:
             face = Face(0, t_cap, self.frames, res_d)
-            face.draw_cv(frame)
             if self.fdb:
                 self.fdb.write_face(face)
+            face.draw_cv(frame)
+            self.checker.check_all(face)
         self.rec.write_frame(frame)
         cv2.imshow("cap", frame)  # move to main thread
 
