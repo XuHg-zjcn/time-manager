@@ -22,7 +22,7 @@ class RepeatingTimer(Thread):
         if self._prepare:
             self._prepare()
         while self.running:
-            self.sem.acquire()
+            self.sem.acquire(timeout=self.period)
             self._target(*self._args, **self._kwargs)
         if self._finish:
             self._finish()
