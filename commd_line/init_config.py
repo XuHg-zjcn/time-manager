@@ -34,8 +34,11 @@ def create():
     conf['camera'] = {'period': 0.5,
                       'face_detector': 'MTCNN',  # unused
                       'codec': 'hevc',
-                      'crf': 30,  # don't use constant bitrate!, because quality not balance.
-                      'face_area_warn': 10000}
+                      'crf': 30,        # don't use constant bitrate!, because quality not balance.
+                      'div': 2,         # image div for face detection, must
+                      'f35mm': 34.6,    # 35mm equivalent focal length
+                      'face_cm2': 230,  # face area for warning eyes near to screen
+                      'face_dis_cm': 45}  # face distance to camera
     conf.write(open(cfg_path, 'w'))
 
 

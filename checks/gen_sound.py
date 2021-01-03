@@ -1,6 +1,6 @@
 import os
 import wave
-from threading import Thread
+from multiprocessing import Process, Semaphore
 import numpy as np
 from playsound import playsound
 from commd_line.init_config import init_config
@@ -48,15 +48,28 @@ class SoundGene:
             ww = WaveWrite(self.path)
             self.process(ww)
             ww.close()
+        self.running = True
+        self.sem = Semaphore(0)
+        self.proc = Process(target=self.thread, args=(self.sem,))
+        self.proc.start()
 
     def process(self, ww):
         pass
 
-    def play(self):
-        playsound(self.path)
+    def thread(self, sem):
+        while True:
+            sem.acquire()
+            if not self.running:
+                break
+            playsound(self.path)
 
-    def play_thread(self):
-        Thread(target=self.play).start()
+    def play(self):
+        self.sem.release()
+
+    def kill_process(self):
+        self.running = False
+        self.sem.release()
+        self.proc.join()
 
 class eye_screen(SoundGene):
     def process(self, ww):

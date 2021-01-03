@@ -18,6 +18,7 @@ class MTCNNFace:
     def __init__(self, period=float(conf['camera']['period']),
                        codec=conf['camera']['codec'],
                        crf=int(conf['camera']['crf']),
+                       div=int(conf['camera']['div']),
                        db_path=None):
         # don't use CUDA, start is slow, run speed nearly CPU.
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -28,20 +29,21 @@ class MTCNNFace:
         prepare = self.fdb.auto_create_table if self.fdb else None
         self.tim = RepeatingTimer(period, self.a_frame, prepare=prepare)
         self.checker = FaceCheckers()
+        self.div = div
         self.frames = 0
 
     def a_frame(self):
         _, frame = self.cap.read()
         t_cap = time.time()
         self.frames += 1
-        half = cv2.resize(frame, dsize=None, fx=1/2, fy=1/2)
+        half = cv2.resize(frame, dsize=None, fx=1/self.div, fy=1/self.div)
         result = self.det.detect_faces(half)
         for res_d in result:
-            face = Face(0, t_cap, self.frames, res_d)
+            face = Face(0, t_cap, self.frames, res_d, self.div)
             if self.fdb:
                 self.fdb.write_face(face)
             face.draw_cv(frame)
-            self.checker.check_all(face)
+            self.checker.check_all(face, half.shape)
         self.rec.write_frame(frame)
         cv2.imshow("cap", frame)  # move to main thread
 
