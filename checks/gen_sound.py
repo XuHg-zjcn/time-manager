@@ -48,7 +48,6 @@ class SoundGene:
             ww = WaveWrite(self.path)
             self.process(ww)
             ww.close()
-        self.running = True
         self.sem = Semaphore(0)
         self.proc = Process(target=self.thread, args=(self.sem,))
         self.proc.start()
@@ -59,17 +58,13 @@ class SoundGene:
     def thread(self, sem):
         while True:
             sem.acquire()
-            if not self.running:
-                break
             playsound(self.path)
 
     def play(self):
         self.sem.release()
 
     def kill_process(self):
-        self.running = False
-        self.sem.release()
-        self.proc.join()
+        self.proc.kill()
 
 class eye_screen(SoundGene):
     def process(self, ww):
