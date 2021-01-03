@@ -12,7 +12,7 @@ class RepeatingTimer(Thread):
         """
         self.period = period
         self.running = False
-        self.thr = None
+        self.thr = Thread(target=self.thread)
         self.sem = Semaphore()
         self._prepare = prepare
         self._finish = finish
@@ -21,15 +21,16 @@ class RepeatingTimer(Thread):
     def thread(self):
         if self._prepare:
             self._prepare()
-        while self.running:
+        while True:
             self.sem.acquire(timeout=self.period)
+            if not self.running:
+                break
             self._target(*self._args, **self._kwargs)
         if self._finish:
             self._finish()
 
     def run(self):
         self.running = True
-        self.thr = Thread(target=self.thread)
         self.thr.start()
         while self.running:
             self.sem.release()
@@ -37,4 +38,5 @@ class RepeatingTimer(Thread):
 
     def stop(self):
         self.running = False
+        self.sem.release()
         self.thr.join(self.period*2)
