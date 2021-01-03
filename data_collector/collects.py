@@ -8,7 +8,10 @@ from data_collector.camera.mtcnn_face import MTCNNFace
 def stop(signalnum, handler):
     global mtc
     print('stopping')
-    mtc.stop()
+    try:  # avoid call in sound play multiprocess raise Error
+        mtc.stop()
+    except NameError:
+        pass
 
 
 signal.signal(signal.SIGINT, stop)

@@ -54,4 +54,5 @@ class MTCNNFace:
         self.tim.stop()
         self.cap.release()
         self.rec.stop()
+        self.checker.sound.kill_process()
         cv2.destroyAllWindows()
