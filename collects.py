@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import signal
 from commd_line.init_config import init_config
-from data_collector.camera.mtcnn_face import MTCNNFace
+from analyzers.mtcnn_face import MTCNNFace
 
 
 def stop(signalnum, handler):

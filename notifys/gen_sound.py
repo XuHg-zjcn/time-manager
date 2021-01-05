@@ -40,11 +40,11 @@ class SoundGene:
     def __init__(self, name=None):
         if name is None:
             name = self.__class__.__name__ + '.wav'
-        sound_dir = '../checks/sounds'
+        sound_dir = './sounds'
         if not os.path.isdir(sound_dir):
             os.mkdir(sound_dir)
         self.path = os.path.join(sound_dir, name)
-        if not os.path.exists:
+        if not os.path.exists(self.path):
             ww = WaveWrite(self.path)
             self.process(ww)
             ww.close()

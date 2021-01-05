@@ -12,11 +12,12 @@ def point_x(src, div):
 
 
 class Face:
-    def __init__(self, cam_id, t_cap, frame_i, res_d, div):
+    def __init__(self, cam_id, t_cap, frame_i, res_d, shape, div):
         self.cam_id = cam_id
         self.t_cap = t_cap
         self.frame_i = frame_i
         self.res_d = res_d
+        self.shape = shape
         self.div = div
 
     def draw_cv(self, frame):
