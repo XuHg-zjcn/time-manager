@@ -12,7 +12,7 @@ conf = init_config()
 
 
 class VideoRecoder(ThrRunn, Record):
-    def __init__(self, inps=None,
+    def __init__(self, inps,
                  codec=conf['camera']['codec'],
                  crf=float(conf['camera']['crf'])):
         ThrRunn.__init__(self, inps)

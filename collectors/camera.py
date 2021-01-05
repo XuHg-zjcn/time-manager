@@ -4,7 +4,7 @@ from my_libs.my_process import ThrRunn
 
 
 class Camera(Collect, ThrRunn):
-    def __init__(self, inps=None, callbacks=None):
+    def __init__(self, inps, callbacks=None):
         Collect.__init__(self)
         ThrRunn.__init__(self, inps, callbacks)
         self.cap = cv2.VideoCapture(0)

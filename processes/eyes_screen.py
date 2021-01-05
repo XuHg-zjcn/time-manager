@@ -1,4 +1,5 @@
 from collectors.camera import Camera
+from collectors.timer import SemTimer
 from analyzers.mtcnn_face import MTCNNFace
 from analyzers.face_check import AreaChecker
 from recorders.video_recoder import VideoRecoder
