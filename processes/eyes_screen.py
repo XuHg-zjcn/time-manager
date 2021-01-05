@@ -7,6 +7,7 @@ import signal
 
 
 def sigint(signalnum, handler):
+    print('stopping')
     cam.stop()
     rec.stop()
     mtc.stop()
