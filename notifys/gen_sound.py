@@ -1,9 +1,9 @@
 import os
 import wave
-from multiprocessing import Process, Semaphore
 import numpy as np
 from playsound import playsound
 from commd_line.init_config import init_config
+from my_libs.my_process import ThrRunn
 
 conf = init_config()
 
@@ -36,8 +36,9 @@ class WaveWrite(wave.Wave_write):
         self.writeframes(data)
 
 
-class SoundGene:
-    def __init__(self, name=None):
+class SoundGene(ThrRunn):
+    def __init__(self, inps=None, name=None):
+        super().__init__(inps)
         if name is None:
             name = self.__class__.__name__ + '.wav'
         sound_dir = './sounds'
@@ -46,26 +47,16 @@ class SoundGene:
         self.path = os.path.join(sound_dir, name)
         if not os.path.exists(self.path):
             ww = WaveWrite(self.path)
-            self.process(ww)
+            self.gen(ww)
             ww.close()
-        self.sem = Semaphore(0)
-        self.proc = Process(target=self.thread, args=(self.sem,))
-        self.proc.start()
 
-    def process(self, ww):
+    def gen(self, ww):
         pass
 
-    def thread(self, sem):
-        while True:
-            sem.acquire()
-            playsound(self.path)
+    def once(self, obj):
+        playsound(self.path)
 
-    def play(self):
-        self.sem.release()
-
-    def kill_process(self):
-        self.proc.kill()
 
 class eye_screen(SoundGene):
-    def process(self, ww):
+    def gen(self, ww):
         ww.write_fx(0.5, lambda t: 0.5*np.sin(t*5*pi2)*np.sin(t*2000*pi2))

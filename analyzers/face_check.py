@@ -3,6 +3,7 @@ import math
 from commd_line.init_config import init_config
 from .base_checker import Checker
 from notifys.gen_sound import eye_screen
+from threading import Semaphore
 
 conf = init_config()
 
@@ -13,7 +14,9 @@ class AreaChecker(Checker):
         self.face_cm2 = float(conf['camera']['face_cm2'])
         self.face_dis_cm = float(conf['camera']['face_dis_cm'])
         self.n_warn = 0
-        self.sound = eye_screen()
+        self.sound_sem = Semaphore(0)
+        self.sound = eye_screen(self.sound_sem.acquire)
+        self.sound.start()
         Checker.__init__(self)
 
     def check_one(self, face):
@@ -27,7 +30,7 @@ class AreaChecker(Checker):
             self.n_warn += 1
             print('warning {:d}th at {:s}, face distance={:4.1f}cm, mind your eyes keep away from screen'
                   .format(self.n_warn, time.strftime('%H:%M:%S'), distance))
-            self.sound.play()
+            self.sound_sem.release()
             return True
         return False
 
