@@ -15,10 +15,17 @@ limitations under the License.
 """
 from numbers import Number
 from intervaltree import Interval
-from .ivtree2 import IvTree2
+from intervaltree import IntervalTree
 
 
 class Iv2(Interval):
+    def __new__(cls, begin, end=None, data=None):
+        if isinstance(begin, Interval):
+            end = begin.end
+            data = begin.data
+            begin = begin.begin
+        return Interval.__new__(cls, begin, end, data)
+
     def __contains__(self, num):
         return self.contains_point(num)
 
@@ -90,7 +97,7 @@ class Iv2(Interval):
             end = max(self.end, other.end)
             return Iv2(begin, end, self.data)
         else:
-            return IvTree2([self, other])
+            return IntervalTree([self, other])
 
     def __xor__(self, other):
         """Xor logic."""
@@ -99,7 +106,7 @@ class Iv2(Interval):
         sta4 = max(other.begin, self.end)
         end4 = min(other.end, self.begin)
         if sta3 <= end3 and sta4 <= end4:
-            return IvTree2([Iv2(sta3, end3), Iv2(sta4, end4)])
+            return IntervalTree([Iv2(sta3, end3), Iv2(sta4, end4)])
         elif sta3 <= end3:
             return Iv2(sta3, end3)
         elif sta4 <= end4:
@@ -115,6 +122,6 @@ class Iv2(Interval):
         """
         left = Iv2(float('-inf'), self.begin, self.data)
         right = Iv2(self.end, float('inf'), self.data)
-        return IvTree2([left, right])
+        return IntervalTree([left, right])
 
     __str__ = __repr__

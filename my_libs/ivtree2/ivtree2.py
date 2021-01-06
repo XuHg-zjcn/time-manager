@@ -16,6 +16,7 @@ limitations under the License.
 from numbers import Number
 from intervaltree import Interval
 from intervaltree import IntervalTree
+from .iv2 import Iv2
 
 
 class IvTree2(IntervalTree):
@@ -111,9 +112,13 @@ class IvTree2(IntervalTree):
             if isinstance(other, Interval):
                 o_begin = other.begin
                 o_end = other.end
+                if not isinstance(other, Iv2):
+                    other = Iv2(other)
             elif isinstance(other, IntervalTree):
                 o_begin = other.begin()
                 o_end = other.end()
+            else:
+                raise TypeError('unsupported type', type(other))
             ret = IvTree2(self.overlap(o_begin, o_end))
             ret._chops(~other)
         return ret
