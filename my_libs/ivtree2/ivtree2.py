@@ -57,18 +57,33 @@ class IvTree2(IntervalTree):
         """Floordiv number to begin and end each interval."""
         return self.apply_each_interval(lambda x: x//num)
 
-    def notx(self, use_data='right'):
+    def notx(self, use_data='right', use_inf=True):
         """
         Invert intervals.
+        overlaps on original tree will merge.
 
-        para data: 'right' use right side data, 'left' use left side data,
-                   'none' for no data
+        :para data: 'right' use right side data, 'left' use left side data,
+                    'none' for no data
+        :para use_inf: True will keep -inf and inf two side, False don't use inf.
         """
         ret = IvTree2()
         last_end = float('-inf')
         assert use_data in ['left', 'right', 'none']
         last_data = None
-        for iv in sorted(self):
+        cp = self.copy()
+        if use_data == 'left':
+            data_reducer = lambda a,b: a
+        elif use_data == 'right':
+            data_reducer = lambda a,b: b
+        else:
+            data_reducer = None
+        cp.merge_overlaps(data_reducer)
+        sort = sorted(cp)
+        if not use_inf:
+            i0 = sort.pop(0)
+            last_end = i0.end
+            last_data = i0.data
+        for iv in sort:
             if use_data == 'left':
                 data = last_data
                 last_data = iv.data
@@ -78,12 +93,13 @@ class IvTree2(IntervalTree):
                 data = None
             ret.addi(last_end, iv.begin, data)
             last_end = iv.end
-        ret.addi(last_end, float('inf'), last_data)
+        if use_inf:
+            ret.addi(last_end, float('inf'), last_data)
         return ret
 
     def __invert__(self):
         """Invert intervals."""
-        return self.notx(use_data='right')
+        return self.notx(use_data='right', use_inf=True)
 
     def __and__(self, other):
         """Chop range not in other, data will keep left side."""
