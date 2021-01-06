@@ -32,7 +32,7 @@ def _out_int(func):
         tup = func(paras)
         ret = 0
         for i in tup:
-            ret = (ret << 8) + i
+            ret = (ret << 8) + int(i)
         return ret
 
     return warp
@@ -110,3 +110,28 @@ class ARGB:
 
     def __str__(self):
         return "#{:06x} {:>3.0%}".format(self.RGBi(), self.A/255)
+
+    def map1_rgba(self, func):
+        return ARGB(*map(func, self.RGBA()))
+
+    def map2_rgba(self, other, func):
+        return ARGB(*map(func, zip(self.RGBA(), other.RGBA())))
+
+    def __add__(self, other):
+        """other: ARGB object"""
+        return self.map2_rgba(other, lambda a,b:a+b)
+
+    def __mul__(self, other):
+        """other: float or int"""
+        return self.map1_rgba(lambda x: x*other)
+
+    def __truediv__(self, other):
+        """other: float or int"""
+        return self.map1_rgba(lambda x: x/other)
+
+    def __floordiv__(self, other):
+        """other: float or int"""
+        return self.map1_rgba(lambda x: int(x//other))
+
+    def copy(self):
+        return ARGB(*self.RGBA())
