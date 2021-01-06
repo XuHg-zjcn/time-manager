@@ -116,6 +116,7 @@ class ProcRunn(Runn, Process):
             inp2 = None
         Process.__init__(self)
         Runn.__init__(self, inps, callbacks, inp2)
+        # TODO: self.will_stop use multiprocessing.Value instead
 
 
 def stop_all():
