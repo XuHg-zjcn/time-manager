@@ -31,6 +31,8 @@ class DateTime2DItem(pg.GraphicsObject):
         :para end: float 0-86400
         :para color: QColor
         """
+        if begin == end:
+            return
         assert 0 <= begin < end < 86400
         begin /= 3600
         end /= 3600
@@ -39,10 +41,10 @@ class DateTime2DItem(pg.GraphicsObject):
         rect = QtCore.QRectF(doy, begin, 0.8, end-begin)
         p.drawRect(rect)
 
-    def _draw_iv(self, p, iv):
-        BEG = self.time2xy(iv.begin)
-        END = self.time2xy(iv.end)
-        color = QtGui.QColor.fromRgb(*iv.data.color.RGBA())
+    def _draw_iv(self, p, begin, end, color):
+        BEG = self.time2xy(begin)
+        END = self.time2xy(end)
+        color = QtGui.QColor.fromRgb(*color.RGBA())
         for doy in range(max(0, BEG[0]), min(END[0], self.max_doy)+1):
             beg_sec = BEG[1] if doy == BEG[0] else 0
             end_sec = END[1] if doy == END[0] else 86399
@@ -55,8 +57,23 @@ class DateTime2DItem(pg.GraphicsObject):
         self.d11 = datetime(year, 1, 1)
         self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
         p = QtGui.QPainter(self.picture)
-        for iv in ivtree:
-            self._draw_iv(p, iv)
+        for iv in sorted(ivtree):
+            color = iv.data.color
+            ovlps = ivtree[iv.begin]
+            ovlps.remove(iv)
+            if ovlps:
+                first = min(ovlps, key=lambda x: x.end)
+                color50 = color.copy()
+                color50.A //= 2
+                if first.begin == iv.begin and first.end <= iv.end:
+                    self._draw_iv(p, iv.begin, iv.end, color)  # TODO: use mean color
+                elif first.end < iv.end:
+                    self._draw_iv(p, iv.begin, first.end, color50)
+                    self._draw_iv(p, first.end, iv.end, color)
+                else:
+                    self._draw_iv(p, iv.begin, iv.end, color50)
+            else:
+                self._draw_iv(p, iv.begin, iv.end, color)
         p.end()
         print('draw_ivtree')
 
