@@ -3,7 +3,6 @@ import math
 from commd_line.init_config import init_config
 from .base_checker import Checker
 from notifys.gen_sound import eye_screen
-from threading import Semaphore
 
 conf = init_config()
 
@@ -29,7 +28,7 @@ class AreaChecker(Checker):
             self.n_warn += 1
             print('warning {:d}th at {:s}, face distance={:4.1f}cm, mind your eyes keep away from screen'
                   .format(self.n_warn, time.strftime('%H:%M:%S'), distance))
-            self.sound.inp2.put()
+            self.sound.inp2.release()
             return True
         return False
 
