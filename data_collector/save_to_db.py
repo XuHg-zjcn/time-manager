@@ -1,9 +1,14 @@
 #!/bin/python
-from wtmp import wtmp_iter
-import sys
-sys.path.append('../')
-from sqlite_api.task_db import TaskDB, Plan, PlanTime
-tdb = TaskDB(db_path='linux.db', table_name='wtmp', commit_each=False)
+import sqlite3
+from .wtmp import wtmp_iter
+from sqlite_api.task_db import TaskTable, Plan, PlanTime
+from commd_line.init_config import init_config
+
+conf = init_config()
+db_path = conf['init']['db_path']
+conn = sqlite3.connect(db_path)
+
+tdb = TaskTable(conn, commit_each=False)
 for i in wtmp_iter():
     print(i)
     try:
@@ -12,5 +17,5 @@ for i in wtmp_iter():
     except ValueError as e:
         print(e)
 tdb.commit()
-tdb.close()
+conn.close()
 print(tdb.conn)

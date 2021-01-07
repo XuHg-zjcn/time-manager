@@ -1,5 +1,5 @@
-import sqlite3
-import os
+# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import time
 from datetime import datetime
 import numpy as np
@@ -94,14 +94,12 @@ class Plan:
         self.tree_i = tree_i
         self.dbid = dbid
         self.state = state
-        self.color_flag = color is not None
-        if self.color_flag:
-            self.color = color
+        if color is not None:
+            pass
         elif db is not None:
             dbt = db.find_dbtype(dbtype)
-            self.color = dbt.color if dbt is not None else None
-        else:
-            self.color = None
+            color = dbt.color if dbt is not None else None
+        self.color = color
 
     def db_item(self):
         ret = [self.dbtype, self.name, self.num]
@@ -139,8 +137,11 @@ class Plans(list):
 
     def __init__(self, iterable, db):  # sqlite3.Cursor
         super().__init__()
-        for tup in iterable:
-            self.append(Plan(tup, db=db))
+        for obj in iterable:
+            if isinstance(obj, Plan):
+                self.append(obj)
+            else:
+                self.append(Plan(obj, db=db))
 
     def __repr__(self):
         ret = ''
@@ -178,41 +179,49 @@ class Plans(list):
         return ivtree
 
 
-class TaskDB:
-    def __init__(self, db_path, table_name, commit_each=False):
+class SqlTable:
+    def __init__(self, conn, table_name, name2dtype, commit_each=False):
+        """
+        Examples
+        --------
+        table_name: 'tab'
+        name2type_dict: [('name','TEXT'), ('num','REAL')]
+        """
+        self.conn = conn
         self.table_name = table_name
-        self.db_path = db_path
         self.commit_each = commit_each
-        if not os.path.exists(db_path):
-            self.create_table()
+        self.name2dtype = name2dtype
+        self.create_table(commit=True)
+
+    def create_table(self, commit=True):
+        cur = self.conn.cursor()
+        fields = []
+        for name, dtype in self.name2dtype:
+            if dtype:
+                fields.append('{} {}'.format(name, dtype))
+            else:
+                fields.append(str(name))
+        fields = ', '.join(fields)
+        sql = 'CREATE TABLE IF NOT exists {}('\
+              'id INTEGER PRIMARY KEY AUTOINCREMENT, {})'
+        cur.execute(sql.format(self.table_name, fields))
+        if commit or self.commit_each:
+            self.conn.commit()
+
+    def insert(self, values, commit=None):
+        cur = self.conn.cursor()
+        if not isinstance(values, dict):
+            val_d = {}
+            for v, (k, _) in zip(values, self.name2dtype):
+                val_d[k] = v
         else:
-            self.conn = sqlite3.connect(self.db_path)
-            cur = self.conn.cursor()
-            sql = 'SELECT name FROM sqlite_sequence;'
-            table_exists = cur.execute(sql)
-            if (self.table_name,) not in table_exists:
-                self.create_table()
-
-    def create_table(self):
-        self.conn = sqlite3.connect(self.db_path)
-        cur = self.conn.cursor()
-        sql = '''CREATE TABLE {}(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type     INT,   name     TEXT,  num      NUMERIC,
-            pares    BLOB,  subs     BLOB,  reqs     BLOB,
-            sta_time REAL,  end_time REAL,  use_time REAL,  sub_time REAL,
-            state    INT,  color);'''.format(self.table_name)
-        cur.execute(sql)
-        self.add_aitem(Plan(None, -1, 'root'))  # add root item
-        self.conn.commit()
-
-    def add_aitem(self, plan):
-        cur = self.conn.cursor()
-        sql = 'INSERT INTO {}(type, name, num, pares, subs, reqs, '\
-              'sta_time, end_time, use_time, sub_time, state, color)'\
-              'VALUES(?,?,?,?,?,?,?,?,?,?,?,?);'.format(self.table_name)
-        cur.execute(sql, plan.db_item())
-        if self.commit_each:
+            val_d = values
+        sql = 'INSERT INTO {}({}) VALUES({})'
+        sqf = sql.format(self.table_name,
+                         ', '.join(val_d.keys()),
+                         ('?,'*len(val_d))[:-1])
+        cur.execute(sqf, list(val_d.values()))
+        if commit or self.commit_each:
             self.conn.commit()
 
     def commit(self):
@@ -220,19 +229,14 @@ class TaskDB:
             raise RuntimeWarning('commit each change is Enable')
         self.conn.commit()
 
-    def connect(self):
-        self.conn = sqlite3.connect(self.db_path)
-
-    def close(self):
-        self.conn.close()
-
-    def get_plans_cond(self, cond_dict):
+    def get_conds(self, cond_dict, fields=None):
         """
         Get Plans matched conditions.
         :para cond_dict: {'field1':value, 'field2':(min, max), 'field3':('<', value), ...}
         """
         cur = self.conn.cursor()
-        sql = 'SELECT * FROM {} WHERE '.format(self.table_name)
+        fields_str = ', '.join(fields) if fields else '*'
+        sql = 'SELECT {} FROM {} WHERE '.format(fields_str, self.table_name)
         paras = []
         assert len(cond_dict) > 0
         for key in cond_dict.keys():
@@ -254,11 +258,28 @@ class TaskDB:
             else:
                 raise ValueError('key type invaild')
         sql = sql[:-5] # remove end of str ' and '
-        res = cur.execute(sql, paras)
-        return Plans(res, self)
+        return cur.execute(sql, paras)
+
+
+class TaskTable(SqlTable):
+    name2dtype = [('type','INT'), ('name','TEXT'), ('num','NUMERIC'),
+                  ('pares','BLOB'), ('subs','BLOB'), ('reqs','BLOB'),
+                  ('sta_time','REAL'), ('end_time','REAL'), ('use_time','REAL'),
+                  ('sub_time','REAL'), ('state','INT'), ('color', None)]
+
+    table_name = 'tasks'
+
+    def __init__(self, conn, commit_each=False):
+        super().__init__(conn, self.table_name, self.name2dtype, commit_each)
+
+    def add_aitem(self, plan, commit=None):
+        self.insert(plan.db_item(), commit)
+
+    def get_plans_cond(self, cond_dict):
+        return Plans(self.get_conds(cond_dict), self)
 
     def find_dbtype(self, dbtype):
-        plans = self.get_plans_cond({'type':1, 'num':dbtype})
+        plans = Plans(self.get_plans_cond({'type':1, 'num':dbtype}), self)
         if len(plans) == 0:
             return None
         elif len(plans) == 1:
