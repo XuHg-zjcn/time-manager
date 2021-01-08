@@ -11,6 +11,7 @@ show current running tasks on terminal
 
 ## improve
 use pandas  
+split sqlite TABLE 'task' to 'plans' and 'real_record'  
 filter tasks  
 notify to gnome-shell  
 food expiration date  

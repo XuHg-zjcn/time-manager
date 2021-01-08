@@ -7,10 +7,12 @@ Created on Mon Dec  7 13:53:35 2020
 """
 import sys
 import sqlite3
+from datetime import datetime
+
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from Qt_GUI.layout import Ui_MainWindow
 from Qt_GUI.pyqtgraph_plot import dt2dplot
-from datetime import datetime
+from Qt_GUI.tabview import test
 from commd_line.init_config import init_config
 from sqlite_api.task_db import TaskTable
 from smart_strptime.my_datetime import sTimeRange
@@ -83,6 +85,7 @@ if __name__ == '__main__':
     win.setWindowTitle('time-manager Date-Time 2D Image')
     ui = Ui_MainWindow()
     ui.setupUi(win)
+    test(ui.tableWidget)
     dt2p = dt2dplot(ui.PlotWidget, tdb)
     win.show()
     controller(ui)
