@@ -10,6 +10,7 @@ auto collect data from linux wtmp, chrome and firefox browser. (will add more)
 show current running tasks on terminal  
 
 ## improve
+use pandas  
 filter tasks  
 notify to gnome-shell  
 food expiration date  
