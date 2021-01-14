@@ -19,13 +19,13 @@ class BrowserHistory(Collector):
     dbtype = 1001
     table_name = 'browser'
     coll_name = 'browser history'
+    plan_name = 'browser visit'
 
-    def __init__(self, source_path, plan_name='browser visit'):
+    def __init__(self, source_path, plan_name=plan_name):
         self.source_path = source_path
-        self.plan_name = plan_name
-        super().__init__(source_path, plan_name)
+        super().__init__(plan_name)
 
-    def run(self, tdb, cid):
+    def run(self, clog, tdb):
         conn = sqlite3.connect(self.source_path)
         cur = conn.cursor()
         res = cur.execute(self.sql)
@@ -34,7 +34,7 @@ class BrowserHistory(Collector):
         try:
             prev = next(res)[0]
         except StopIteration:
-            self.write_log(tdb, cid, None, None, 0)
+            clog.add_log(self.cid, None, None, 0)
             return
         t_min = prev
         last_start = prev
@@ -52,6 +52,4 @@ class BrowserHistory(Collector):
                 last_start = curr
             prev = curr
         t_max = prev
-
-        tdb.commit()
-        self.write_log(tdb, cid, t_min, t_max, items)
+        clog.add_log(self.cid, t_min, t_max, items)

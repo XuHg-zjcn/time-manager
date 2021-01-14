@@ -14,7 +14,7 @@ conn = sqlite3.connect(db_path)
 tdb = TaskTable(conn)
 cti = CLI_Inputer(output_type=OutType.timestamp)
 
-ac = auto_collect.Collectors(tdb)
+ac = auto_collect.Collectors(conn, tdb)
 ac.run_enable()
 
 def add_task():

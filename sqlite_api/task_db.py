@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 import time
 from datetime import datetime
+import pandas as pd
 import numpy as np
+
 from my_libs.ivtree2 import IvTree2
 from smart_strptime.MTshort import MTshort
 from commd_line.init_config import init_config
@@ -11,6 +13,7 @@ from .argb import ARGB
 conf = init_config()
 mts1 = MTshort('? Y-? m-? d % H:%0M:%0S')
 mts2 = MTshort('? m-? d % H:%0M:%0S')
+
 
 class TreeItem:
     """Plan tree node."""
@@ -179,8 +182,20 @@ class Plans(list):
         return ivtree
 
 
+def optional_assign(obj, name, value=None):
+    if value is not None:
+        setattr(obj, name, value)
+    elif hasattr(obj, name):
+        pass
+    else:
+        raise ValueError("value is None and '{}' object has no attribute '{}'".format(type(obj), name))
+
+
 class SqlTable:
-    def __init__(self, conn, table_name, name2dtype, commit_each=False):
+    name2dtype = [('example_int', 'INT'), ('example_text', 'TEXT')]
+    table_name = 'table_name'
+
+    def __init__(self, conn, table_name=None, name2dtype=None, commit_each=False):
         """
         Examples
         --------
@@ -188,9 +203,9 @@ class SqlTable:
         name2type_dict: [('name','TEXT'), ('num','REAL')]
         """
         self.conn = conn
-        self.table_name = table_name
+        optional_assign(self, 'table_name', table_name)
+        optional_assign(self, 'name2dtype', name2dtype)
         self.commit_each = commit_each
-        self.name2dtype = name2dtype
         self.create_table(commit=True)
 
     def create_table(self, commit=True):
@@ -229,12 +244,11 @@ class SqlTable:
             raise RuntimeWarning('commit each change is Enable')
         self.conn.commit()
 
-    def get_conds(self, cond_dict, fields=None):
+    def conds_sql(self, cond_dict, fields=None):
         """
         Get Plans matched conditions.
         :para cond_dict: {'field1':value, 'field2':(min, max), 'field3':('<', value), ...}
         """
-        cur = self.conn.cursor()
         fields_str = ', '.join(fields) if fields else '*'
         sql = 'SELECT {} FROM {} WHERE '.format(fields_str, self.table_name)
         paras = []
@@ -257,15 +271,24 @@ class SqlTable:
                     raise ValueError('tuple invaild')
             else:
                 raise ValueError('key type invaild')
-        sql = sql[:-5] # remove end of str ' and '
+        sql = sql[:-5]  # remove end of str ' and '
+        return sql, paras
+
+    def get_conds_execute(self, cond_dict, fields=None):
+        cur = self.conn.cursor()
+        sql, paras = self.conds_sql(cond_dict, fields)
         return cur.execute(sql, paras)
+
+    def get_conds_dataframe(self, cond_dict, fields=None):
+        sql, paras = self.conds_sql(cond_dict, fields)
+        return pd.read_sql_query(sql, self.conn, params=paras)
 
 
 class TaskTable(SqlTable):
-    name2dtype = [('type','INT'), ('name','TEXT'), ('num','NUMERIC'),
-                  ('pares','BLOB'), ('subs','BLOB'), ('reqs','BLOB'),
-                  ('sta_time','REAL'), ('end_time','REAL'), ('use_time','REAL'),
-                  ('sub_time','REAL'), ('state','INT'), ('color', None)]
+    name2dtype = [('type', 'INT'), ('name', 'TEXT'), ('num', 'NUMERIC'),
+                  ('pares', 'BLOB'), ('subs', 'BLOB'), ('reqs', 'BLOB'),
+                  ('sta_time', 'REAL'), ('end_time', 'REAL'), ('use_time', 'REAL'),
+                  ('sub_time', 'REAL'), ('state', 'INT'), ('color', None)]
 
     table_name = 'tasks'
 
@@ -276,10 +299,10 @@ class TaskTable(SqlTable):
         self.insert(plan.db_item(), commit)
 
     def get_plans_cond(self, cond_dict):
-        return Plans(self.get_conds(cond_dict), self)
+        return Plans(self.get_conds_execute(cond_dict), self)
 
     def find_dbtype(self, dbtype):
-        plans = Plans(self.get_plans_cond({'type':1, 'num':dbtype}), self)
+        plans = Plans(self.get_plans_cond({'type': 1, 'num': dbtype}), self)
         if len(plans) == 0:
             return None
         elif len(plans) == 1:
@@ -288,7 +311,7 @@ class TaskTable(SqlTable):
             raise ValueError('find more than one dbtype'.format(dbtype))
 
     def print_doings(self):
-        plans = self.get_plans_cond({'state':1})
+        plans = self.get_plans_cond({'state': 1})
         print('{} plans doing'.format(len(plans)))
         if len(plans) != 0:
             print(plans)

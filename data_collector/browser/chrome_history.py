@@ -11,8 +11,9 @@ class ChromeHistory(BrowserHistory):
     sql = 'SELECT visit_time/1000000-11644473600 FROM visits'
     dbtype = 1002
     coll_name = 'chrome history'
+    plan_name = 'chrome visit'
 
-    def __init__(self, source_path=None, plan_name='chrome history'):
+    def __init__(self, source_path=None, plan_name=plan_name):
         if source_path is None:
             path = os.path.join(os.environ['HOME'], '.config/google-chrome/Default/History')
             if os.path.isfile(path):

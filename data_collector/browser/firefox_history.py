@@ -8,14 +8,13 @@ import glob
 from .browser_history import BrowserHistory
 
 
-sql = 'SELECT visit_date/1000000 FROM moz_historyvisits'
-
 class FirefoxHistory(BrowserHistory):
     sql = 'SELECT visit_date/1000000 FROM moz_historyvisits'
     dbtype = 1001
     coll_name = 'firefox history'
+    plan_name = 'firefox visit'
 
-    def __init__(self, source_path=None, plan_name='firefox history'):
+    def __init__(self, source_path=None, plan_name=plan_name):
         if source_path is None:
             paths = glob.glob(os.path.join(os.environ['HOME'], '.mozilla/firefox/*.default-release/places.sqlite'))
             if len(paths) == 0:

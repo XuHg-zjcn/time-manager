@@ -1,66 +1,40 @@
 # -*- coding: utf-8 -*-
-import time
+from pickle import loads
 import glob
-from pickle import dumps, loads
+from sqlite_api.tables import CollTable, CollLogTable
 
 
 class Collector:
     dbtype = 1000
     table_name = 'browser'
     coll_name = 'Collector'
+    plan_name = 'collect'
 
-    def __init__(self, source_path, plan_name='collect'):
-        self.source_path = source_path
+    def __init__(self, plan_name=plan_name):
         self.plan_name = plan_name
 
-    def write_log(self, tdb, cid, t_min, t_max, items):
-        """run once d=-1"""
-        cur = tdb.conn.cursor()
-        cur.execute('UPDATE collectors SET runs=runs+1, items=items+? WHERE id=?', (items, cid))
-        try:
-            run_i, name = list(cur.execute('SELECT runs, name FROM collectors WHERE id=?',(cid,)))[0]
-        except IndexError:
-            run_i = -1
-            name = self.coll_name
-        cur.execute('INSERT INTO colls_log (cid, run_i, run_time, t_min, t_max, items) VALUES(?,?,?,?,?,?)',
-                    (cid, run_i, time.time(), t_min, t_max, items))
-        print('{} {} items updated'.format(name, items))
-        tdb.conn.commit()
+    def loads_up(self, cid=-1, coll_name=coll_name):
+        self.cid = cid
+        self.coll_name = coll_name
 
-    def run(self, tdb, cid):
-        self.write_log(tdb, cid, None, None, 0)
+    def run(self, clog, tdb):
         pass
 
 
 class Collectors:
-    def __init__(self, tdb):
+    def __init__(self, conn, tdb):
+        self.conn = conn
         self.tdb = tdb
-        cur = self.tdb.conn.cursor()
-        sql = ('CREATE TABLE IF NOT exists collectors('
-               'id INTEGER PRIMARY KEY AUTOINCREMENT,'
-               'name TEXT, enable BOOL, dump BLOB, runs INT, items INT);')
-        cur.execute(sql)
-        sql = ('CREATE TABLE IF NOT exists colls_log('
-               'id INTEGER PRIMARY KEY AUTOINCREMENT,'
-               'cid INT, run_i INT, run_time REAL, t_min REAL, t_max REAL, items INT);')
-        cur.execute(sql)
-        self.tdb.conn.commit()
+        self.colls = CollTable(conn)
+        self.logs = CollLogTable(conn)
 
     # TODO: check is already add in sqlite, use a table collect history
     def run_enable(self):
-        cur = self.tdb.conn.cursor()
-        res = cur.execute('SELECT id, dump FROM collectors WHERE enable=1')
-        for cid, dump in res:
+        res = self.colls.get_conds_execute({'enable':1}, ['id', 'name', 'dump'])
+        for cid, name, dump in res:
             coll = loads(dump)
-            coll.run(self.tdb, cid)
-
-    def add_item(self, name, enable, coll):
-        cur = self.tdb.conn.cursor()
-        sql = 'INSERT INTO collectors (name, enable, dump, runs, items) VALUES(?,?,?,0,0);'
-        cur.execute(sql, (name, enable, dumps(coll)))
-        sql = 'SELECT last_insert_rowid() FROM collectors WHERE id=1'
-        cid = list(cur.execute(sql))[0]
-        self.tdb.conn.commit()
+            coll.loads_up(cid, name)
+            coll.run(self.logs, self.tdb)
 
     @classmethod
     def input_enable(cls):
@@ -80,7 +54,7 @@ class Collectors:
             if inp == 'a':
                 coll_obj = defaults.input_choose_coll()()
                 enable = self.input_enable()
-                self.add_item(coll_obj.coll_name, enable, coll_obj)
+                self.colls.add_item(coll_obj, enable)
             elif inp == 'b':
                 coll_cls = defaults.input_choose_coll()
                 path_glob = input('数据源路径(Glob):')
@@ -88,7 +62,7 @@ class Collectors:
                 for p in paths:
                     print('Glob matched {}'.format(p))
                     coll_obj = coll_cls(source_path=p)
-                    coll_obj.run(self.tdb, -1)
+                    coll_obj.run(self.logs, self.tdb)
             elif inp == 'q':
                 break
             else:
