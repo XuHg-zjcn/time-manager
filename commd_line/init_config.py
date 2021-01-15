@@ -28,7 +28,7 @@ def create():
     conf['show'] = {'type': 'pyqtgraph',  # plot date-time2d
                     'char_hour': 4,     # char per hour
                     'print_minN': 5,    # print N found min items
-                    'print_max': 50,    # print output max item
+                    'print_max': 50,    # print output max item, >= 2*print_side
                     'print_side': 20,   # print over max item, middle use '...'
                     'force_bar': 20}    # force print each item
     conf['camera'] = {'period': 0.5,

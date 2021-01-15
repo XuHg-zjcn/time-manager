@@ -14,13 +14,15 @@ from Qt_GUI.layout import Ui_MainWindow
 from Qt_GUI.pyqtgraph_plot import dt2dplot
 from Qt_GUI.tabview import test
 from commd_line.init_config import init_config
-from sqlite_api.task_db import TaskTable
+from sqlite_api.tables import CollTable
+from sqlite_api.task_db import TaskTable, Plan
 from smart_strptime.my_datetime import sTimeRange
 
 conf = init_config()
 db_path = conf['init']['db_path']
 conn = sqlite3.connect(db_path)
 tdb = TaskTable(conn)
+colls = CollTable(conn)
 
 
 class QTimeRange(sTimeRange):
@@ -73,8 +75,8 @@ class controller:
         year = self.ui.year.value()
         start = self.start.timestamp_tuple()
         stop = self.stop.timestamp_tuple()
-        plans = tdb.get_plans_cond({'sta_time': start, 'end_time': stop})
-        ivtree = plans.get_ivtree(lambda p:p)
+        plans = tdb.get_conds_plans({'sta': start, 'end': stop})
+        ivtree = plans.get_ivtree(lambda p: Plan(p))
         dt2p.update_ivtree(ivtree, year)
 
 
@@ -86,7 +88,7 @@ if __name__ == '__main__':
     ui = Ui_MainWindow()
     ui.setupUi(win)
     test(ui.tableWidget)
-    dt2p = dt2dplot(ui.PlotWidget, tdb)
+    dt2p = dt2dplot(ui.PlotWidget, colls)
     win.show()
     controller(ui)
     sys.exit(app.exec_())

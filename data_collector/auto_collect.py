@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from pickle import loads
 import glob
+
+from sqlite_api.argb import ARGB
 from sqlite_api.tables import CollTable, CollLogTable
 
 
@@ -12,6 +14,7 @@ class Collector:
 
     def __init__(self, plan_name=plan_name):
         self.plan_name = plan_name
+        self.cid = -1
 
     def loads_up(self, cid=-1, coll_name=coll_name):
         self.cid = cid
@@ -54,7 +57,8 @@ class Collectors:
             if inp == 'a':
                 coll_obj = defaults.input_choose_coll()()
                 enable = self.input_enable()
-                self.colls.add_item(coll_obj, enable)
+                color = ARGB.from_str(input('颜色'))
+                self.colls.add_item(coll_obj, enable, color)
             elif inp == 'b':
                 coll_cls = defaults.input_choose_coll()
                 path_glob = input('数据源路径(Glob):')

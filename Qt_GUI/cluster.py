@@ -3,10 +3,13 @@ from datetime import datetime
 from PyQt5.QtGui import QPainterPath, QFont, QTransform, QColor
 from sklearn.cluster import MeanShift
 from threading import Thread
-from sqlite_api.task_db import Plan
+
+from sqlite_api.argb import ARGB
 
 
 TextSymbol = namedtuple("TextSymbol", "label symbol scale")
+TxtClr = namedtuple("TxtClr", "text color")
+
 
 class PlanList(list):
     def __init__(self, d11, day_div=5):
@@ -26,17 +29,20 @@ class PlanList(list):
         """
         :para pobj: Plan obj
         """
-        ts = (lambda x: (x.sta + x.end) / 2)(pobj.p_time)
+        ts = (pobj['sta'] + pobj['end']) / 2
         xy = self.time2xy(ts)
         super().append(xy)
 
 
 class Cluster:
-    def __init__(self, ivtree, d11, db, scatter, day_div=5):
+    def __init__(self, ivtree, d11, scatter, day_div=5,
+                 func_classify=lambda p: 0,
+                 func_textcolor=lambda x: TxtClr('name', ARGB(0, 255, 255))):
         self.ivtree = ivtree
         self.d11 = d11
-        self.db = db
         self.day_div = day_div
+        self.func_classify = func_classify
+        self.func_textcolor = func_textcolor
         self.dbt2plst = {}
         self.dbt2dbtp = {}
         self.before()
@@ -60,28 +66,26 @@ class Cluster:
 
     def before(self):
         for iv in self.ivtree:
-            if iv.data.dbtype not in self.dbt2plst:
-                self.dbt2plst[iv.data.dbtype] = PlanList(self.d11, self.day_div)
-            self.dbt2plst[iv.data.dbtype].append(iv.data)
-        for dbtype in self.dbt2plst.keys():
-            type_plan = self.db.find_dbtype(dbtype)
-            if type_plan is None:
-                type_plan = Plan(name='dbtype{}'.format(dbtype), color=0xffffff00)
-            self.dbt2dbtp[dbtype] = type_plan
+            ctg = self.func_classify(iv.data)  # category
+            if ctg not in self.dbt2plst:
+                self.dbt2plst[ctg] = PlanList(self.d11, self.day_div)
+            self.dbt2plst[ctg].append(iv.data)
+        for ctg in self.dbt2plst.keys():
+            txt_clr = self.func_textcolor(ctg)
+            self.dbt2dbtp[ctg] = txt_clr
 
     def thread(self, scatter):
         print('thread')
         spots = []
         for dbtype, plst in self.dbt2plst.items():
             tp = self.dbt2dbtp[dbtype]
-            text = tp.name
-            inv_color = QColor(*tp.color.inv_bin().RGB())
+            inv_color = QColor(*tp.color.RGB())
             ms = MeanShift(bandwidth=5)
             ms.fit(plst)
             centers = ms.cluster_centers_
             centers[:,0] *= self.day_div
             for c in centers:
-                label = self.create_label(text, 0)
+                label = self.create_label(tp.text, 0)
                 spots.append({'pos': c, 'data': 1, 'pen':inv_color, 'brush': inv_color,
                               'symbol': label.symbol, 'size': label.scale*10})
         scatter.setData(spots)

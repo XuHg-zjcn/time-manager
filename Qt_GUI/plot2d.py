@@ -4,15 +4,13 @@ from PyQt5 import QtCore, QtGui
 
 
 class DateTime2DItem(pg.GraphicsObject):
-    def __init__(self, ivtree=None, year=None):
-        self.ivtree = ivtree
-        self.year = year
+    def __init__(self, func_color):
+        self.ivtree = None
+        self.year = None
         self.picture = QtGui.QPicture()
-        if ivtree is not None and year is not None:
-            self.draw_ivtree(ivtree, year)
-        else:
-            self.d11 = None
-            self.max_doy = None
+        self.d11 = None
+        self.max_doy = None
+        self.func_color = func_color
         super().__init__()
 
     def time2xy(self, time):
@@ -58,7 +56,7 @@ class DateTime2DItem(pg.GraphicsObject):
         self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
         p = QtGui.QPainter(self.picture)
         for iv in sorted(ivtree):
-            color = iv.data.color
+            color = self.func_color(iv.data)
             ovlps = ivtree[iv.begin]
             ovlps.remove(iv)
             if ovlps:

@@ -5,10 +5,10 @@ from .cluster import Cluster
 
 
 class dt2dplot:
-    def __init__(self, pw, db):
+    def __init__(self, pw, colls):
         self.pw = pw
-        self.db = db
-        self.item = DateTime2DItem()
+        self.colls = colls
+        self.item = DateTime2DItem(lambda p: p.get_collect_color(colls))
         self.scatter = pg.ScatterPlotItem()
         self.pw.addItem(self.item)
         self.pw.addItem(self.scatter)
@@ -49,7 +49,9 @@ class dt2dplot:
     def update_ivtree(self, ivtree, year):
         self.item.draw_ivtree(ivtree, year)
         self.set_xaixs(year)
-        Cluster(ivtree, self.item.d11, self.db, self.scatter)
+        Cluster(ivtree, self.item.d11, self.scatter,
+                func_classify=lambda p: p['rec_id'],
+                func_textcolor=self.colls.find_txtclr)
 
     def mouse_move_slot(self, pos):
         if self.pw.sceneBoundingRect().contains(pos):

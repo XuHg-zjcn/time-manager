@@ -11,7 +11,7 @@ from ..auto_collect import Collector
 
 sys.path.append('../')
 sys.path.append('../../')
-from sqlite_api.task_db import Plan, PlanTime
+from sqlite_api.task_db import Plan
 
 
 class BrowserHistory(Collector):
@@ -42,8 +42,8 @@ class BrowserHistory(Collector):
             if curr - prev > 15*60:
                 if prev - last_start > 15*60:
                     try:
-                        plan = Plan(PlanTime(last_start, prev),
-                                    self.dbtype, self.plan_name)
+                        plan = Plan(rec_id=self.dbtype, name=self.plan_name,
+                                    sta=last_start, end=prev)
                         tdb.add_aitem(plan)
                     except ValueError as e:
                         print(e)
