@@ -10,7 +10,8 @@ auto collect data from linux wtmp, chrome and firefox browser. (will add more)
 show current running tasks on terminal  
 
 ## improve
-use pandas  
+browser collector auto filter already records  
+add once run collector to 'collectors' table  
 split sqlite TABLE 'task' to 'plans' and 'real_record'  
 filter tasks  
 notify to gnome-shell  
