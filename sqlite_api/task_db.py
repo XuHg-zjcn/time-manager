@@ -17,17 +17,17 @@ mts2 = MTshort('? m-? d % H:%0M:%0S')
 class Plan(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.apply_defalut('rec_id', -1)
-        self.apply_defalut('type_id', -1)
-        self.apply_defalut('name', 'untitled')
-        self.apply_defalut('num', 0)
+        self.apply_default('rec_id', -1)
+        self.apply_default('type_id', -1)
+        self.apply_default('name', 'untitled')
+        self.apply_default('num', 0)
         assert 'sta' in self
         assert 'end' in self
-        self.apply_defalut('use', self['end']-self['sta'])
+        self.apply_default('use', self['end'] - self['sta'])
         assert self['use'] >= 0
-        self.apply_defalut('state', 2)
+        self.apply_default('state', 2)
 
-    def apply_defalut(self, key, value):
+    def apply_default(self, key, value):
         if key not in self:
             self[key] = value
 
