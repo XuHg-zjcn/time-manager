@@ -49,7 +49,6 @@ class Cluster:
         thr = Thread(target=self.thread, args=(scatter,))
         thr.start()
 
-
     @staticmethod
     def create_label(label, angle):
         symbol = QPainterPath()
@@ -85,7 +84,9 @@ class Cluster:
             centers = ms.cluster_centers_
             centers[:,0] *= self.day_div
             for c in centers:
+                pos = c
+                pos[0] += 0.5
                 label = self.create_label(tp.text, 0)
-                spots.append({'pos': c, 'data': 1, 'pen':inv_color, 'brush': inv_color,
+                spots.append({'pos': pos, 'data': 1, 'pen':inv_color, 'brush': inv_color,
                               'symbol': label.symbol, 'size': label.scale*10})
         scatter.setData(spots)

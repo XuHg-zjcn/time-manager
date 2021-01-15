@@ -36,7 +36,7 @@ class DateTime2DItem(pg.GraphicsObject):
         end /= 3600
         p.setPen(pg.mkPen(color))
         p.setBrush(pg.mkBrush(color))
-        rect = QtCore.QRectF(doy, begin, 0.8, end-begin)
+        rect = QtCore.QRectF(doy+0.1, begin, 0.8, end-begin)
         p.drawRect(rect)
 
     def _draw_iv(self, p, begin, end, color):
