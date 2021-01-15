@@ -23,7 +23,7 @@ class CollTable(SqlTable):
     def find_txtclr(self, cid):
         txt, clr = self.get_conds_onlyone({'id': cid}, ['name', 'color'],
                                           ['{}'.format(cid), 0xff00ffff])
-        clr = ARGB.from_argb(clr)
+        clr = ARGB.from_argb(clr).inv_bin()
         return TxtClr(txt, clr)
 
 

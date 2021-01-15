@@ -52,7 +52,7 @@ class Plan(dict):
         return ret
 
     def get_collect_color(self, colls, default=0xffffff00):
-        argb = colls.get_conds_onlyone({'id':self['rec_id']}, ['color'], default)
+        argb = colls.get_conds_onlyone({'id':self['rec_id']}, ['color'], default)[0]
         return ARGB.from_argb(argb)
 
 
