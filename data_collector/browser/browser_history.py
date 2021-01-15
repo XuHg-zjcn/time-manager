@@ -5,12 +5,8 @@ Created on Tue Nov 17 14:37:07 2020
 """
 
 import sqlite3
-import sys
 
-from ..auto_collect import Collector
-
-sys.path.append('../')
-sys.path.append('../../')
+from data_collector.auto_collect import Collector
 from sqlite_api.task_db import Plan
 
 
@@ -42,7 +38,7 @@ class BrowserHistory(Collector):
             if curr - prev > 15*60:
                 if prev - last_start > 15*60:
                     try:
-                        plan = Plan(rec_id=self.dbtype, name=self.plan_name,
+                        plan = Plan(rec_id=self.cid, name=self.plan_name,
                                     sta=last_start, end=prev)
                         tdb.add_aitem(plan)
                     except ValueError as e:
