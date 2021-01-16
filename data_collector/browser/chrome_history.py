@@ -9,7 +9,6 @@ from .browser_history import BrowserHistory
 
 class ChromeHistory(BrowserHistory):
     sql = 'SELECT visit_time/1000000-11644473600 FROM visits'
-    dbtype = 1002
     coll_name = 'chrome history'
     plan_name = 'chrome visit'
 

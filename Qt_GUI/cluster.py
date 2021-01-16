@@ -1,8 +1,9 @@
 from collections import namedtuple
 from datetime import datetime
+from threading import Thread
+
 from PyQt5.QtGui import QPainterPath, QFont, QTransform, QColor
 from sklearn.cluster import MeanShift
-from threading import Thread
 
 from sqlite_api.argb import ARGB
 

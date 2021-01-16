@@ -10,7 +10,6 @@ from .browser_history import BrowserHistory
 
 class FirefoxHistory(BrowserHistory):
     sql = 'SELECT visit_date/1000000 FROM moz_historyvisits'
-    dbtype = 1001
     coll_name = 'firefox history'
     plan_name = 'firefox visit'
 

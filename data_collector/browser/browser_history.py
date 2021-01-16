@@ -12,7 +12,6 @@ from sqlite_api.task_db import Plan
 
 class BrowserHistory(Collector):
     sql = None
-    dbtype = 1001
     table_name = 'browser'
     coll_name = 'browser history'
     plan_name = 'browser visit'
