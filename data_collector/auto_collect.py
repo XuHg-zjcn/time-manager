@@ -65,7 +65,7 @@ class Collectors:
         cond_dict = {'name': coll_cls.coll_name, 'start_mode': -1}
         res = self.colls.get_conds_onlyone(cond_dict, ['id', 'name', 'dump'], default=None)
         if res is None:
-            self.colls.add_item(coll_cls(), -1)
+            self.colls.add_item(coll_cls(source_path=''), -1)
             res = self.colls.get_conds_onlyone(cond_dict, ['id', 'name', 'dump'],
                                                default=RuntimeError("can't add custom_path coll"))
         cid, name, dump = res
