@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sqlite3
 import time
 from pickle import loads
 import glob
@@ -26,6 +27,12 @@ class Collector:
     def run(self, clog, tdb):
         pass
 
+    def try_run(self, clog, tdb):
+        try:
+            self.run(clog, tdb)
+        except sqlite3.OperationalError as e:
+            print('Collector {} skip, Error: {}'.format(self.coll_name, e))
+
 
 class Collectors:
     def __init__(self, conn, tdb, commit_each=True):
@@ -41,7 +48,7 @@ class Collectors:
         for cid, name, dump, t_max in res:
             coll = loads(dump)
             coll.loads_up(cid, name, t_max)
-            coll.run(self, self.tdb)
+            coll.try_run(self, self.tdb)
 
     @classmethod
     def input_enable(cls):
@@ -90,7 +97,7 @@ class Collectors:
                 for p in paths:
                     print('Glob matched {}'.format(p))
                     coll_obj = coll_cls(source_path=p)
-                    coll_obj.run(self, self.tdb)
+                    coll_obj.try_run(self, self.tdb)
             elif inp == 'q':
                 break
             else:
