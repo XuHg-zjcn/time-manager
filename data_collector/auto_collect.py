@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from pickle import loads
 import glob
 
@@ -15,29 +16,32 @@ class Collector:
     def __init__(self, plan_name=plan_name):
         self.plan_name = plan_name
         self.cid = -1
+        self.t_max = 0
 
-    def loads_up(self, cid=-1, coll_name=coll_name):
+    def loads_up(self, cid=-1, coll_name=coll_name, t_max=0):
         self.cid = cid
         self.coll_name = coll_name
+        self.t_max = t_max
 
     def run(self, clog, tdb):
         pass
 
 
 class Collectors:
-    def __init__(self, conn, tdb):
+    def __init__(self, conn, tdb, commit_each=True):
         self.conn = conn
         self.tdb = tdb
         self.colls = CollTable(conn)
         self.logs = CollLogTable(conn)
+        self.commit_each = commit_each
 
     # TODO: check is already add in sqlite, use a table collect history
     def run_enable(self):
-        res = self.colls.get_conds_execute({'enable':1}, ['id', 'name', 'dump'])
-        for cid, name, dump in res:
+        res = self.colls.get_conds_execute({'enable':1}, ['id', 'name', 'dump', 't_max'])
+        for cid, name, dump, t_max in res:
             coll = loads(dump)
-            coll.loads_up(cid, name)
-            coll.run(self.logs, self.tdb)
+            coll.loads_up(cid, name, t_max)
+            coll.run(self, self.tdb)
 
     @classmethod
     def input_enable(cls):
@@ -49,6 +53,26 @@ class Collectors:
                 return False
             else:
                 continue
+
+    def add_log(self, cid, t_min, t_max, items, commit=True):
+        current_time = time.time()
+        cur = self.conn.cursor()
+        cur.execute('UPDATE collectors SET runs=runs+1, items=items+?,'
+                    't_max=max(t_max,?), t_last=? WHERE id=?', (items, t_max, current_time, cid))
+        cur.execute('SELECT runs, name FROM collectors WHERE id=?', (cid,))
+        lcur = list(cur)
+        if len(lcur) == 0:
+            run_i = -1
+            name = 'unknown'
+        elif len(lcur) == 1:
+            run_i, name = lcur[0]
+        else:
+            raise RuntimeError('not impossible')
+        sql = 'INSERT INTO colls_log(cid, run_i, run_time, t_min, t_max, items) VALUES(?,?,?,?,?,?)'
+        cur.execute(sql, [cid, run_i, current_time, t_min, t_max, items])
+        if commit or self.commit_each:
+            self.conn.commit()
+        print('Collector {} {} founds'.format(name, items))
 
     def cli(self):
         from . import defaults
@@ -66,7 +90,7 @@ class Collectors:
                 for p in paths:
                     print('Glob matched {}'.format(p))
                     coll_obj = coll_cls(source_path=p)
-                    coll_obj.run(self.logs, self.tdb)
+                    coll_obj.run(self, self.tdb)
             elif inp == 'q':
                 break
             else:

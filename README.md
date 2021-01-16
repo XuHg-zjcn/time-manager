@@ -10,7 +10,7 @@ auto collect data from linux wtmp, chrome and firefox browser. (will add more)
 show current running tasks on terminal  
 
 ## improve
-browser collector auto filter already records  
+browser collector auto filter already records(part finally)  
 add once run collector to 'collectors' table  
 split sqlite TABLE 'task' to 'plans' and 'real_record'  
 filter tasks  

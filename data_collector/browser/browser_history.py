@@ -34,9 +34,9 @@ class BrowserHistory(Collector):
             return
         t_min = prev
         last_start = prev
-        for curr, in res:
-            if curr - prev > 15*60:
-                if prev - last_start > 15*60:
+        for curr, in res:  # TODO: probably curr > current timestamp
+            if curr - prev > 15*60:  # use t_max only for auto update
+                if prev - last_start > 15*60 and last_start >= self.t_max:
                     try:
                         plan = Plan(rec_id=self.cid, name=self.plan_name,
                                     sta=last_start, end=prev)
