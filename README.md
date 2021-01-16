@@ -11,6 +11,9 @@ show current running tasks on terminal
 
 ## improve
 browser collector auto filter already records(part finally)  
+cache cluster result to database, use less cpu.  
+auto run collect in system crontab  
+skip collect when database locked  
 add once run collector to 'collectors' table  
 split sqlite TABLE 'task' to 'plans' and 'real_record'  
 filter tasks  
