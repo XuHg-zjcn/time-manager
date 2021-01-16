@@ -7,19 +7,24 @@ from sqlite_api.task_db import SqlTable
 
 
 class CollTable(SqlTable):
-    name2dtype = [('name', 'TEXT'), ('enable', 'BOOL'), ('dump', 'BLOB'),
-                  ('runs', 'INT'), ('items', 'INT'),
-                  ('t_max', 'REAL'), ('t_last', 'REAL'), ('color', 'INT')]
+    name2dtype = [('name', 'TEXT'),   # name of collector
+                  ('start_mode', 'INT'),  # -1 custom source path, 0 manual, 1 batch, 2 auto
+                  ('dump', 'BLOB'),   # pickle.dumps bytes
+                  ('runs', 'INT'),    # runs counts
+                  ('items', 'INT'),   # items counts
+                  ('t_max', 'REAL'),  # max timestamp of record
+                  ('t_last', 'REAL'), # timestamp of last run
+                  ('color', 'INT')]   # color for plot
     table_name = 'collectors'
 
-    def add_item(self, coll_obj, enable=True, color=0xffffff00, commit=True):
+    def add_item(self, coll_obj, start_mode=1, color=0xffffff00, commit=True):
         if isinstance(color, int):
             pass
         elif isinstance(color, ARGB):
             color = color.ARGBi()
         else:
             raise TypeError('unsupported color type:', type(color))
-        self.insert([coll_obj.coll_name, enable, dumps(coll_obj),
+        self.insert([coll_obj.coll_name, start_mode, dumps(coll_obj),
                      0, 0, 0, time.time(), color], commit)
 
     def find_txtclr(self, cid):
@@ -30,6 +35,10 @@ class CollTable(SqlTable):
 
 
 class CollLogTable(SqlTable):
-    name2dtype = [('cid', 'INT'), ('run_i', 'INT'), ('run_time', 'DATETIME'),
-                  ('t_min', 'DATETIME'), ('t_max', 'DATETIME'), ('items', 'INT')]
+    name2dtype = [('cid', 'INT'),     # id of collector
+                  ('run_i', 'INT'),   # n-th run of the collector
+                  ('t_run', 'REAL'),  # time when insert to the table
+                  ('t_min', 'REAL'),  # min start time of items
+                  ('t_max', 'REAL'),  # max stop time of items
+                  ('items', 'INT')]   # count items of this run
     table_name = 'colls_log'

@@ -78,7 +78,7 @@ class SqlTable:
                 value = float(value)
             if value is None:
                 continue
-            elif type(value) in [bool, int, float]:   # x == ?
+            elif type(value) in [bool, int, float, str]:   # x == ?
                 sql += '{}=? and '.format(key)
                 paras.append(value)
             elif isinstance(value, tuple) and len(value) == 2:  # a <= x < b

@@ -9,7 +9,6 @@ from sqlite_api.tables import CollTable, CollLogTable
 
 
 class Collector:
-    dbtype = 1000
     table_name = 'browser'
     coll_name = 'Collector'
     plan_name = 'collect'
@@ -42,24 +41,42 @@ class Collectors:
         self.logs = CollLogTable(conn)
         self.commit_each = commit_each
 
-    # TODO: check is already add in sqlite, use a table collect history
-    def run_enable(self):
-        res = self.colls.get_conds_execute({'enable':1}, ['id', 'name', 'dump', 't_max'])
+    def run_conds(self, cond_dict, num=0):
+        """
+        :para num:
+        0: 0 or 1 collector, if found more than one will raise Error
+        1: must 1 collector, if found 0 or more than one will raise Error
+        2: any number of collectors
+        """
+        if 'start_mode' not in cond_dict:
+            cond_dict['start_mode'] = ('!=', -1)
+        res = self.colls.get_conds_execute(cond_dict, ['id', 'name', 'dump', 't_max'])
+        res = list(res)
+        if num == 0 and len(res) > 1:
+            raise ValueError('num=0, but found {}>1'.format(len(res)))
+        if num == 1 and len(res) != 1:
+            raise ValueError('num=1, but found {}!=1'.format(len(res)))
         for cid, name, dump, t_max in res:
             coll = loads(dump)
             coll.loads_up(cid, name, t_max)
             coll.try_run(self, self.tdb)
 
-    @classmethod
-    def input_enable(cls):
-        while True:
-            enable = input('enable:').upper()
-            if enable in {'Y', 'YES', 'T', 'TRUE'}:
-                return True
-            elif enable in {'N', 'NO', 'F', 'FALSE'}:
-                return False
-            else:
-                continue
+    def run_custom_path(self, coll_cls, source_path):
+        cond_dict = {'name': coll_cls.coll_name, 'start_mode': -1}
+        res = self.colls.get_conds_onlyone(cond_dict, ['id', 'name', 'dump'], default=None)
+        if res is None:
+            self.colls.add_item(coll_cls(), -1)
+            res = self.colls.get_conds_onlyone(cond_dict, ['id', 'name', 'dump'],
+                                               default=RuntimeError("can't add custom_path coll"))
+        cid, name, dump = res
+        coll = loads(dump)
+        coll.loads_up(cid, name)
+        coll.source_path = source_path
+        coll.try_run(self, self.tdb)
+
+    # TODO: check is already add in sqlite, use a table collect history
+    def run_enable(self):
+        self.run_conds({'start_mode': 1}, num=2)
 
     def add_log(self, cid, t_min, t_max, items, commit=True):
         current_time = time.time()
@@ -75,8 +92,7 @@ class Collectors:
             run_i, name = lcur[0]
         else:
             raise RuntimeError('not impossible')
-        sql = 'INSERT INTO colls_log(cid, run_i, run_time, t_min, t_max, items) VALUES(?,?,?,?,?,?)'
-        cur.execute(sql, [cid, run_i, current_time, t_min, t_max, items])
+        self.logs.insert([cid, run_i, current_time, t_min, t_max, items])
         if commit or self.commit_each:
             self.conn.commit()
         print('Collector {} {} founds'.format(name, items))
@@ -87,17 +103,16 @@ class Collectors:
             inp = input('a:添加预设, b:一次性, q:退出')
             if inp == 'a':
                 coll_obj = defaults.input_choose_coll()()
-                enable = self.input_enable()
+                start_mode = int(input('启动方式(0手动,1批量,2自动):'))
                 color = ARGB.from_str(input('颜色'))
-                self.colls.add_item(coll_obj, enable, color)
+                self.colls.add_item(coll_obj, start_mode, color)
             elif inp == 'b':
                 coll_cls = defaults.input_choose_coll()
                 path_glob = input('数据源路径(Glob):')
                 paths = glob.glob(path_glob)
                 for p in paths:
                     print('Glob matched {}'.format(p))
-                    coll_obj = coll_cls(source_path=p)
-                    coll_obj.try_run(self, self.tdb)
+                    self.run_custom_path(coll_cls, p)
             elif inp == 'q':
                 break
             else:
