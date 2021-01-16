@@ -1,3 +1,5 @@
+from collections import Iterable
+
 import pandas as pd
 import numpy as np
 
@@ -58,7 +60,14 @@ class SqlTable:
         Get Plans matched conditions.
         :para cond_dict: {'field1':value, 'field2':(min, max), 'field3':('<', value), ...}
         """
-        fields_str = ', '.join(fields) if fields else '*'
+        if isinstance(fields, str):
+            fields_str = fields  # only one field, return without tuple
+        elif isinstance(fields, Iterable):
+            fields_str = ', '.join(fields)
+        elif not fields:
+            fields_str = '*'
+        else:
+            raise ValueError('invalid fields')
         sql = 'SELECT {} FROM {} WHERE '.format(fields_str, self.table_name)
         paras = []
         assert len(cond_dict) > 0
@@ -89,7 +98,11 @@ class SqlTable:
     def get_conds_execute(self, cond_dict, fields=None):
         cur = self.conn.cursor()
         sql, paras = self.conds_sql(cond_dict, fields)
-        return cur.execute(sql, paras)
+        res = cur.execute(sql, paras)
+        if isinstance(fields, str):
+            return map(lambda x: x[0], res)
+        else:
+            return res
 
     def get_conds_onlyone(self, cond_dict, fields=None, default=None):
         cur = self.get_conds_execute(cond_dict, fields)
