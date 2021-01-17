@@ -104,18 +104,23 @@ class SqlTable:
         else:
             return res
 
-    def get_conds_onlyone(self, cond_dict, fields=None, default=None):
+    def get_conds_onlyone(self, cond_dict, fields=None,
+                          def0=LookupError('not found'),
+                          def2=LookupError('found multiply items')):
+        def raise_return(x):
+            if isinstance(x, Exception):
+                raise x
+            else:
+                return x
+
         cur = self.get_conds_execute(cond_dict, fields)
         lst = list(cur)
         if len(lst) == 0:
-            if isinstance(default, Exception):
-                raise default
-            else:
-                return default
+            return raise_return(def0)
         elif len(lst) == 1:
             return lst[0]
         else:
-            raise LookupError('found multiply({}) items'.format(len(lst)))
+            return raise_return(def2)
 
     def get_conds_dataframe(self, cond_dict, fields=None):
         sql, paras = self.conds_sql(cond_dict, fields)

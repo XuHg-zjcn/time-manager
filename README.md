@@ -10,6 +10,7 @@ auto collect data from linux wtmp, chrome and firefox browser. (will add more)
 show current running tasks on terminal  
 
 ## improve
+use event instead task browser collector, generate task in other module  
 browser collector auto filter already records(part finally)  
 cache cluster result to database, use less cpu.  
 auto run collect in system crontab  

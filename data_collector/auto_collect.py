@@ -10,7 +10,7 @@ from sqlite_api.tables import CollTable, CollLogTable
 
 class Collector:
     table_name = 'browser'
-    coll_name = 'Collector'
+    name = 'Collector'
     plan_name = 'collect'
 
     def __init__(self, plan_name=plan_name):
@@ -18,9 +18,9 @@ class Collector:
         self.cid = -1
         self.t_max = 0
 
-    def loads_up(self, cid=-1, coll_name=coll_name, t_max=0):
-        self.cid = cid
-        self.coll_name = coll_name
+    def loads_up(self, id=-1, name=name, t_max=0):
+        self.cid = id
+        self.name = name
         self.t_max = t_max
 
     def run(self, clog, tdb):
@@ -30,7 +30,7 @@ class Collector:
         try:
             self.run(clog, tdb)
         except sqlite3.OperationalError as e:
-            print('Collector {} skip, Error: {}'.format(self.coll_name, e))
+            print('Collector {} skip, Error: {}'.format(self.name, e))
 
 
 class Collectors:
@@ -41,42 +41,22 @@ class Collectors:
         self.logs = CollLogTable(conn)
         self.commit_each = commit_each
 
-    def run_conds(self, cond_dict, num=0):
-        """
-        :para num:
-        0: 0 or 1 collector, if found more than one will raise Error
-        1: must 1 collector, if found 0 or more than one will raise Error
-        2: any number of collectors
-        """
-        if 'start_mode' not in cond_dict:
-            cond_dict['start_mode'] = ('!=', -1)
-        res = self.colls.get_conds_execute(cond_dict, ['id', 'name', 'dump', 't_max'])
-        res = list(res)
-        if num == 0 and len(res) > 1:
-            raise ValueError('num=0, but found {}>1'.format(len(res)))
-        if num == 1 and len(res) != 1:
-            raise ValueError('num=1, but found {}!=1'.format(len(res)))
-        for cid, name, dump, t_max in res:
-            coll = loads(dump)
-            coll.loads_up(cid, name, t_max)
-            coll.try_run(self, self.tdb)
-
     def run_custom_path(self, coll_cls, source_path):
-        cond_dict = {'name': coll_cls.coll_name, 'start_mode': -1}
-        res = self.colls.get_conds_onlyone(cond_dict, ['id', 'name', 'dump'], default=None)
-        if res is None:
+        cond_dict = {'name': coll_cls.name, 'start_mode': -1}
+        res = self.colls.get_conds_objs(cond_dict)
+        if len(res) == 0:
             self.colls.add_item(coll_cls(source_path=''), -1)
             res = self.colls.get_conds_onlyone(cond_dict, ['id', 'name', 'dump'],
-                                               default=RuntimeError("can't add custom_path coll"))
-        cid, name, dump = res
-        coll = loads(dump)
-        coll.loads_up(cid, name)
+                                               def0=RuntimeError("can't add custom_path coll"))
+        elif len(res) > 1:
+            raise LookupError('found more than one')
+        coll = res[0]
         coll.source_path = source_path
         coll.try_run(self, self.tdb)
 
     # TODO: check is already add in sqlite, use a table collect history
     def run_enable(self):
-        self.run_conds({'start_mode': 1}, num=2)
+        self.colls.run_conds_objs({'start_mode': 1}, 2, self, self.tdb)
 
     def add_log(self, cid, t_min, t_max, items, commit=True):
         current_time = time.time()

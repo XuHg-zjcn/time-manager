@@ -4,9 +4,10 @@ from pickle import dumps
 from Qt_GUI.cluster import TxtClr
 from sqlite_api.argb import ARGB
 from sqlite_api.task_db import SqlTable
+from my_libs.dump_table import DumpTable
 
 
-class CollTable(SqlTable):
+class CollTable(DumpTable):
     name2dtype = [('name', 'TEXT'),   # name of collector
                   ('start_mode', 'INT'),  # -1 custom source path, 0 manual, 1 batch, 2 auto
                   ('dump', 'BLOB'),   # pickle.dumps bytes
@@ -17,14 +18,14 @@ class CollTable(SqlTable):
                   ('color', 'INT')]   # color for plot
     table_name = 'collectors'
 
-    def add_item(self, coll_obj, start_mode=1, color=0xffffff00, commit=True):
+    def add_item(self, obj, start_mode=1, color=0xffffff00, commit=True):
         if isinstance(color, int):
             pass
         elif isinstance(color, ARGB):
             color = color.ARGBi()
         else:
             raise TypeError('unsupported color type:', type(color))
-        self.insert([coll_obj.coll_name, start_mode, dumps(coll_obj),
+        self.insert([obj.name, start_mode, dumps(obj),
                      0, 0, 0, time.time(), color], commit)
 
     def find_txtclr(self, cid):

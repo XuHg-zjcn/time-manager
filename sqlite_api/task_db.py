@@ -52,7 +52,7 @@ class Plan(dict):
         return ret
 
     def get_collect_color(self, colls, default=0xffffff00,):
-        argb = colls.get_conds_onlyone({'id':self['rec_id']}, 'color', default)
+        argb = colls.get_conds_onlyone({'id': self['rec_id']}, 'color', default)
         return ARGB.from_argb(argb)
 
 
@@ -103,9 +103,6 @@ class TaskTable(SqlTable):
     name2dtype = [('rec_id', 'INT'), ('type_id', 'INT'), ('name', 'TEXT'), ('num', 'NUMERIC'),
                   ('sta', 'REAL'), ('end', 'REAL'), ('use', 'REAL'), ('state', 'INT')]
     table_name = 'tasks'
-
-    def add_aitem(self, plan, commit=None):
-        self.insert(plan, commit)
 
     def get_conds_plans(self, cond_dict):
         df = self.get_conds_dataframe(cond_dict)

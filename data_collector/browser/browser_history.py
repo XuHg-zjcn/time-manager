@@ -13,7 +13,7 @@ from sqlite_api.task_db import Plan
 class BrowserHistory(Collector):
     sql = None
     table_name = 'browser'
-    coll_name = 'browser history'
+    name = 'browser history'
     plan_name = 'browser visit'
 
     def __init__(self, source_path, plan_name=plan_name):
@@ -39,7 +39,7 @@ class BrowserHistory(Collector):
                     try:
                         plan = Plan(rec_id=self.cid, name=self.plan_name,
                                     sta=last_start, end=prev)
-                        tdb.add_aitem(plan)
+                        tdb.insert(plan)
                     except ValueError as e:
                         print(e)
                     else:
