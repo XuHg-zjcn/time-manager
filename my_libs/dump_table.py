@@ -1,7 +1,7 @@
 import time
 from pickle import loads, dumps
 
-from sqlite_api.sqltable import SqlTable
+from my_libs.sqltable import SqlTable
 
 
 class DumpTable(SqlTable):

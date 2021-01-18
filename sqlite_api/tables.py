@@ -2,7 +2,7 @@ import time
 from pickle import dumps
 
 from Qt_GUI.cluster import TxtClr
-from sqlite_api.argb import ARGB
+from my_libs.argb import ARGB
 from sqlite_api.task_db import SqlTable
 from my_libs.dump_table import DumpTable
 

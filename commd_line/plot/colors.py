@@ -1,4 +1,4 @@
-from sqlite_api.argb import ARGB
+from my_libs.argb import ARGB
 #  3x 4x  01234567
 names = 'krgybmcw'    # rgb cmykw
 nums = range(30, 38)  # 30, 31...37

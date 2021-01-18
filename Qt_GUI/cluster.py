@@ -5,7 +5,7 @@ from threading import Thread
 from PyQt5.QtGui import QPainterPath, QFont, QTransform, QColor
 from sklearn.cluster import MeanShift
 
-from sqlite_api.argb import ARGB
+from my_libs.argb import ARGB
 
 
 TextSymbol = namedtuple("TextSymbol", "label symbol scale")
