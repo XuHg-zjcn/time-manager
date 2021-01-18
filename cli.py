@@ -16,7 +16,6 @@ colls = CollTable(conn)
 cti = CLI_Inputer(output_type=OutType.timestamp)
 
 ac = auto_collect.Collectors(conn, tdb)
-ac.run_enable()
 
 
 def input_op():
