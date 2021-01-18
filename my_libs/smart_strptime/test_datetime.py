@@ -6,7 +6,6 @@ Created on Wed Nov 11 02:51:06 2020
 @author: xrj
 """
 
-import cProfile
 from basetest import BaseTest
 import sys
 sys.path.append("..")

@@ -7,8 +7,10 @@ Created on Sun Nov  1 13:32:38 2020
 """
 from pycallgraph import PyCallGraph
 from pycallgraph.output import GraphvizOutput
-from time_str import Time_str
 import os
+import sys
+sys.path.append('..')
+from smart_strptime import DateTime_str
 
 def get_new_fn():
     lsdir = os.listdir('graphs')
@@ -25,6 +27,6 @@ graphviz = GraphvizOutput()
 filename = get_new_fn() #graphs/x.png
 graphviz.output_file = filename
 with PyCallGraph(output=graphviz):
-    tstr = Time_str(test_str)
+    tstr = DateTime_str(test_str)
     tstr.process_check()
 print('graph save in {}'.format(filename))

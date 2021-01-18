@@ -1,2 +1,0 @@
-from smart_strptime.timedelta_str import TimeDelta_str
-from smart_strptime.datetime_str import DateTime_str

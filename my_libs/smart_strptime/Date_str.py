@@ -3,10 +3,10 @@ Created on Tue Nov 10 13:30:37 2020
 
 @author: xrj
 """
-from enum import Enum                                    # L0 built-in model
-from smart_strptime.my_str import Part, BigPart, My_str  # L2 my_str
-from smart_strptime.my_str import sType
-from smart_strptime.basetime import UType, UxType        # L3 basetime define
+from enum import Enum                      # L0 built-in model
+from .my_str import Part, BigPart, My_str  # L2 my_str
+from .my_str import sType
+from .basetime import UType, UxType        # L3 basetime define
 # level of the module is L4
 
 

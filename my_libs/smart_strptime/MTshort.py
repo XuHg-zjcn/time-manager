@@ -6,9 +6,8 @@ Created on Thu Nov 12 21:43:12 2020
 @author: xrj
 """
 from datetime import datetime
-import time
 import re
-from smart_strptime.basetime import UType as U
+from .basetime import UType as U
 
 
 class group:

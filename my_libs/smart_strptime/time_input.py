@@ -2,9 +2,8 @@ from numbers import Number
 from datetime import datetime, timedelta
 from enum import Enum
 import re
-import sys
-sys.path.append("..")
-import smart_strptime as sspt
+
+from . import DateTime_str, TimeDelta_str
 
 re_c = re.compile('^(n(ow)?)?([+-])?')
 
@@ -76,12 +75,12 @@ class Time_input:
         return ret
 
     def _get_timedelta(self):
-        tdstr = sspt.TimeDelta_str(self.in_str)
+        tdstr = TimeDelta_str(self.in_str)
         tdstr.process_check()
         return tdstr.as_timedelta()
 
     def _get_datetime(self):
-        dtstr = sspt.DateTime_str(self.in_str)
+        dtstr = DateTime_str(self.in_str)
         dtstr.process_check()
         dt_obj = dtstr.as_datetime()
         return dt_obj

@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 
 from my_libs.ivtree2 import IvTree2
-from smart_strptime.MTshort import MTshort
+from my_libs.smart_strptime.MTshort import MTshort
 from commd_line.init_config import init_config
 from my_libs.argb import ARGB
 from my_libs.sqltable import SqlTable

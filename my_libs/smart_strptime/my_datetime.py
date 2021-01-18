@@ -7,7 +7,7 @@ some code copy from datetime module
 from numbers import Number
 from datetime import date, datetime, timedelta
 from time import struct_time
-from .datetime_str import DateTime_str
+from . import DateTime_str
 from my_libs.ivtree2.iv2 import Iv2
 
 

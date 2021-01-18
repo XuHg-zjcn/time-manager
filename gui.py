@@ -16,7 +16,7 @@ from Qt_GUI.tabview import test
 from commd_line.init_config import init_config
 from sqlite_api.tables import CollTable
 from sqlite_api.task_db import TaskTable, Plan
-from smart_strptime.my_datetime import sTimeRange
+from my_libs.smart_strptime.my_datetime import sTimeRange
 
 conf = init_config()
 db_path = conf['init']['db_path']
