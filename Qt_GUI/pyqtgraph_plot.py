@@ -46,12 +46,17 @@ class dt2dplot:
         bottom.setTicks([[(x, m) for x, m in doys]])
         bottom.setStyle(tickLength=5)
 
+    def set_xy_full_range(self):
+        self.pw.setXRange(0, 366)
+        self.pw.setYRange(0, 24)
+
     def update_ivtree(self, ivtree, year):
         self.item.draw_ivtree(ivtree, year)
         self.set_xaixs(year)
         Cluster(ivtree, self.item.d11, self.scatter,
                 func_classify=lambda p: p['rec_id'],
                 func_textcolor=self.colls.find_txtclr)
+        self.set_xy_full_range()
 
     def mouse_move_slot(self, pos):
         if self.pw.sceneBoundingRect().contains(pos):
