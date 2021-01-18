@@ -6,7 +6,7 @@ force close network by time algh.
 CLI and GUI  (will add web UI)  
 plot date-time 2d in terminal UNICODE or pyqtgraph GUI.  
 sklearn cluster and show name in pyqtgraph plot  
-auto collect data from linux wtmp, chrome and firefox browser. (will add more)
+auto collect data from linux wtmp, chrome and firefox browser. (will add more)  
 show current running tasks on terminal  
 
 ## improve
@@ -89,3 +89,15 @@ sound, gnome-shell, other device, email, run command.
 | :----------- | :-----: | :-------: | :----------: | :------------- |
 | date-time 2d | unicode | pyqtgraph |              | image per year |
 | custom plot  |         | plt, pg   |              | simple use     |
+
+## project folders struct
+| name       | desc
+| :--------  | :------------
+| collectors | collector data from browsers, linux wtmp, cameras ...
+| analyzers  | analyzer data from collectors or other analyzers
+| recorders  | save data to disk, and auto sync
+| notify     | notify to user
+| UI         | CLI, GUI, Web...
+| programs   | can direct run
+| my_libs    | libraries, not include UI
+| user_data  |
