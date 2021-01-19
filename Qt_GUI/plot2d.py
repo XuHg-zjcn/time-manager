@@ -20,6 +20,7 @@ class DateTime2DItem(pg.GraphicsObject):
         return dt.days, dt.seconds + dt.microseconds/1e6
 
     def xy2time(self, x:int, y:float):
+        # TODO: TypeError: unsupported operand type(s) for +: 'NoneType' and 'datetime.timedelta'
         return self.d11 + timedelta(days=x, seconds=y)
 
     def _draw_rect(self, p, doy, begin, end, color):

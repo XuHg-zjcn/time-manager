@@ -4,10 +4,11 @@ from .plot2d import DateTime2DItem
 from .cluster import Cluster
 
 
-class dt2dplot:
+class DT2DPlot:
     def __init__(self, pw, colls):
         self.pw = pw
         self.colls = colls
+        self.click_callbacks = [print]
         self.item = DateTime2DItem(lambda p: p.get_collect_color(colls))
         self.scatter = pg.ScatterPlotItem()
         self.pw.addItem(self.item)
@@ -71,9 +72,5 @@ class dt2dplot:
             doy = int(point.x())
             sec = point.y()*3600
             dati = self.item.xy2time(doy, sec)
-            select = list(map(lambda x: x.data, self.item.ivtree[dati.timestamp()]))
-            print('found {} plans at {}'.format(len(select), dati.strftime('%Y-%m-%d %H:%M:%S')))
-            for p in select:
-                print(p)
-            print('')
-        pass
+            for cb in self.click_callbacks:
+                cb(dati)

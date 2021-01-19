@@ -11,7 +11,7 @@ from datetime import datetime
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from Qt_GUI.layout import Ui_MainWindow
-from Qt_GUI.pyqtgraph_plot import dt2dplot
+from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from Qt_GUI.tabview import test
 from commd_line.init_config import init_config
 from sqlite_api.tables import CollTable
@@ -21,8 +21,6 @@ from my_libs.smart_strptime.my_datetime import sTimeRange
 conf = init_config()
 db_path = conf['init']['db_path']
 conn = sqlite3.connect(db_path)
-tdb = TaskTable(conn)
-colls = CollTable(conn)
 
 
 class QTimeRange(sTimeRange):
@@ -53,16 +51,25 @@ class QTimeRange(sTimeRange):
         self.widget_end.setDateTime(self._end)
 
 
-class controller:
+class Controller:
+    """
+    select data and display.
+    """
+
     def __init__(self, ui):
         self.ui = ui
         self.start = QTimeRange(self.ui.min_sta, self.ui.max_sta)
         self.stop = QTimeRange(self.ui.min_end, self.ui.max_end)
-        self.ui.year.valueChanged.connect(lambda: self.change_year())
-        self.ui.update_view.clicked.connect(lambda: self.update_view())
         # set current year
         year = datetime.now().year
         self.ui.year.setValue(year)
+        self.tdb = TaskTable(conn)
+        self.colls = CollTable(conn)
+        self.dt2p = DT2DPlot(ui.PlotWidget, self.colls)
+        self.dt2p.click_callbacks = [self.update_table]
+        self.tdb.print_doings()
+        self.ui.year.valueChanged.connect(lambda: self.change_year())
+        self.ui.update_view.clicked.connect(lambda: self.update_view())
 
     def change_year(self):
         year = self.ui.year.value()
@@ -75,20 +82,25 @@ class controller:
         year = self.ui.year.value()
         start = self.start.timestamp_tuple()
         stop = self.stop.timestamp_tuple()
-        plans = tdb.get_conds_plans({'sta': start, 'end': stop})
+        plans = self.tdb.get_conds_plans({'sta': start, 'end': stop})
         ivtree = plans.get_ivtree(lambda p: Plan(p))
-        dt2p.update_ivtree(ivtree, year)
+        self.dt2p.update_ivtree(ivtree, year)
+
+    def update_table(self, t):
+        select = list(map(lambda x: x.data, self.dt2p.item.ivtree[t.timestamp()]))
+        print('found {} plans at {}'.format(len(select), t.strftime('%Y-%m-%d %H:%M:%S')))
+        for p in select:
+            print(p)
+        print('')
 
 
 if __name__ == '__main__':
-    tdb.print_doings()
     app = QApplication([])
     win = QMainWindow()
     win.setWindowTitle('time-manager Date-Time 2D Image')
     ui = Ui_MainWindow()
     ui.setupUi(win)
     test(ui.tableWidget)
-    dt2p = dt2dplot(ui.PlotWidget, colls)
     win.show()
-    controller(ui)
+    Controller(ui)
     sys.exit(app.exec_())
