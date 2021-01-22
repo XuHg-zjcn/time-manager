@@ -26,7 +26,14 @@ class DumpTable(SqlTable):
             if hasattr(obj, 'loads_up'):
                 vns = list(obj.loads_up.__code__.co_varnames)
                 vns.remove('self')
-                paras = self.get_conds_onlyone({'id': did}, vns)
+                if 'table' in vns:  # var name 'table' will into self
+                    table_index = vns.index('table')
+                    vns.remove('table')
+                else:
+                    table_index = None
+                paras = list(self.get_conds_onlyone({'id': did}, vns))
+                if table_index is not None:
+                    paras.insert(table_index, self)
                 obj.loads_up(*paras)
                 obj.did = did
             objs.append(obj)
@@ -49,9 +56,25 @@ class DumpTable(SqlTable):
             v_d = {}
         dump = dumps(obj)
         v_d['dump'] = dump
+        if 'name' not in v_d:
+            v_d['name'] = obj.__class__.__name__
+        if 'runs' not in v_d:
+            v_d['runs'] = 0
         self.insert(v_d, commit)
 
     def plus1(self, did):
         cur = self.conn.cursor()
         cur.execute('UPDATE {} SET runs=runs+1, t_last=? WHERE id=?'\
                     .format(self.table_name), (time.time(), did))
+
+    def auto_create(self, a_cls, name, commit=True):
+        objs = self.get_conds_objs({'name': name})
+        if len(objs) == 0:
+            obj = a_cls()
+            v_d = {'name': name, 'dump': dumps(obj), 'runs': 0}
+            self.insert(v_d, commit)
+            objs = self.get_conds_objs({'name': name})
+            assert len(objs) == 1
+        elif len(objs) > 1:
+            raise ValueError('found more than one items')
+        return objs[0]

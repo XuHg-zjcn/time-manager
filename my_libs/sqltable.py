@@ -1,7 +1,16 @@
 from collections import Iterable
+from numbers import Number
 
 import pandas as pd
 import numpy as np
+
+
+def number_np2py(x):
+    if isinstance(x, np.integer):
+        x = int(x)
+    elif isinstance(x, np.floating):
+        x = float(x)
+    return x
 
 
 class SqlTable:
@@ -55,11 +64,8 @@ class SqlTable:
             raise RuntimeWarning('commit each change is Enable')
         self.conn.commit()
 
-    def conds_sql(self, cond_dict, fields=None):
-        """
-        Get Plans matched conditions.
-        :para cond_dict: {'field1':value, 'field2':(min, max), 'field3':('<', value), ...}
-        """
+    @staticmethod
+    def _fields2sql(fields=None):
         if isinstance(fields, str):
             fields_str = fields  # only one field, return without tuple
         elif isinstance(fields, Iterable):
@@ -68,17 +74,18 @@ class SqlTable:
             fields_str = '*'
         else:
             raise ValueError('invalid fields')
-        sql = 'SELECT {} FROM {} WHERE '.format(fields_str, self.table_name)
+        return fields_str
+
+    @staticmethod
+    def _conds2where(cond_dict):
+        sql = ''
         paras = []
         assert len(cond_dict) > 0
         for key, value in cond_dict.items():
-            if isinstance(value, np.integer):
-                value = int(value)
-            elif isinstance(value, np.floating):
-                value = float(value)
+            value = number_np2py(value)
             if value is None:
                 continue
-            elif type(value) in [bool, int, float, str]:   # x == ?
+            elif type(value) in [bool, int, float, str]:  # x == ?
                 sql += '{}=? and '.format(key)
                 paras.append(value)
             elif isinstance(value, tuple) and len(value) == 2:  # a <= x < b
@@ -93,6 +100,16 @@ class SqlTable:
             else:
                 raise ValueError('invalid value type {}'.format(type(value)))
         sql = sql[:-5]  # remove end of str ' and '
+        return sql, paras
+
+    def conds_sql(self, cond_dict, fields=None):
+        """
+        Get Plans matched conditions.
+        :para cond_dict: {'field1':value, 'field2':(min, max), 'field3':('<', value), ...}
+        """
+        fields_str = self._fields2sql(fields)
+        where_str, paras = self._conds2where(cond_dict)
+        sql = 'SELECT {} FROM {} WHERE {}'.format(fields_str, self.table_name, where_str)
         return sql, paras
 
     def get_conds_execute(self, cond_dict, fields=None):
@@ -125,3 +142,26 @@ class SqlTable:
     def get_conds_dataframe(self, cond_dict, fields=None):
         sql, paras = self.conds_sql(cond_dict, fields)
         return pd.read_sql_query(sql, self.conn, params=paras)
+
+    def _update2sql(self, update_dict):
+        sqls = []
+        paras = []
+        for key, value in update_dict.items():
+            value = number_np2py(value)
+            if isinstance(value, Number) or \
+               isinstance(value, str) or \
+               isinstance(value, bytes):
+                sqls.append("{}=?".format(key))
+                paras.append(value)
+            elif isinstance(value, tuple) and len(value) == 2:
+                if value[0] in ['+', '-', '*', '/']:
+                    sqls.append("{}={}{}?".format(key, key, value[0]))
+                    paras.append(value[1])
+        return ', '.join(sqls), paras
+
+    def update_conds(self, cond_dict, update_dict):
+        cur = self.conn.cursor()
+        where_str, paras1 = self._conds2where(cond_dict)
+        set_str, paras2 = self._update2sql(update_dict)
+        sql = 'UPDATE {} SET {} WHERE {}'.format(self.table_name, set_str, where_str)
+        cur.execute(sql, paras1+paras2)
