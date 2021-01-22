@@ -1,6 +1,7 @@
 #!/bin/python
 import os
 import configparser
+import sqlite3
 
 finds = map(lambda x: '../'*x + 'time-manager', range(4))
 found = False
@@ -42,10 +43,9 @@ def create():
     conf.write(open(cfg_path, 'w'))
 
 
-def init_config():
-    if os.path.exists(cfg_path):
-        conf.read(cfg_path)
-    else:
-        create()
-    os.chdir(conf['init']['dir'])
-    return conf
+if os.path.exists(cfg_path):
+    conf.read(cfg_path)
+else:
+    create()
+os.chdir(conf['init']['dir'])
+conn = sqlite3.connect(conf['init']['db_path'])

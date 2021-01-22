@@ -5,11 +5,10 @@ import pandas as pd
 
 from my_libs.ivtree2 import IvTree2
 from my_libs.smart_strptime.MTshort import MTshort
-from commd_line.init_config import init_config
+from commd_line.init_config import conf
 from my_libs.argb import ARGB
 from my_libs.sqltable import SqlTable
 
-conf = init_config()
 mts1 = MTshort('? Y-? m-? d % H:%0M:%0S')
 mts2 = MTshort('? m-? d % H:%0M:%0S')
 

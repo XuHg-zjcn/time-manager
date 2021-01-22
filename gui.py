@@ -6,21 +6,15 @@ Created on Mon Dec  7 13:53:35 2020
 @author: xrj
 """
 import sys
-import sqlite3
 from datetime import datetime
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from Qt_GUI.layout import Ui_MainWindow
 from Qt_GUI.pyqtgraph_plot import DT2DPlot
-from Qt_GUI.tabview import test
-from commd_line.init_config import init_config
+from commd_line.init_config import conn
 from sqlite_api.tables import CollTable
 from sqlite_api.task_db import TaskTable, Plan
 from my_libs.smart_strptime.my_datetime import sTimeRange
-
-conf = init_config()
-db_path = conf['init']['db_path']
-conn = sqlite3.connect(db_path)
 
 
 class QTimeRange(sTimeRange):
