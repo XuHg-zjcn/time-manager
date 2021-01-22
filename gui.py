@@ -10,10 +10,11 @@ from datetime import datetime
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from Qt_GUI.layout import Ui_MainWindow
+from Qt_GUI.pandasModel import PandasModel
 from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from commd_line.init_config import conn
 from sqlite_api.tables import CollTable
-from sqlite_api.task_db import TaskTable, Plan
+from sqlite_api.task_db import TaskTable, Plan, Plans
 from my_libs.smart_strptime.my_datetime import sTimeRange
 
 
@@ -57,6 +58,7 @@ class Controller:
         # set current year
         year = datetime.now().year
         self.ui.year.setValue(year)
+        self.table = ui.tableView
         self.tdb = TaskTable(conn)
         self.colls = CollTable(conn)
         self.dt2p = DT2DPlot(ui.PlotWidget, self.colls)
@@ -86,6 +88,9 @@ class Controller:
         for p in select:
             print(p)
         print('')
+        plans = Plans(select)
+        model = PandasModel(plans, 'tasks')
+        self.table.setModel(model)
 
 
 if __name__ == '__main__':
@@ -94,7 +99,6 @@ if __name__ == '__main__':
     win.setWindowTitle('time-manager Date-Time 2D Image')
     ui = Ui_MainWindow()
     ui.setupUi(win)
-    test(ui.tableWidget)
     win.show()
     Controller(ui)
     sys.exit(app.exec_())
