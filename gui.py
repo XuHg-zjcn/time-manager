@@ -88,7 +88,7 @@ class Controller:
         for p in select:
             print(p)
         print('')
-        plans = Plans(select)
+        plans = Plans(select).str_datetime()
         model = PandasModel(plans, 'tasks')
         self.table.setModel(model)
 

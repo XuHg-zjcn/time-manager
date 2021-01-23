@@ -97,6 +97,14 @@ class Plans(pd.DataFrame):
                 ivtree[sta:end] = data_func(plan)
         return ivtree
 
+    def str_datetime(self):
+        if len(self) == 0:
+            return self
+        df2 = self.copy()
+        df2['sta'] = pd.to_datetime(df2['sta'], unit='s')
+        df2['end'] = pd.to_datetime(df2['end'], unit='s')
+        return df2
+
 
 class TaskTable(SqlTable):
     name2dtype = [('rec_id', 'INT'), ('type_id', 'INT'), ('name', 'TEXT'), ('num', 'NUMERIC'),
