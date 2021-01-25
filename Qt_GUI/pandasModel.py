@@ -1,19 +1,13 @@
 # most copy from https://blog.csdn.net/weixin_40530134/article/details/95031370
 
-import sys
 from enum import Enum
 from pickle import dumps
 
-import pandas as pd
-from PyQt5.QtWidgets import QApplication, QTableView
 from PyQt5.QtCore import QAbstractTableModel, Qt
 
 from my_libs.dump_table import DumpTable
 from commd_line.init_config import conn
 
-df = pd.DataFrame({'a': ['Mary', 'Jim', 'John'],
-                   'b': [100, 200, 300],
-                   'c': ['a', 'b', 'c']})
 
 class ShowStat(Enum):
     No = 0
@@ -115,12 +109,3 @@ def pandas_table(tableview, dataframe, name):
     headers = tableview.horizontalHeader()
     i2name = list(data2.columns)
     headers.sectionResized.connect(lambda i,_,w: column_set.set_wide(i2name[i], w))
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    view = QTableView()
-    pandas_table(view, df, 'all')
-    view.resize(800, 600)
-    view.show()
-    sys.exit(app.exec_())
