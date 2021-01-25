@@ -73,6 +73,9 @@ class Runn(Base):
             self.inp2.put(brk)
         self.join()
 
+    def __del__(self):
+        self.stop()
+
 
 class ThrRunn(Runn, Thread):
     def __init__(self, inps, callbacks=None):
