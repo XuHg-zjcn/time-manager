@@ -3,12 +3,12 @@
 import os
 import time
 import subprocess as sp
+
 from ffmpy3 import FFmpeg
+
 from .record import Record
 from my_libs.my_process import ThrRunn
-from commd_line.init_config import init_config
-
-conf = init_config()
+from commd_line.init_config import conf
 
 
 class VideoRecoder(ThrRunn, Record):

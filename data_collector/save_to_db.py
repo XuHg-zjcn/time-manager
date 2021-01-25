@@ -1,12 +1,7 @@
 #!/bin/python
-import sqlite3
 from .wtmp import wtmp_iter
 from sqlite_api.task_db import TaskTable, Plan, PlanTime
-from commd_line.init_config import init_config
-
-conf = init_config()
-db_path = conf['init']['db_path']
-conn = sqlite3.connect(db_path)
+from commd_line.init_config import conn
 
 tdb = TaskTable(conn, commit_each=False)
 for i in wtmp_iter():

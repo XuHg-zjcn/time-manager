@@ -1,11 +1,10 @@
 import os
+
 import wave
 import numpy as np
 from playsound import playsound
-from commd_line.init_config import init_config
-from my_libs.my_process import ThrRunn
 
-conf = init_config()
+from my_libs.my_process import ThrRunn
 
 pi = np.pi
 pi2 = pi*2

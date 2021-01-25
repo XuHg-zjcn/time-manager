@@ -1,9 +1,8 @@
 import sqlite3
+
 from my_libs.my_process import ThrRunn
 from .record import Record
-from commd_line.init_config import init_config
-
-conf = init_config()
+from commd_line.init_config import conf
 
 
 class FaceDB(ThrRunn, Record):

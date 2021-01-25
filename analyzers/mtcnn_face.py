@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 import os
 import time
+
 import cv2
 from mtcnn import MTCNN
-from commd_line.init_config import init_config
+
+from commd_line.init_config import conf
 from .base_checker import Checker
 from .face import Face
 from my_libs.my_process import ThrRunn
-
-conf = init_config()
 
 
 class MTCNNFace(ThrRunn, Checker):

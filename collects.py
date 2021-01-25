@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import signal
-from commd_line.init_config import init_config
+
+from commd_line.init_config import conf
 from analyzers.mtcnn_face import MTCNNFace
 
 
@@ -18,7 +19,6 @@ signal.signal(signal.SIGINT, stop)
 
 
 if __name__ == '__main__':
-    conf = init_config()
     db_path = conf['init']['db_path']
     mtc = MTCNNFace(db_path=db_path)
     mtc.start()

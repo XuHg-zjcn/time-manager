@@ -1,10 +1,8 @@
 import time
 import math
-from commd_line.init_config import init_config
+from commd_line.init_config import conf
 from .base_checker import Checker
 from notifys.gen_sound import eye_screen
-
-conf = init_config()
 
 
 class AreaChecker(Checker):
