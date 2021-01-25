@@ -1,6 +1,7 @@
 # most copy from https://blog.csdn.net/weixin_40530134/article/details/95031370
 
 import sys
+from enum import Enum
 from pickle import dumps
 
 import pandas as pd
@@ -13,6 +14,22 @@ from commd_line.init_config import conn
 df = pd.DataFrame({'a': ['Mary', 'Jim', 'John'],
                    'b': [100, 200, 300],
                    'c': ['a', 'b', 'c']})
+
+class ShowStat(Enum):
+    No = 0
+    Default = 1
+    Yes = 2
+
+
+class TableColumn:
+    def __init__(self, is_show: ShowStat, wide: int):
+        self.is_show = is_show
+        self.wide = wide
+
+    def __repr__(self):
+        return "TableColumn({}, {})".format(self.is_show, self.wide)
+
+    __str__ = __repr__
 
 
 class ColumnSet(dict):
@@ -27,40 +44,45 @@ class ColumnSet(dict):
         self.table = table
 
     def is_show(self, name):
-        v = self[name]
-        if v == 0:
+        v = self[name].is_show
+        if v == ShowStat.Default:
             return self.default
         else:
-            return v > 0
+            return v == ShowStat.Yes
 
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
-        table = self.table
-        delattr(self, 'table')
-        table.update_conds({'id': self.fid}, {'dump': dumps(self)})
-        self.table = table
+        if hasattr(self, 'table'):  # don't run in pickle.loads
+            table = self.table      # else raise AttributeError
+            delattr(self, 'table')
+            table.update_conds({'id': self.fid}, {'dump': dumps(self)})
+            self.table = table
 
     def __getitem__(self, key):
         if key not in self:
-            self[key] = 0
+            self[key] = TableColumn(ShowStat.Default, 80)
         return super().__getitem__(key)
+
+    def set_show(self, name, is_show):
+        wide = self[name].wide
+        self[name] = TableColumn(is_show, wide)
+
+    def set_wide(self, name, wide):
+        is_show = self[name].is_show
+        self[name] = TableColumn(is_show, wide)
 
 
 class ColumnSetTable(DumpTable):
     table_name = 'column_set_table'
 
 
-column_table = ColumnSetTable(conn)
+column_table = ColumnSetTable(conn, commit_each=True)
 
 
 class PandasModel(QAbstractTableModel):
-    def __init__(self, data, name):
+    def __init__(self, data):
         QAbstractTableModel.__init__(self)
-        self.column_set = column_table.auto_create(ColumnSet, name)
-        self._data = data.copy()
-        for col in data.columns:
-            if not self.column_set.is_show(col):
-                self._data.pop(col)
+        self._data = data
 
     def rowCount(self, parent=None, *args, **kwargs):
         return self._data.shape[0]
@@ -80,11 +102,25 @@ class PandasModel(QAbstractTableModel):
         return None
 
 
+def pandas_table(tableview, dataframe, name):
+    column_set = column_table.auto_create(ColumnSet, name)
+    data2 = dataframe.copy()
+    for col_name in data2.columns:
+        if not column_set.is_show(col_name):
+            data2.pop(col_name)
+    model = PandasModel(data2)
+    tableview.setModel(model)
+    for i, col_name in enumerate(data2.columns):
+        tableview.setColumnWidth(i, column_set[col_name].wide)
+    headers = tableview.horizontalHeader()
+    i2name = list(data2.columns)
+    headers.sectionResized.connect(lambda i,_,w: column_set.set_wide(i2name[i], w))
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    model = PandasModel(df, 'all')
     view = QTableView()
-    view.setModel(model)
+    pandas_table(view, df, 'all')
     view.resize(800, 600)
     view.show()
     sys.exit(app.exec_())
