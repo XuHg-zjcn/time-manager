@@ -60,6 +60,10 @@ class SqlTable:
             self.conn.commit()
 
     def commit(self):
+        """
+        commit change to sqlite3 database.
+        don't use in class method, please use 'self.conn.commit()'
+        """
         if self.commit_each:
             raise RuntimeWarning('commit each change is Enable')
         self.conn.commit()
@@ -159,9 +163,18 @@ class SqlTable:
                     paras.append(value[1])
         return ', '.join(sqls), paras
 
-    def update_conds(self, cond_dict, update_dict):
+    def update_conds(self, cond_dict, update_dict, commit=None):
         cur = self.conn.cursor()
         where_str, paras1 = self._conds2where(cond_dict)
         set_str, paras2 = self._update2sql(update_dict)
         sql = 'UPDATE {} SET {} WHERE {}'.format(self.table_name, set_str, where_str)
-        cur.execute(sql, paras1+paras2)
+        cur.execute(sql, paras2+paras1)
+        if self.commit_each or commit:
+            self.conn.commit()
+
+    def __del__(self):
+        """
+        auto commit when del SqlTable obj.
+        """
+        if not self.commit_each:
+            self.conn.commit()
