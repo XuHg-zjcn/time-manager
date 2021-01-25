@@ -13,7 +13,7 @@ from my_libs.my_process import ThrRunn
 
 
 class MTCNNFace(ThrRunn, Checker):
-    def __init__(self, inps, callbacks=None, div=int(conf['camera']['div']), db_path=None):
+    def __init__(self, inps, callbacks=None, div=int(conf['camera']['div'])):
         # don't use CUDA, start is slow, run speed nearly CPU.
         ThrRunn.__init__(self, inps, callbacks)
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"

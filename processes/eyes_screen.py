@@ -23,7 +23,8 @@ fdb = FaceDB('queue')
 mtc = MTCNNFace('queue', (fdb.inp2.put, ac.once))
 cam = Camera(0.5, (rec.inp2.put, mtc.inp2.put))
 
-if __name__ == '__main__':
+
+def run():
     cam.start()
     rec.start()
     mtc.start()
