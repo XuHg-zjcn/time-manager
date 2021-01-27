@@ -1,8 +1,6 @@
-import time
 import math
 from commd_line.init_config import conf
 from .base_checker import Checker
-from notifys.gen_sound import eye_screen
 
 
 class AreaChecker(Checker):
@@ -11,9 +9,7 @@ class AreaChecker(Checker):
         self.face_cm2 = float(conf['camera']['face_cm2'])
         self.face_dis_cm = float(conf['camera']['face_dis_cm'])
         self.n_warn = 0
-        self.sound = eye_screen('sem')
-        self.sound.start()
-        Checker.__init__(self)
+        super().__init__()
 
     def check_one(self, face):
         box = face.res_d['box']
@@ -22,14 +18,8 @@ class AreaChecker(Checker):
         a = math.sqrt(shape[0]**2 + shape[1]**2)/43.27*self.f35mm
         b = math.sqrt(self.face_cm2)/math.sqrt(area_pix)
         distance = a*b
-        if distance < self.face_dis_cm:
-            self.n_warn += 1
-            print('warning {:d}th at {:s}, face distance={:4.1f}cm, mind your eyes keep away from screen'
-                  .format(self.n_warn, time.strftime('%H:%M:%S'), distance))
-            self.sound.inp2.release()
-            return True
-        return False
+        return distance
 
     def once(self, obj):
-        for face in obj:
-            self.check_one(face)
+        if len(obj) > 0:
+            return min(map(lambda x: self.check_one(x), obj))
