@@ -4,6 +4,7 @@ from sqlite_api.task_db import TaskTable, Plan, PlanTime
 from commd_line.init_config import conn
 
 tdb = TaskTable(conn, commit_each=False)
+# TODO: save collector obj in CollTable
 for i in wtmp_iter():
     print(i)
     try:

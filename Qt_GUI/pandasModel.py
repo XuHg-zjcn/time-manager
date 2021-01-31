@@ -97,15 +97,20 @@ class PandasModel(QAbstractTableModel):
 
 
 def pandas_table(tableview, dataframe, name):
+    # filter columns
     column_set = column_table.auto_create(ColumnSet, name)
     data2 = dataframe.copy()
     for col_name in data2.columns:
         if not column_set.is_show(col_name):
             data2.pop(col_name)
+    # PandasModel
     model = PandasModel(data2)
     tableview.setModel(model)
+    # setColumnWidth
     for i, col_name in enumerate(data2.columns):
         tableview.setColumnWidth(i, column_set[col_name].wide)
+    # connect signals
+    tableview.activated.connect(print)  # TODO: edit in TabView, write to database.
     headers = tableview.horizontalHeader()
     i2name = list(data2.columns)
     headers.sectionResized.connect(lambda i,_,w: column_set.set_wide(i2name[i], w))
