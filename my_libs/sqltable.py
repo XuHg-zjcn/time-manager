@@ -82,9 +82,14 @@ class SqlTable:
 
     @staticmethod
     def _conds2where(cond_dict):
-        sql = ''
+        """
+        if cond_dict is empty, return empty string
+        not empty dict, return string include 'WHERE'
+        """
+        if not cond_dict:
+            return ''
+        sql = 'WHERE '
         paras = []
-        assert len(cond_dict) > 0
         for key, value in cond_dict.items():
             value = number_np2py(value)
             if value is None:
@@ -106,17 +111,17 @@ class SqlTable:
         sql = sql[:-5]  # remove end of str ' and '
         return sql, paras
 
-    def conds_sql(self, cond_dict, fields=None):
+    def conds_sql(self, cond_dict=None, fields=None):
         """
         Get Plans matched conditions.
         :para cond_dict: {'field1':value, 'field2':(min, max), 'field3':('<', value), ...}
         """
         fields_str = self._fields2sql(fields)
         where_str, paras = self._conds2where(cond_dict)
-        sql = 'SELECT {} FROM {} WHERE {}'.format(fields_str, self.table_name, where_str)
+        sql = 'SELECT {} FROM {} {}'.format(fields_str, self.table_name, where_str)
         return sql, paras
 
-    def get_conds_execute(self, cond_dict, fields=None):
+    def get_conds_execute(self, cond_dict=None, fields=None):
         cur = self.conn.cursor()
         sql, paras = self.conds_sql(cond_dict, fields)
         res = cur.execute(sql, paras)
@@ -143,7 +148,7 @@ class SqlTable:
         else:
             return raise_return(def2)
 
-    def get_conds_dataframe(self, cond_dict, fields=None):
+    def get_conds_dataframe(self, cond_dict=None, fields=None):
         sql, paras = self.conds_sql(cond_dict, fields)
         return pd.read_sql_query(sql, self.conn, params=paras)
 
@@ -167,8 +172,16 @@ class SqlTable:
         cur = self.conn.cursor()
         where_str, paras1 = self._conds2where(cond_dict)
         set_str, paras2 = self._update2sql(update_dict)
-        sql = 'UPDATE {} SET {} WHERE {}'.format(self.table_name, set_str, where_str)
+        sql = 'UPDATE {} SET {} {}'.format(self.table_name, set_str, where_str)
         cur.execute(sql, paras2+paras1)
+        if self.commit_each or commit:
+            self.conn.commit()
+
+    def delete(self, cond_dict, commit=None):
+        cur = self.conn.cursor()
+        where_str, paras = self._conds2where(cond_dict)
+        sql = 'DELETE FROM {} {}'.format(self.table_name, where_str)
+        cur.execute(sql, paras)
         if self.commit_each or commit:
             self.conn.commit()
 
