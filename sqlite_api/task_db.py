@@ -1,5 +1,6 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import time
 from datetime import datetime
 import pandas as pd
 
@@ -80,7 +81,11 @@ class Plans(pd.DataFrame):
         ret += '{:-^80}\n'.format('{} plans found'.format(len(self)))
         return ret
 
-    __str__ = __repr__
+    def __str__(self):
+        if len(self) == 0:
+            return ''
+        else:
+            return self.__repr__()
 
     def get_ivtree(self, data_func):
         """
@@ -118,7 +123,13 @@ class TaskTable(SqlTable):
     def print_doings(self):
         plans = self.get_conds_plans({'state': 1})
         print('{} plans doing'.format(len(plans)))
-        if len(plans) != 0:
-            print(plans)
-        else:
-            print('')
+        print('')
+
+    def print_need(self):
+        now = time.time()
+        need_start = self.get_conds_plans({'state': 0, 'sta': ('<=', now)})
+        need_stop = self.get_conds_plans({'state': 1, 'end': ('<=', now)})
+        print('need start:')
+        print(need_start)
+        print('need stop:')
+        print(need_stop)

@@ -45,6 +45,7 @@ def list_tasks():
 
 if __name__ == '__main__':
     tdb.print_doings()
+    tdb.print_need()
     op = input_op()
     if op == '1':
         add_task()

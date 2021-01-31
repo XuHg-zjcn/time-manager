@@ -64,6 +64,7 @@ class Controller:
         self.dt2p = DT2DPlot(ui.PlotWidget, self.colls)
         self.dt2p.click_callbacks = [self.update_table]
         self.tdb.print_doings()
+        self.tdb.print_need()
         self.ui.year.valueChanged.connect(lambda: self.change_year())
         self.ui.update_view.clicked.connect(lambda: self.update_view())
 
