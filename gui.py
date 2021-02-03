@@ -14,7 +14,7 @@ from Qt_GUI.pandasModel import pandas_table
 from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from commd_line.init_config import conn
 from sqlite_api.tables import CollTable
-from sqlite_api.task_db import TaskTable, Plan, Plans
+from sqlite_api.task_db import TaskTable, Plan, Plans, ColumnSetTasks
 from my_libs.smart_strptime.my_datetime import sTimeRange
 
 
@@ -90,7 +90,7 @@ class Controller:
             print(p)
         print('')
         plans = Plans(select).str_datetime()
-        pandas_table(self.table, plans, 'tasks')
+        pandas_table(self.table, plans, 'tasks', column_set_cls=ColumnSetTasks)
 
 
 if __name__ == '__main__':

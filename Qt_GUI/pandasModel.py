@@ -4,6 +4,7 @@ from enum import Enum
 from pickle import dumps
 
 from PyQt5.QtCore import QAbstractTableModel, Qt
+from PyQt5.QtWidgets import QSpinBox
 
 from my_libs.dump_table import DumpTable
 from commd_line.init_config import conn
@@ -25,9 +26,26 @@ class TableColumn:
 
     __str__ = __repr__
 
+    def on_build(self, value):
+        pass
+
+    def on_active(self, q_model_index):
+        pass
+
+    def on_entered(self, q_model_index):
+        pass
+
+
+class TableColumnSpinBox(TableColumn):
+    def on_build(self, value):
+        spb = QSpinBox()
+        spb.setValue(int(value))
+        return spb
+
 
 class ColumnSet(dict):
     def __init__(self, default=True, *args, **kwargs):
+        self.i2name = None
         self.default = default
         self.fid = None
         self.table = None
@@ -48,6 +66,8 @@ class ColumnSet(dict):
         super().__setitem__(key, value)
         if hasattr(self, 'table'):  # don't run in pickle.loads
             table = self.table      # else raise AttributeError
+            if table is None:
+                return
             delattr(self, 'table')
             table.update_conds({'id': self.fid}, {'dump': dumps(self)})
             self.table = table
@@ -64,6 +84,33 @@ class ColumnSet(dict):
     def set_wide(self, name, wide):
         is_show = self[name].is_show
         self[name] = TableColumn(is_show, wide)
+
+    def on_builds(self, tableview):
+        model = tableview.model()
+        self.i2name = list(map(model.headerData, range(model.columnCount())))
+        for i in range(model.columnCount()):
+            col_name = model.headerData(i)
+            for j in range(model.rowCount()):
+                qmi = model.index(j, i)
+                data = model.data(qmi)
+                widget = self[col_name].on_build(data)
+                if widget is not None:
+                    tableview.setIndexWidget(qmi, widget)
+
+    def set_wides(self, tableview):
+        if self.i2name is None:
+            raise RuntimeError('please call `on_builds` before `set_wides`')
+        for i, col_name in enumerate(self.i2name):
+            tableview.setColumnWidth(i, self[col_name].wide)
+
+    def actived_slot(self, q_model_index):
+        print(q_model_index)
+
+    def entered_slot(self, q_model_index):
+        print(q_model_index)
+
+    def resized_slot(self, i, _, w):
+        self.set_wide(self.i2name[i], w)
 
 
 class ColumnSetTable(DumpTable):
@@ -90,15 +137,15 @@ class PandasModel(QAbstractTableModel):
                 return str(self._data.iloc[index.row(), index.column()])
         return None
 
-    def headerData(self, col, orientation, role=None):
+    def headerData(self, col, orientation=Qt.Horizontal, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return self._data.columns[col]
         return None
 
 
-def pandas_table(tableview, dataframe, name):
+def pandas_table(tableview, dataframe, name, column_set_cls=ColumnSet):
     # filter columns
-    column_set = column_table.auto_create(ColumnSet, name)
+    column_set = column_table.auto_create(column_set_cls, name)
     data2 = dataframe.copy()
     for col_name in data2.columns:
         if not column_set.is_show(col_name):
@@ -106,11 +153,9 @@ def pandas_table(tableview, dataframe, name):
     # PandasModel
     model = PandasModel(data2)
     tableview.setModel(model)
-    # setColumnWidth
-    for i, col_name in enumerate(data2.columns):
-        tableview.setColumnWidth(i, column_set[col_name].wide)
-    # connect signals
-    tableview.activated.connect(print)  # TODO: edit in TabView, write to database.
+    column_set.on_builds(tableview)
+    column_set.set_wides(tableview)
+    # connect signals, TODO: edit in TabView, write to database.
+    tableview.activated.connect(lambda x: column_set.actived_slot(x))
     headers = tableview.horizontalHeader()
-    i2name = list(data2.columns)
-    headers.sectionResized.connect(lambda i,_,w: column_set.set_wide(i2name[i], w))
+    headers.sectionResized.connect(column_set.resized_slot)

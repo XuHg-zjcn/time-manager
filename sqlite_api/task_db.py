@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 import pandas as pd
 
+from Qt_GUI.pandasModel import ColumnSet, TableColumnSpinBox, ShowStat
 from my_libs.ivtree2 import IvTree2
 from my_libs.smart_strptime.MTshort import MTshort
 from commd_line.init_config import conf
@@ -109,6 +110,12 @@ class Plans(pd.DataFrame):
         df2['sta'] = pd.to_datetime(df2['sta'], unit='s')
         df2['end'] = pd.to_datetime(df2['end'], unit='s')
         return df2
+
+
+class ColumnSetTasks(ColumnSet):
+    def __init__(self):
+        super().__init__()
+        self['num'] = TableColumnSpinBox(ShowStat.Yes, 100)
 
 
 class TaskTable(SqlTable):
