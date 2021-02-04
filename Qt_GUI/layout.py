@@ -98,7 +98,7 @@ class Ui_MainWindow(object):
         self.comboBox = QtWidgets.QComboBox(self.layoutWidget)
         self.comboBox.setObjectName("comboBox")
         self.gridLayout.addWidget(self.comboBox, 2, 3, 1, 1)
-        self.tableView = QtWidgets.QTableView(self.centralwidget)
+        self.tableView = iTableView(self.centralwidget)
         self.tableView.setGeometry(QtCore.QRect(755, 1, 661, 581))
         self.tableView.setObjectName("tableView")
         MainWindow.setCentralWidget(self.centralwidget)
@@ -130,4 +130,5 @@ class Ui_MainWindow(object):
         self.label_6.setText(_translate("MainWindow", "时长"))
         self.label_4.setText(_translate("MainWindow", "最小"))
         self.max_end.setDisplayFormat(_translate("MainWindow", "yyyy/M/d hh:mm"))
+from Qt_GUI.pandasModel import iTableView
 from pyqtgraph import PlotWidget
