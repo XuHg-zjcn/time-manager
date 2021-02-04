@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QSpinBox, QWidget, QTableView
 
 from my_libs.dump_table import DumpTable
 from commd_line.init_config import conn
+from my_libs.sqltable import SqlTable
 
 
 class ShowStat(Enum):
@@ -129,11 +130,16 @@ class iTableView(QTableView):
         self.current_edit_index = None
         self.current_edit_widget = None
         self.column_set = None
+        self.sql_table = None
+        self.dataframe = None
 
-    def setDataFrame(self, dataframe, name, column_set_cls=ColumnSet):
+    def setDataFrame(self, dataframe, name: str,
+                     column_set_cls=ColumnSet, sql_table :SqlTable=None):
         # filter columns
         column_set = column_table.auto_create(column_set_cls, name)
         self.column_set = column_set
+        self.sql_table = sql_table
+        self.dataframe = dataframe
         data2 = dataframe.copy()
         for col_name in data2.columns:
             if not column_set.is_show(col_name):
@@ -200,7 +206,8 @@ class iTableView(QTableView):
             col_old = cei.column()
             name_old = model.headerData(col_old, Qt.Horizontal, role=Qt.DisplayRole)
             value = self.column_set[name_old].on_edit_finish(qmi, cew)
-            print('edit_finish', name_old, value)
+            if self.sql_table:
+                self.update_sql_table(cei.row(), name_old, value)
             self.setIndexWidget(cei, None)
             self.current_edit_widget = None
             self.current_edit_index = None
@@ -210,3 +217,11 @@ class iTableView(QTableView):
             return
         col_name = self.model().headerData(i, Qt.Horizontal, role=Qt.DisplayRole)
         self.column_set.set_wide(col_name, w)
+
+    def update_sql_table(self, row: int, col_name: str, value):
+        if 'id' not in self.dataframe or not self.sql_table:
+            return
+        self.dataframe[col_name][row] = value
+        xid = self.dataframe['id'][row]
+        self.update()
+        self.sql_table.update_conds({'id': xid}, {col_name: value})

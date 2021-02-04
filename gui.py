@@ -89,7 +89,7 @@ class Controller:
             print(p)
         print('')
         plans = Plans(select).str_datetime()
-        self.table.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks)
+        self.table.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks, sql_table=self.tdb)
 
 
 if __name__ == '__main__':
