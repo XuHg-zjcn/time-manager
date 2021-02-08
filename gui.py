@@ -8,7 +8,9 @@ Created on Mon Dec  7 13:53:35 2020
 import sys
 from datetime import datetime
 
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from Qt_GUI.add_task_gen import Ui_Dialog
+
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from Qt_GUI.layout import Ui_MainWindow
 from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from commd_line.init_config import conn
@@ -96,8 +98,13 @@ if __name__ == '__main__':
     app = QApplication([])
     win = QMainWindow()
     win.setWindowTitle('time-manager Date-Time 2D Image')
+    dia = QDialog()
+    dia.setWindowTitle('add task gen')
     ui = Ui_MainWindow()
     ui.setupUi(win)
+    ud = Ui_Dialog()
+    ud.setupUi(dia)
     win.show()
     Controller(ui)
+    ui.add_task_gen.clicked.connect(dia.show)
     sys.exit(app.exec_())

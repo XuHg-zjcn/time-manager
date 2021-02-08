@@ -101,6 +101,9 @@ class Ui_MainWindow(object):
         self.tableView = iTableView(self.centralwidget)
         self.tableView.setGeometry(QtCore.QRect(755, 1, 661, 581))
         self.tableView.setObjectName("tableView")
+        self.add_task_gen = QtWidgets.QPushButton(self.centralwidget)
+        self.add_task_gen.setGeometry(QtCore.QRect(520, 420, 101, 30))
+        self.add_task_gen.setObjectName("add_task_gen")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1417, 34))
@@ -130,5 +133,6 @@ class Ui_MainWindow(object):
         self.label_6.setText(_translate("MainWindow", "时长"))
         self.label_4.setText(_translate("MainWindow", "最小"))
         self.max_end.setDisplayFormat(_translate("MainWindow", "yyyy/M/d hh:mm"))
+        self.add_task_gen.setText(_translate("MainWindow", "添加生成器"))
 from Qt_GUI.pandasModel import iTableView
 from pyqtgraph import PlotWidget

@@ -238,6 +238,19 @@
      </rect>
     </property>
    </widget>
+   <widget class="QPushButton" name="add_task_gen">
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>420</y>
+      <width>101</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>添加生成器</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
