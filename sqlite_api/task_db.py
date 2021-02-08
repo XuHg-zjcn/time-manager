@@ -56,6 +56,14 @@ class Plan(dict):
         argb = colls.get_conds_onlyone({'id': self['rec_id']}, 'color', default)
         return ARGB.from_argb(argb)
 
+    def __getitem__(self, item):
+        if item in self:
+            return super().__getitem__(item)
+        else:
+            # used for format, don't use `None`, else raise TypeError below:
+            # TypeError: unsupported format string passed to NoneType.__format__
+            return 'None'
+
 
 class Plans(pd.DataFrame):
     str_head = '   id | typ| name{}|{}start time{}|{}end time{}|stat\n'\
