@@ -77,4 +77,6 @@ class DumpTable(SqlTable):
             assert len(objs) == 1
         elif len(objs) > 1:
             raise ValueError('found more than one items')
-        return objs[0]
+        obj = objs[0]
+        assert isinstance(obj, a_cls), "get obj isn't instance of a_cls"
+        return obj
