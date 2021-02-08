@@ -49,7 +49,7 @@ class DumpTable(SqlTable):
             getattr(obj, f_name)(*paras)
             self.plus1(obj.did)
 
-    def add_item(self, obj, commit=True):
+    def add_obj(self, obj, commit=True):
         if hasattr(obj, 'dumps_dn'):
             v_d = obj.dumps_dn()
         else:

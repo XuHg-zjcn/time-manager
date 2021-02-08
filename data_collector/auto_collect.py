@@ -44,7 +44,7 @@ class Collectors:
         cond_dict = {'name': coll_cls.name, 'start_mode': -1}
         res = self.colls.get_conds_objs(cond_dict)
         if len(res) == 0:
-            self.colls.add_item(coll_cls(source_path=''), -1)
+            self.colls.add_obj(coll_cls(source_path=''), -1)
             res = self.colls.get_conds_onlyone(cond_dict, ['id', 'name', 'dump'],
                                                def0=RuntimeError("can't add custom_path coll"))
         elif len(res) > 1:
@@ -85,7 +85,7 @@ class Collectors:
                 coll_obj = defaults.input_choose_coll()()
                 start_mode = int(input('启动方式(0手动,1批量,2自动):'))
                 color = ARGB.from_str(input('颜色'))
-                self.colls.add_item(coll_obj, start_mode, color)
+                self.colls.add_obj(coll_obj, start_mode)
             elif inp == 'b':
                 coll_cls = defaults.input_choose_coll()
                 path_glob = input('数据源路径(Glob):')

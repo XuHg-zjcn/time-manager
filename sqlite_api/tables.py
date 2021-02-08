@@ -18,7 +18,7 @@ class CollTable(DumpTable):
                   ('color', 'INT')]   # color for plot
     table_name = 'collectors'
 
-    def add_item(self, obj, start_mode=1, color=0xffffff00, commit=True):
+    def add_obj(self, obj, start_mode=1, color=0xffffff00, commit=True):
         if isinstance(color, int):
             pass
         elif isinstance(color, ARGB):
