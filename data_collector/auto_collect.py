@@ -45,8 +45,7 @@ class Collectors:
         res = self.colls.get_conds_objs(cond_dict)
         if len(res) == 0:
             self.colls.add_obj(coll_cls(source_path=''), -1)
-            res = self.colls.get_conds_onlyone(cond_dict, ['id', 'name', 'dump'],
-                                               def0=RuntimeError("can't add custom_path coll"))
+            res = self.colls.get_conds_objs(cond_dict)
         elif len(res) > 1:
             raise LookupError('found more than one')
         coll = res[0]
