@@ -1,6 +1,10 @@
 from datetime import datetime
 from collections import Iterable, Container
 
+from my_libs.dump_table import DumpTable
+from sqlite_api.task_db import Plan, TaskTable
+from commd_line.init_config import conn
+
 
 class UpBit(Exception):
     pass  # up bigger iterators, and reinit smaller iterators
@@ -16,11 +20,13 @@ skip = object()  # flag of skip the current result, can return in SeqGen.test
 class SeqGen:
     def __init__(self, groups, chks=None):
         self.groups = list(map(lambda x: x if isinstance(x, Iterable) else (x,), groups))
+        assert len(self.groups) >= 1, 'groups length must >=1'
         self.states = list(map(iter, self.groups))
         self.last_s = list(map(next, self.states[:-1])) + [None]  # don't call last iter
         if chks is None:
             chks = []
         self.chks = chks
+        self.count = 0
 
     def test(self):
         try:
@@ -53,6 +59,7 @@ class SeqGen:
             self.clears(index)  # notice: clear all before raise MyStop, the state will not keep.
             self.next(index-1)
         else:
+            self.count += 1
             return self.last_s
 
     def proc(self):
@@ -94,8 +101,64 @@ class DatetimePointGen(SeqGen):
         return datetime(*self.last_s)
 
 
+class TaskGen(DatetimePointGen):
+    def __init__(self, name='tg', rec_id=-1, type_id=-1,
+                 long=3600, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.long = long
+        self.name = name
+        self.rec_id = rec_id
+        self.type_id = type_id
+
+    def proc(self):
+        sta = super().proc().timestamp()
+        end = sta + self.long
+        d = {'rec_id': self.rec_id,
+             'type_id': self.type_id,
+             'name': self.name,
+             'sta': sta,
+             'end': end,
+             'num': self.count}
+        return Plan(d)
+
+    def dumps_dn(self):
+        rec_id = self.rec_id
+        type_id = self.type_id
+        delattr(self, 'rec_id')
+        delattr(self, 'type_id')
+        return {'rec_id': rec_id, 'type_id': type_id}
+
+    def loads_up(self, rec_id, type_id):
+        self.rec_id = rec_id
+        self.type_id = type_id
+
+    def add_to_task_table(self, task_table: TaskTable):
+        for p in self:
+            df = task_table.get_conds_plans({'rec_id': p['rec_id'], 'num': p['num']})
+            if len(df) == 0:
+                task_table.insert(p, commit=False)
+        if not task_table.commit_each:
+            task_table.commit()
+
+
+class TaskGenTable(DumpTable):
+    name2dtype = [('name', 'TEXT'),
+                  ('dump', 'BLOB'),
+                  ('runs', 'INT'),
+                  ('rec_id', 'INT'),
+                  ('type_id', 'INT')]
+    table_name = 'task_gen_table'
+
+
 if __name__ == '__main__':
-    # TODO: first iter
-    dtg = DatetimePointGen(year=range(2020, 2030), mon=range(1, 3), week=0)
+    tg_tab = TaskGenTable(conn)
+    task_tab = TaskTable(conn)
+    dtg = TaskGen(year=range(2020, 2030),
+                  mon=range(1, 3), day=range(1, 3),
+                  rec_id=4, type_id=2, name='task_gen2')
+
+    tg_tab.add_obj(dtg)
+    dtg = tg_tab.get_conds_objs({'name': 'TaskGen'})[0]
+    dtg.add_to_task_table(task_tab)
     for i in dtg:
         print(i)
