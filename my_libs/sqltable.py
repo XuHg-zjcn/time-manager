@@ -13,6 +13,24 @@ def number_np2py(x):
     return x
 
 
+def onlyone_process(iterable,
+                    def0=LookupError('not found'),
+                    def2=LookupError('found multiply items')):
+    def raise_return(x):
+        if isinstance(x, Exception):
+            raise x
+        else:
+            return x
+
+    lst = list(iterable)
+    if len(lst) == 0:
+        return raise_return(def0)
+    elif len(lst) == 1:
+        return lst[0]
+    else:
+        return raise_return(def2)
+
+
 class SqlTable:
     name2dtype = [('example_int', 'INT'), ('example_text', 'TEXT')]
     table_name = 'table_name'
@@ -133,20 +151,8 @@ class SqlTable:
     def get_conds_onlyone(self, cond_dict, fields=None,
                           def0=LookupError('not found'),
                           def2=LookupError('found multiply items')):
-        def raise_return(x):
-            if isinstance(x, Exception):
-                raise x
-            else:
-                return x
-
         cur = self.get_conds_execute(cond_dict, fields)
-        lst = list(cur)
-        if len(lst) == 0:
-            return raise_return(def0)
-        elif len(lst) == 1:
-            return lst[0]
-        else:
-            return raise_return(def2)
+        return onlyone_process(cur, def0, def2)
 
     def get_conds_dataframe(self, cond_dict=None, fields=None):
         sql, paras = self.conds_sql(cond_dict, fields)
