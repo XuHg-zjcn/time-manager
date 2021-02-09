@@ -1,13 +1,16 @@
 from datetime import datetime
 import pyqtgraph as pg
+from PyQt5.QtCore import Qt
+
 from .plot2d import DateTime2DItem
 from .cluster import Cluster
 
 
 class DT2DPlot:
-    def __init__(self, pw, colls):
+    def __init__(self, pw, colls, app):
         self.pw = pw
         self.colls = colls
+        self.app = app
         self.click_callbacks = [print]
         self.item = DateTime2DItem(lambda p: p.get_collect_color(colls))
         self.scatter = pg.ScatterPlotItem()
@@ -67,6 +70,9 @@ class DT2DPlot:
 
     def mouse_click_slot(self, event):
         pos = event._scenePos
+        modifiers = self.app.keyboardModifiers()
+        if modifiers == Qt.ShiftModifier:
+            print('ShiftModifier')
         if self.pw.sceneBoundingRect().contains(pos):
             point = self.pw.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
             doy = int(point.x())

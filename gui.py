@@ -52,7 +52,7 @@ class Controller:
     select data and display.
     """
 
-    def __init__(self, ui):
+    def __init__(self, ui, app):
         self.ui = ui
         self.start = QTimeRange(self.ui.min_sta, self.ui.max_sta)
         self.stop = QTimeRange(self.ui.min_end, self.ui.max_end)
@@ -62,7 +62,7 @@ class Controller:
         self.table = ui.tableView
         self.tdb = TaskTable(conn)
         self.colls = CollTable(conn)
-        self.dt2p = DT2DPlot(ui.PlotWidget, self.colls)
+        self.dt2p = DT2DPlot(ui.PlotWidget, self.colls, app)
         self.dt2p.click_callbacks = [self.update_table]
         self.tdb.print_doings()
         self.tdb.print_need()
@@ -105,6 +105,6 @@ if __name__ == '__main__':
     ud = Ui_Dialog()
     ud.setupUi(dia)
     win.show()
-    Controller(ui)
+    Controller(ui, app)
     ui.add_task_gen.clicked.connect(dia.show)
     sys.exit(app.exec_())
