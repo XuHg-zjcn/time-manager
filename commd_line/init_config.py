@@ -39,7 +39,8 @@ def create():
                       'div': 2,         # image div for face detection, must
                       'f35mm': 34.6,    # 35mm equivalent focal length
                       'face_cm2': 230,  # face area for warning eyes near to screen
-                      'face_dis_cm': 45}  # face distance to camera
+                      'face_dis_cm_L': 40,  # trigger to send warning
+                      'face_dis_cm_H': 45}  # trigger to stop warning
     conf.write(open(cfg_path, 'w'))
 
 

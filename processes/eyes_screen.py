@@ -6,6 +6,7 @@ from recorders.video_recoder import VideoRecoder
 from recorders.sqlite_face import FaceDB
 from notifys.gen_sound import eye_screen
 from notifys.gnome import GiNotify
+from commd_line.init_config import conf
 import signal
 
 
@@ -22,7 +23,9 @@ signal.signal(signal.SIGINT, sigint)
 
 gn = GiNotify()
 sound = eye_screen('sem')
-vc = ValueChecker(45, 50, False)
+vc = ValueChecker(float(conf['camera']['face_dis_cm_L']),
+                  float(conf['camera']['face_dis_cm_H']),
+                  False)
 ac = AreaChecker()
 
 
@@ -40,7 +43,7 @@ def area2(faces):
 rec = VideoRecoder('queue')
 fdb = FaceDB('queue')
 mtc = MTCNNFace('queue', (fdb.inp2.put, area2))
-cam = Camera(0.5, (rec.inp2.put, mtc.inp2.put))
+cam = Camera(float(conf['camera']['period']), (rec.inp2.put, mtc.inp2.put))
 
 
 def run():

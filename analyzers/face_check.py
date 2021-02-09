@@ -7,8 +7,6 @@ class AreaChecker(Checker):
     def __init__(self):
         self.f35mm = float(conf['camera']['f35mm'])
         self.face_cm2 = float(conf['camera']['face_cm2'])
-        self.face_dis_cm = float(conf['camera']['face_dis_cm'])
-        self.n_warn = 0
         super().__init__()
 
     def check_one(self, face):
