@@ -12,7 +12,7 @@ from Qt_GUI.add_task_gen import Ui_Dialog
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from Qt_GUI.layout import Ui_MainWindow
-from Qt_GUI.pyqtgraph_plot import DT2DPlot
+from Qt_GUI.pyqtgraph_plot import DT2DPlot, SelectRect
 from commd_line.init_config import conn
 from sqlite_api.tables import CollTable
 from sqlite_api.task_db import TaskTable, Plan, Plans, ColumnSetTasks
@@ -62,7 +62,10 @@ class Controller:
         self.table = ui.tableView
         self.tdb = TaskTable(conn)
         self.colls = CollTable(conn)
-        self.dt2p = DT2DPlot(ui.PlotWidget, self.colls, app)
+        self.dt2p = DT2DPlot(ui.PlotWidget, self.colls)
+        self.select_rect = SelectRect(ui.PlotWidget, app)
+        ui.PlotWidget.scene().sigMouseClicked.connect(self.select_rect.mouse_click_slot)
+        self.select_rect.select_OK.connect(print)
         self.dt2p.click_callbacks = [self.update_table]
         self.tdb.print_doings()
         self.tdb.print_need()
