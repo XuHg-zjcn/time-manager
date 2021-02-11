@@ -58,6 +58,16 @@ class DateTimeRange(QObject):
         tM_ = self.tM.time().toPyTime()
         return dm_, dM_, tm_, tM_
 
+    def get2py(self):
+        dm, dM, tm, tM = self.get4py()
+        m = datetime.datetime.combine(dm, tm)
+        M = datetime.datetime.combine(dM, tM)
+        return m, M
+
+    def get2float(self):
+        m, M = self.get2py()
+        return m.timestamp(), M.timestamp()
+
     def get4str(self):
         dm_ = self.dm.date().toString('yyyy-MM-dd')
         dM_ = self.dM.date().toString('yyyy-MM-dd')
@@ -68,23 +78,23 @@ class DateTimeRange(QObject):
     def get_sql_where_dict(self):
         name = self.comb.currentText()
         dm, dM, tm, tM = self.get4str()
+        m, M = self.get2float()
         if name == '2D包含':
-            ret = {"date(sta, 'unixepoch', 'localtime')": ('>=', dm),
-                   "date(end, 'unixepoch', 'localtime')": ('<=', dM)}
-            if tm != '00:00:00' or tM != '23:59:59':
-                ret["time(sta, 'unixepoch', 'localtime')"] = ('>=', tm)
-                ret["time(end, 'unixepoch', 'localtime')"] = ('<=', tM)
+            if tm == '00:00:00' and tM == '23:59:59':
+                ret = {'sta': ('>=', m), 'end': ('<=', M)}  # same to '1D包含'
+            else:
+                ret = {"date(sta, 'unixepoch', 'localtime')": ('>=', dm),
+                       "date(end, 'unixepoch', 'localtime')": ('<=', dM),
+                       "time(sta, 'unixepoch', 'localtime')": ('>=', tm),
+                       "time(end, 'unixepoch', 'localtime')": ('<=', tM)}
         elif name == '2D重叠':
             raise NotImplementedError('2D重叠 暂时没有实现')  # TODO: use where string
         elif name == '1D包含':
-            ret = {"datetime(sta, 'unixepoch', 'localtime')": ('>=', dm+' '+tm),
-                   "datetime(end, 'unixepoch', 'localtime')": ('<=', dM+' '+tM)}
+            ret = {'sta': ('>=', m), 'end': ('<=', M)}
         elif name == '1D重叠':
-            ret = {"datetime(sta, 'unixepoch', 'localtime')": ('<=', dM+' '+tM),
-                   "datetime(end, 'unixepoch', 'localtime')": ('>=', dm+' '+tm)}
+            ret = {'sta': ('<=', M), 'end': ('>=', m)}
         elif name == '点选择':
-            ret = {"datetime(sta, 'unixepoch', 'localtime')": ('<=', dm+' '+tm),
-                   "datetime(end, 'unixepoch', 'localtime')": ('>=', dm+' '+tm)}
+            ret = {'sta': ('<=', m), 'end': ('>=', m)}
         else:
             raise ValueError('ComboBox get unknown name')
         return ret
