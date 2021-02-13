@@ -115,6 +115,7 @@ class Plans(pd.DataFrame):
         if len(self) == 0:
             return self
         df2 = self.copy()
+        # TODO: use system local time, tz_convert('Asia/Shanghai') failed
         df2['sta'] = pd.to_datetime(df2['sta'], unit='s')
         df2['end'] = pd.to_datetime(df2['end'], unit='s')
         return df2
