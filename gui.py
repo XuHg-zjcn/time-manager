@@ -14,7 +14,7 @@ from Qt_GUI.add_task_gen import Ui_Dialog
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QDateEdit, QTimeEdit, QComboBox
 from Qt_GUI.layout import Ui_MainWindow
-from Qt_GUI.pyqtgraph_plot import DT2DPlot, SelectRect
+from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from commd_line.init_config import conn
 from my_libs.datetime_utils import date2ts0, time2float
 from sqlite_api.tables import CollTable
@@ -137,11 +137,9 @@ class Controller:
         self.table = ui.tableView
         self.tdb = TaskTable(conn)
         self.colls = CollTable(conn)
-        self.dt2p = DT2DPlot(ui.PlotWidget, self.colls)
-        self.select_rect = SelectRect(ui.PlotWidget, app)
-        ui.PlotWidget.scene().sigMouseClicked.connect(self.select_rect.mouse_click_slot)
-        self.select_rect.select_OK.connect(print)
-        self.dt2p.click_callbacks = [self.update_table]
+        self.dt2p = DT2DPlot(ui.PlotWidget, app, self.colls)
+        self.dt2p.select_OK.connect(print)
+        self.dt2p.click.connect(self.update_table)
         self.tdb.print_doings()
         self.tdb.print_need()
         self.ui.year.valueChanged.connect(lambda: self.change_year())

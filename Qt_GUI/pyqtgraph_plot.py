@@ -1,40 +1,21 @@
 from datetime import datetime
 import pyqtgraph as pg
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QRectF
+from PyQt5.QtCore import Qt, pyqtSignal, QObject
 
 from .plot2d import DateTime2DItem
 from .cluster import Cluster
 
 
-class SelectRect(QObject):
-    select_OK = pyqtSignal(QRectF)
+class DT2DPlot(QObject):
+    click = pyqtSignal(datetime)
+    select_OK = pyqtSignal(datetime, datetime)
 
-    def __init__(self, pw, app):
+    def __init__(self, pw, app, colls):
         super().__init__()
         self.pw = pw
         self.app = app
-        self.points = []
-
-    def mouse_click_slot(self, event):
-        pos = event._scenePos
-        modifiers = self.app.keyboardModifiers()
-        if modifiers == Qt.ShiftModifier:
-            point = self.pw.plotItem.vb.mapSceneToView(pos)
-            self.points.append((point.x(), point.y()))
-            if len(self.points) == 2:
-                (x0, y0), (x1, y1) = self.points
-                self.points.clear()
-                qrf = QRectF(x0, y0, x1-x0, y1-y0)
-                self.select_OK.emit(qrf)
-        else:
-            self.points.clear()
-
-
-class DT2DPlot:
-    def __init__(self, pw, colls):
-        self.pw = pw
         self.colls = colls
-        self.click_callbacks = [print]
+        self.points = []
         self.item = DateTime2DItem(lambda p: p.get_collect_color(colls))
         self.scatter = pg.ScatterPlotItem()
         self.pw.addItem(self.item)
@@ -93,10 +74,16 @@ class DT2DPlot:
 
     def mouse_click_slot(self, event):
         pos = event._scenePos
-        if self.pw.sceneBoundingRect().contains(pos):
-            point = self.pw.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
-            doy = int(point.x())
-            sec = point.y()*3600
-            dati = self.item.xy2time(doy, sec)
-            for cb in self.click_callbacks:
-                cb(dati)
+        modifiers = self.app.keyboardModifiers()
+        point = self.pw.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
+        doy = int(point.x())
+        sec = point.y()*3600
+        dati = self.item.xy2time(doy, sec)
+        self.click.emit(dati)
+        if modifiers == Qt.ShiftModifier:
+            self.points.append(dati)
+            if len(self.points) == 2:
+                self.select_OK.emit(*self.points)
+                self.points.clear()
+        else:
+            self.points.clear()
