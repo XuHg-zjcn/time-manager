@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QDateEdit, QTime
 from Qt_GUI.layout import Ui_MainWindow
 from Qt_GUI.pyqtgraph_plot import DT2DPlot, SelectRect
 from commd_line.init_config import conn
+from my_libs.datetime_utils import date2ts0, time2float
 from sqlite_api.tables import CollTable
 from sqlite_api.task_db import TaskTable, Plan, Plans, ColumnSetTasks
 
@@ -68,6 +69,14 @@ class DateTimeRange(QObject):
         m, M = self.get2py()
         return m.timestamp(), M.timestamp()
 
+    def get4float(self):
+        dm, dM, tm, tM = self.get4py()
+        dmf = date2ts0(dm)
+        dMf = date2ts0(dM)
+        tmf = time2float(tm)
+        tMf = time2float(tM)
+        return dmf, dMf, tmf, tMf
+
     def get4str(self):
         dm_ = self.dm.date().toString('yyyy-MM-dd')
         dM_ = self.dM.date().toString('yyyy-MM-dd')
@@ -83,12 +92,24 @@ class DateTimeRange(QObject):
             if tm == '00:00:00' and tM == '23:59:59':
                 ret = {'sta': ('>=', m), 'end': ('<=', M)}  # same to '1D包含'
             else:
-                ret = {"date(sta, 'unixepoch', 'localtime')": ('>=', dm),
-                       "date(end, 'unixepoch', 'localtime')": ('<=', dM),
-                       "time(sta, 'unixepoch', 'localtime')": ('>=', tm),
-                       "time(end, 'unixepoch', 'localtime')": ('<=', tM)}
+                dmf, dMf, tmf, tMf = self.get4float()
+                ret = {'sta': ('>=', dmf),
+                       'end': ('<=', dMf),
+                       '(sta+8*3600)%86400': ('>=', tmf),
+                       '(end+8*3600)%86400': ('<=', tMf),
+                       'CAST((end+8*3600)/86400 as int)=CAST((sta+8*3600)/86400 as int)': []}
         elif name == '2D重叠':
-            raise NotImplementedError('2D重叠 暂时没有实现')  # TODO: use where string
+            dmf, dMf, tmf, tMf = self.get4float()
+            where_str = ('sta>=? AND end<? AND (sta+8*3600)%86400<? AND (end+8*3600)%86400>? OR '
+                         # date of end != date of start
+                         '((sta+8*3600)%86400<=? AND sta>=? AND sta<? OR '
+                         '(end+8*3600)%86400>? AND end>=? AND end<?) AND '
+                         'CAST((end+8*3600)/86400 as int)!=CAST((sta+8*3600)/86400 as int) OR '
+                         # date of end > date of start + 1
+                         'end>=?+86400 AND sta<?-86400 AND '
+                         'CAST((end+8*3600)/86400 as int)>CAST((sta+8*3600)/86400 as int)+1')
+            where_paras = [dmf, dMf, tMf, tmf, tMf, dmf, dMf, tmf, dmf, dMf, dmf, dMf]
+            ret = {where_str: where_paras}
         elif name == '1D包含':
             ret = {'sta': ('>=', m), 'end': ('<=', M)}
         elif name == '1D重叠':
