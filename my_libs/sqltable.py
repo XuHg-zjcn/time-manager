@@ -109,10 +109,9 @@ class SqlTable:
         sql = 'WHERE '
         paras = []
         for key, value in cond_dict.items():
+            assert isinstance(key, str), 'conds dict keys must be str'
             value = number_np2py(value)
-            if value is None:
-                continue
-            elif type(value) in [bool, int, float, str]:  # x == ?
+            if type(value) in [bool, int, float, str]:  # x == ?
                 sql += '{}=? and '.format(key)
                 paras.append(value)
             elif isinstance(value, tuple) and len(value) == 2:  # a <= x < b
@@ -124,6 +123,10 @@ class SqlTable:
                     paras.append(value[1])
                 else:
                     raise ValueError('invalid tuple {}'.format(value))
+            elif isinstance(value, list):  # dict key as sql, without paras
+                assert len(value) == key.count('?'), "counts '?' in key not same with length of paras"
+                sql += key + ' and '
+                paras += value
             else:
                 raise ValueError('invalid value type {}'.format(type(value)))
         sql = sql[:-5]  # remove end of str ' and '
