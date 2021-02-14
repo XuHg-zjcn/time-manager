@@ -18,7 +18,7 @@ from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from commd_line.init_config import conn
 from my_libs.datetime_utils import date2ts0, time2float
 from sqlite_api.tables import CollTable
-from sqlite_api.task_db import TaskTable, Plan, Plans, ColumnSetTasks
+from sqlite_api.task_db import TaskTable, Plan, ColumnSetTasks
 
 
 class DateTimeRange(QObject):
@@ -45,12 +45,15 @@ class DateTimeRange(QObject):
         comb.currentIndexChanged.connect(self.change.emit)
         self.comb.clear()
         self.comb.addItems(self.settings)
-        self.comb.currentTextChanged.connect(self.comb_slot)
+        self.comb.currentIndexChanged.connect(self.comb_slot)
+        self.default4dt_comb_index = 0
 
-    def comb_slot(self, text):
-        is_enable = text != '点选择'
+    def comb_slot(self, index):
+        is_enable = index != 4
         self.dM.setEnabled(is_enable)
         self.tM.setEnabled(is_enable)
+        if is_enable:
+            self.default4dt_comb_index = index
 
     def get4py(self):
         dm_ = self.dm.date().toPyDate()
@@ -93,6 +96,18 @@ class DateTimeRange(QObject):
         self.dM.setDate(max(d1, d2))
         self.tm.setTime(min(t1, t2))
         self.tM.setTime(max(t1, t2))
+        if self.comb.currentIndex() == 4:
+            self.comb.setCurrentIndex(self.default4dt_comb_index)
+
+    def set1datetime(self, m):
+        self.comb.setCurrentIndex(4)
+        self.dm.setDate(m.date())
+        self.tm.setTime(m.time())
+
+    def set_year0101_1231(self, year):
+        d0101 = datetime.datetime(year,   1,  1,  0,  0,  0)
+        d1231 = datetime.datetime(year+1, 12, 31, 23, 59, 59)
+        self.set2datetime(d0101, d1231)
 
     def get_sql_where_dict(self):
         name = self.comb.currentText()
@@ -148,35 +163,27 @@ class Controller:
         self.tdb = TaskTable(conn)
         self.colls = CollTable(conn)
         self.dt2p = DT2DPlot(ui.PlotWidget, app, self.colls)
-        self.dt2p.select_OK.connect(self.rang.set2datetime)
-        self.dt2p.click.connect(self.update_table)
+        self.dt2p.select_rect.connect(self.rang.set2datetime)
+        self.dt2p.select_point.connect(self.rang.set1datetime)
+        self.dt2p.select_rect.connect(self.update_table)
+        self.dt2p.select_point.connect(self.update_table)
         self.tdb.print_doings()
         self.tdb.print_need()
         self.ui.year.valueChanged.connect(lambda: self.change_year())
-        self.ui.update_view.clicked.connect(lambda: self.update_view())
 
     def change_year(self):
         year = self.ui.year.value()
-        self.rang.tm.setTime(datetime.time(0, 0, 0))
-        self.rang.tM.setTime(datetime.time(23, 59, 59))
-        self.rang.dm.setDate(datetime.date(year, 1, 1))
-        self.rang.dM.setDate(datetime.date(year, 12, 31))
-        self.update_view()
-
-    def update_view(self):
-        year = self.ui.year.value()
+        self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
         plans = self.tdb.get_conds_plans(where_dict)
         ivtree = plans.get_ivtree(lambda p: Plan(p))
         self.dt2p.update_ivtree(ivtree, year)
 
-    def update_table(self, t):
-        select = list(map(lambda x: x.data, self.dt2p.item.ivtree[t.timestamp()]))
-        print('found {} plans at {}'.format(len(select), t.strftime('%Y-%m-%d %H:%M:%S')))
-        for p in select:
-            print(p)
-        print('')
-        plans = Plans(select).str_datetime()
+    def update_table(self):
+        where_dict = self.rang.get_sql_where_dict()
+        plans = self.tdb.get_conds_plans(where_dict)
+        print(plans)
+        plans = plans.str_datetime()
         self.table.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks, sql_table=self.tdb)
 
 

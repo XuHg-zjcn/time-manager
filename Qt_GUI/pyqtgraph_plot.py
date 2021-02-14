@@ -8,7 +8,8 @@ from .cluster import Cluster
 
 class DT2DPlot(QObject):
     click = pyqtSignal(datetime)
-    select_OK = pyqtSignal(datetime, datetime)
+    select_point = pyqtSignal(datetime)
+    select_rect = pyqtSignal(datetime, datetime)
 
     def __init__(self, pw, app, colls):
         super().__init__()
@@ -81,6 +82,7 @@ class DT2DPlot(QObject):
         dati = self.item.xy2time(doy, sec)
         self.click.emit(dati)
         if modifiers == Qt.ShiftModifier and self.last_select is not None:
-            self.select_OK.emit(self.last_select, dati)
+            self.select_rect.emit(self.last_select, dati)
         else:
             self.last_select = dati
+            self.select_point.emit(dati)
