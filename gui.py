@@ -12,7 +12,8 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from Qt_GUI.add_task_gen import Ui_Dialog
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QDateEdit, QTimeEdit, QComboBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,\
+    QDateEdit, QTimeEdit, QComboBox
 from Qt_GUI.layout import Ui_MainWindow
 from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from commd_line.init_config import conn
@@ -125,16 +126,16 @@ class DateTimeRange(QObject):
                        'CAST((end+8*3600)/86400 as int)=CAST((sta+8*3600)/86400 as int)': []}
         elif name == '2D重叠':
             dmf, dMf, tmf, tMf = self.get4float()
-            where_str = ('sta>=? AND end<? AND (sta+8*3600)%86400<? AND (end+8*3600)%86400>? OR '
-                         # date of end != date of start
-                         '((sta+8*3600)%86400<=? AND sta>=? AND sta<? OR '
-                         '(end+8*3600)%86400>? AND end>=? AND end<?) AND '
-                         'CAST((end+8*3600)/86400 as int)!=CAST((sta+8*3600)/86400 as int) OR '
-                         # date of end > date of start + 1
-                         'end>=?+86400 AND sta<?-86400 AND '
-                         'CAST((end+8*3600)/86400 as int)>CAST((sta+8*3600)/86400 as int)+1')
-            where_paras = [dmf, dMf, tMf, tmf, tMf, dmf, dMf, tmf, dmf, dMf, dmf, dMf]
-            ret = {where_str: where_paras}
+            w_str = ('sta>=? AND end<? AND (sta+8*3600)%86400<? AND (end+8*3600)%86400>? OR '
+                     # date of end != date of start
+                     '((sta+8*3600)%86400<=? AND sta>=? AND sta<? OR '
+                     '(end+8*3600)%86400>? AND end>=? AND end<?) AND '
+                     'CAST((end+8*3600)/86400 as int)!=CAST((sta+8*3600)/86400 as int) OR '
+                     # date of end > date of start + 1
+                     'end>=?+86400 AND sta<?-86400 AND '
+                     'CAST((end+8*3600)/86400 as int)>CAST((sta+8*3600)/86400 as int)+1')
+            w_paras = [dmf, dMf, tMf, tmf, tMf, dmf, dMf, tmf, dmf, dMf, dmf, dMf]
+            ret = {w_str: w_paras}
         elif name == '1D包含':
             ret = {'sta': ('>=', m), 'end': ('<=', M)}
         elif name == '1D重叠':
@@ -184,7 +185,8 @@ class Controller:
         plans = self.tdb.get_conds_plans(where_dict)
         print(plans)
         plans = plans.str_datetime()
-        self.table.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks, sql_table=self.tdb)
+        self.table.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks,
+                                sql_table=self.tdb)
 
 
 if __name__ == '__main__':

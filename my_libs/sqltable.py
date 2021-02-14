@@ -124,7 +124,8 @@ class SqlTable:
                 else:
                     raise ValueError('invalid tuple {}'.format(value))
             elif isinstance(value, list):  # dict key as sql, without paras
-                assert len(value) == key.count('?'), "counts '?' in key not same with length of paras"
+                assert len(value) == key.count('?'),\
+                    "counts '?' in key not same with length of paras"
                 sql += key + ' and '
                 paras += value
             else:
@@ -135,11 +136,14 @@ class SqlTable:
     def conds_sql(self, cond_dict=None, fields=None):
         """
         Get Plans matched conditions.
-        :para cond_dict: {'field1':value, 'field2':(min, max), 'field3':('<', value), ...}
+        :para cond_dict: {'field1':value,
+                          'field2':(min, max),
+                          'field3':('<', value), ...}
         """
         fields_str = self._fields2sql(fields)
         where_str, paras = self._conds2where(cond_dict)
-        sql = 'SELECT {} FROM {} {}'.format(fields_str, self.table_name, where_str)
+        sql = 'SELECT {} FROM {} {}'\
+            .format(fields_str, self.table_name,where_str)
         return sql, paras
 
     def get_conds_execute(self, cond_dict=None, fields=None):
@@ -160,7 +164,8 @@ class SqlTable:
     def get_conds_onlyone_dict(self, cond_dict, fields=None,
                                def0=LookupError('not found'),
                                def2=LookupError('found multiply items')):
-        assert not isinstance(fields, str), "can't use single field str for return dict"
+        assert not isinstance(fields, str),\
+            "can't use single field str for return dict"
         fields = list(fields) if isinstance(fields, set) else fields
         c1 = self.get_conds_onlyone(cond_dict, fields, def0, def2)
         assert len(c1) == len(fields)
