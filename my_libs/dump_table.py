@@ -1,7 +1,7 @@
 import time
 from pickle import loads, dumps
 
-from my_libs.sqltable import SqlTable
+from my_libs.sqltable import SqlTable, onlyone_process
 
 
 class DumpTable(SqlTable):
@@ -23,19 +23,13 @@ class DumpTable(SqlTable):
         objs = []
         for did, dump in id_dumps:
             obj = loads(dump)
-            if hasattr(obj, 'loads_up'):
-                vns = list(obj.loads_up.__code__.co_varnames)
-                vns.remove('self')
-                if 'table' in vns:  # var name 'table' will into self
-                    table_index = vns.index('table')
-                    vns.remove('table')
-                else:
-                    table_index = None
-                paras = list(self.get_conds_onlyone({'id': did}, vns))
-                if table_index is not None:
-                    paras.insert(table_index, self)
-                obj.loads_up(*paras)
-                obj.did = did
+            vns = obj.names_autoload.copy()
+            assert 'id' in vns, "'id' must in names_autoload"
+            table = 'table' in vns and not vns.remove('table')
+            paras = self.get_conds_onlyone_dict({'id': did}, vns)
+            if table:
+                paras['table'] = self
+            obj.loads_up(paras)
             objs.append(obj)
         return objs
 
@@ -47,20 +41,31 @@ class DumpTable(SqlTable):
             raise ValueError('num=1, but found {}!=1'.format(len(objs)))
         for obj in objs:
             getattr(obj, f_name)(*paras)
-            self.plus1(obj.did)
+            self.plus1(obj.db_fields['id'])
 
     def add_obj(self, obj, commit=True):
-        if hasattr(obj, 'dumps_dn'):
-            v_d = obj.dumps_dn()
-        else:
-            v_d = {}
-        dump = dumps(obj)
-        v_d['dump'] = dump
+        """
+        don't use obj after call the func, please cal get_conds_objs,
+        because obj.db_fields will remove,
+        obj.db_fields maybe has different between load from db with before call the method.
+        """
+        v_d = obj.dumps_dn()
+        v_d['dump'] = dumps(obj)  # warning: direct modified
         if 'name' not in v_d:
             v_d['name'] = obj.__class__.__name__
         if 'runs' not in v_d:
             v_d['runs'] = 0
         self.insert(v_d, commit)
+
+    def update_obj(self, obj, commit=None):
+        v_d = obj.dumps_dn()  # can't dump some attributes
+        dump = dumps(obj)
+        obj.loads_up(v_d)
+        v_d2 = v_d.copy()
+        v_d2['dump'] = dump
+        'id' in v_d2 and v_d2.pop('id')
+        'table' in v_d2 and v_d2.pop('table')
+        self.update_conds({'id': v_d['id']}, v_d2, commit)
 
     def plus1(self, did):
         cur = self.conn.cursor()
@@ -70,13 +75,30 @@ class DumpTable(SqlTable):
     def auto_create(self, a_cls, name, commit=True):
         objs = self.get_conds_objs({'name': name})
         if len(objs) == 0:
-            obj = a_cls()
-            v_d = {'name': name, 'dump': dumps(obj), 'runs': 0}
-            self.insert(v_d, commit)
+            obj = a_cls(name=name)
+            self.add_obj(obj, commit)
             objs = self.get_conds_objs({'name': name})
-            assert len(objs) == 1
-        elif len(objs) > 1:
-            raise ValueError('found more than one items')
-        obj = objs[0]
+        obj = onlyone_process(objs)
         assert isinstance(obj, a_cls), "get obj isn't instance of a_cls"
         return obj
+
+
+class DumpBaseCls:
+    names_autoload = {'id', 'table', 'name'}
+
+    def __init__(self, name):
+        self.db_fields = {'name': name}
+
+    def loads_up(self, db_fields):
+        self.db_fields = db_fields
+
+    def dumps_dn(self):
+        ret = self.db_fields
+        delattr(self, 'db_fields')
+        return ret
+
+    def update_to_db(self, commit=None):
+        if hasattr(self, 'db_fields') and\
+           'table' in self.db_fields and\
+           'id' in self.db_fields:
+            self.db_fields['table'].update_obj(self, commit)

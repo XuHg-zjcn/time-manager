@@ -157,6 +157,15 @@ class SqlTable:
         cur = self.get_conds_execute(cond_dict, fields)
         return onlyone_process(cur, def0, def2)
 
+    def get_conds_onlyone_dict(self, cond_dict, fields=None,
+                               def0=LookupError('not found'),
+                               def2=LookupError('found multiply items')):
+        assert not isinstance(fields, str), "can't use single field str for return dict"
+        fields = list(fields) if isinstance(fields, set) else fields
+        c1 = self.get_conds_onlyone(cond_dict, fields, def0, def2)
+        assert len(c1) == len(fields)
+        return dict(zip(fields, c1))
+
     def get_conds_dataframe(self, cond_dict=None, fields=None):
         sql, paras = self.conds_sql(cond_dict, fields)
         return pd.read_sql_query(sql, self.conn, params=paras)
