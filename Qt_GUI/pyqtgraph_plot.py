@@ -15,7 +15,7 @@ class DT2DPlot(QObject):
         self.pw = pw
         self.app = app
         self.colls = colls
-        self.points = []
+        self.last_select = None
         self.item = DateTime2DItem(lambda p: p.get_collect_color(colls))
         self.scatter = pg.ScatterPlotItem()
         self.pw.addItem(self.item)
@@ -80,10 +80,7 @@ class DT2DPlot(QObject):
         sec = point.y()*3600
         dati = self.item.xy2time(doy, sec)
         self.click.emit(dati)
-        if modifiers == Qt.ShiftModifier:
-            self.points.append(dati)
-            if len(self.points) == 2:
-                self.select_OK.emit(*self.points)
-                self.points.clear()
+        if modifiers == Qt.ShiftModifier and self.last_select is not None:
+            self.select_OK.emit(self.last_select, dati)
         else:
-            self.points.clear()
+            self.last_select = dati
