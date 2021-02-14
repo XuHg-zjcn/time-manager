@@ -1,12 +1,11 @@
 # most copy from https://blog.csdn.net/weixin_40530134/article/details/95031370
 
 from enum import Enum
-from pickle import dumps
 
 from PyQt5.QtCore import QAbstractTableModel, Qt
 from PyQt5.QtWidgets import QSpinBox, QWidget, QTableView
 
-from my_libs.dump_table import DumpTable
+from my_libs.dump_table import DumpTable, DumpBaseCls
 from commd_line.init_config import conn
 from my_libs.sqltable import SqlTable
 
@@ -52,16 +51,11 @@ class TableColumnSpinBox(TableColumn):
             return None
 
 
-class ColumnSet(dict):
-    def __init__(self, default=True, *args, **kwargs):
+class ColumnSet(dict, DumpBaseCls):
+    def __init__(self, name, default=True):
         self.default = default
-        self.fid = None
-        self.table = None
-        super().__init__(*args, **kwargs)
-
-    def loads_up(self, id, table):
-        self.fid = id
-        self.table = table
+        dict.__init__(self)
+        DumpBaseCls.__init__(self, name)
 
     def is_show(self, name):
         v = self[name].is_show
@@ -72,13 +66,7 @@ class ColumnSet(dict):
 
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
-        if hasattr(self, 'table'):  # don't run in pickle.loads
-            table = self.table      # else raise AttributeError
-            if table is None:
-                return
-            delattr(self, 'table')
-            table.update_conds({'id': self.fid}, {'dump': dumps(self)})
-            self.table = table
+        self.update_to_db()
 
     def __getitem__(self, key):
         if key not in self:
@@ -86,12 +74,12 @@ class ColumnSet(dict):
         return super().__getitem__(key)
 
     def set_show(self, name, is_show):
-        wide = self[name].wide
-        self[name] = TableColumn(is_show, wide)
+        self[name].is_show = is_show
+        self.update_to_db()
 
     def set_wide(self, name, wide):
-        is_show = self[name].is_show
-        self[name] = TableColumn(is_show, wide)
+        self[name].wide = wide
+        self.update_to_db()
 
 
 class ColumnSetTable(DumpTable):

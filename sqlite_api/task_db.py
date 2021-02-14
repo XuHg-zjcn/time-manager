@@ -122,8 +122,8 @@ class Plans(pd.DataFrame):
 
 
 class ColumnSetTasks(ColumnSet):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
         self['num'] = TableColumnSpinBox(ShowStat.Yes, 100)
 
 

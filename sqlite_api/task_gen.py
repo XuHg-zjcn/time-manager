@@ -1,7 +1,7 @@
 from datetime import datetime
 from collections import Iterable, Container
 
-from my_libs.dump_table import DumpTable
+from my_libs.dump_table import DumpTable, DumpBaseCls
 from sqlite_api.task_db import Plan, TaskTable
 from commd_line.init_config import conn
 
@@ -101,36 +101,25 @@ class DatetimePointGen(SeqGen):
         return datetime(*self.last_s)
 
 
-class TaskGen(DatetimePointGen):
+class TaskGen(DatetimePointGen, DumpBaseCls):
     def __init__(self, name='tg', rec_id=-1, type_id=-1,
                  long=3600, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        DatetimePointGen.__init__(*args, **kwargs)
+        DumpBaseCls.__init__(self, name)
+        self.db_fields['rec_id'] = rec_id
+        self.db_fields['type_id'] = type_id
         self.long = long
-        self.name = name
-        self.rec_id = rec_id
-        self.type_id = type_id
 
     def proc(self):
         sta = super().proc().timestamp()
         end = sta + self.long
-        d = {'rec_id': self.rec_id,
-             'type_id': self.type_id,
-             'name': self.name,
+        d = {'rec_id': self.db_fields['rec_id'],
+             'type_id': self.db_fields['type_id'],
+             'name': self.db_fields['name'],
              'sta': sta,
              'end': end,
              'num': self.count}
         return Plan(d)
-
-    def dumps_dn(self):
-        rec_id = self.rec_id
-        type_id = self.type_id
-        delattr(self, 'rec_id')
-        delattr(self, 'type_id')
-        return {'rec_id': rec_id, 'type_id': type_id}
-
-    def loads_up(self, rec_id, type_id):
-        self.rec_id = rec_id
-        self.type_id = type_id
 
     def add_to_task_table(self, task_table: TaskTable):
         for p in self:
