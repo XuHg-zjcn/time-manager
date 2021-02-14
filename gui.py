@@ -85,10 +85,14 @@ class DateTimeRange(QObject):
         return dm_, dM_, tm_, tM_
 
     def set2datetime(self, m, M):
-        self.dm.setDate(m.date())
-        self.dM.setDate(M.date())
-        self.tm.setTime(m.time())
-        self.tM.setTime(M.time())
+        d1 = m.date()
+        d2 = M.date()
+        t1 = m.time()
+        t2 = M.time()
+        self.dm.setDate(min(d1, d2))
+        self.dM.setDate(max(d1, d2))
+        self.tm.setTime(min(t1, t2))
+        self.tM.setTime(max(t1, t2))
 
     def get_sql_where_dict(self):
         name = self.comb.currentText()
