@@ -84,6 +84,12 @@ class DateTimeRange(QObject):
         tM_ = self.tM.time().toString('hh:mm:ss')
         return dm_, dM_, tm_, tM_
 
+    def set2datetime(self, m, M):
+        self.dm.setDate(m.date())
+        self.dM.setDate(M.date())
+        self.tm.setTime(m.time())
+        self.tM.setTime(M.time())
+
     def get_sql_where_dict(self):
         name = self.comb.currentText()
         dm, dM, tm, tM = self.get4str()
@@ -138,7 +144,7 @@ class Controller:
         self.tdb = TaskTable(conn)
         self.colls = CollTable(conn)
         self.dt2p = DT2DPlot(ui.PlotWidget, app, self.colls)
-        self.dt2p.select_OK.connect(print)
+        self.dt2p.select_OK.connect(self.rang.set2datetime)
         self.dt2p.click.connect(self.update_table)
         self.tdb.print_doings()
         self.tdb.print_need()

@@ -12,7 +12,6 @@ show current running tasks on terminal
 ## improve
 write notice  
 calendar and clock view, week block DT2DPlot view  
-rectangle select in DT2DPlot, Shift key  
 show day and festival on DT2DPlot x-axis  
 use event instead task browser collector, generate task in other module  
 browser collector auto filter already records(part finally)  
