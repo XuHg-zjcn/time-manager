@@ -105,7 +105,7 @@ class SqlTable:
         not empty dict, return string include 'WHERE'
         """
         if not cond_dict:
-            return ''
+            return '', []
         sql = 'WHERE '
         paras = []
         for key, value in cond_dict.items():
