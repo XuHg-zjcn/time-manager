@@ -57,7 +57,7 @@ class DumpTable(SqlTable):
             v_d['runs'] = 0
         self.insert(v_d, commit)
 
-    def update_obj(self, obj, commit=None):
+    def update_obj(self, obj, cond_dict=None, commit=None):
         v_d = obj.dumps_dn()  # can't dump some attributes
         dump = dumps(obj)
         obj.loads_up(v_d)
@@ -65,7 +65,17 @@ class DumpTable(SqlTable):
         v_d2['dump'] = dump
         'id' in v_d2 and v_d2.pop('id')
         'table' in v_d2 and v_d2.pop('table')
-        self.update_conds({'id': v_d['id']}, v_d2, commit)
+        cond_dict = cond_dict or {'id': v_d['id']}
+        assert len(self.get_conds_execute(cond_dict, 'id')) == 1
+        self.update_conds(cond_dict, v_d2, commit)
+
+    def name_auto_insert_or_update(self, obj):
+        name = obj.db_fields['name']
+        get = self.get_conds_onlyone({'name': name}, 'id', def0=None)
+        if get is None:
+            self.add_obj(obj)
+        else:
+            self.update_obj(obj, {'name': name})
 
     def plus1(self, did):
         cur = self.conn.cursor()
