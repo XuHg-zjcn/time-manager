@@ -69,13 +69,15 @@ class DumpTable(SqlTable):
         assert len(self.get_conds_execute(cond_dict, 'id')) == 1
         self.update_conds(cond_dict, v_d2, commit)
 
-    def name_auto_insert_or_update(self, obj):
+    def name_auto_insert_or_update(self, obj, commit=None):
+        # return True if add new item, False already exists
         name = obj.db_fields['name']
         get = self.get_conds_onlyone({'name': name}, 'id', def0=None)
         if get is None:
-            self.add_obj(obj)
+            self.add_obj(obj, commit)
         else:
-            self.update_obj(obj, {'name': name})
+            self.update_obj(obj, {'name': name}, commit)
+        return get is None
 
     def plus1(self, did):
         cur = self.conn.cursor()
