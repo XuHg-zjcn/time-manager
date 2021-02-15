@@ -1,9 +1,8 @@
-from datetime import datetime
+import datetime
 from collections import Iterable, Container
 
 from my_libs.dump_table import DumpTable, DumpBaseCls
 from sqlite_api.task_db import Plan, TaskTable
-from commd_line.init_config import conn
 
 
 class UpBit(Exception):
@@ -90,7 +89,7 @@ class DatetimePointGen(SeqGen):
 
     def test(self):
         try:
-            dt = datetime(*self.last_s)
+            dt = datetime.datetime(*self.last_s)
         except ValueError as e:
             raise UpBit(e)
         if self.week is not None:
@@ -98,13 +97,13 @@ class DatetimePointGen(SeqGen):
                 return skip
 
     def proc(self):
-        return datetime(*self.last_s)
+        return datetime.datetime(*self.last_s)
 
 
 class TaskGen(DatetimePointGen, DumpBaseCls):
     def __init__(self, name='tg', rec_id=-1, type_id=-1,
-                 long=3600, *args, **kwargs):
-        DatetimePointGen.__init__(*args, **kwargs)
+                 long=3600.0, *args, **kwargs):
+        DatetimePointGen.__init__(self, *args, **kwargs)
         DumpBaseCls.__init__(self, name)
         self.db_fields['rec_id'] = rec_id
         self.db_fields['type_id'] = type_id
@@ -137,17 +136,3 @@ class TaskGenTable(DumpTable):
                   ('rec_id', 'INT'),
                   ('type_id', 'INT')]
     table_name = 'task_gen_table'
-
-
-if __name__ == '__main__':
-    tg_tab = TaskGenTable(conn)
-    task_tab = TaskTable(conn)
-    dtg = TaskGen(year=range(2020, 2030),
-                  mon=range(1, 3), day=range(1, 3),
-                  rec_id=4, type_id=2, name='task_gen2')
-
-    tg_tab.add_obj(dtg)
-    dtg = tg_tab.get_conds_objs({'name': 'TaskGen'})[0]
-    dtg.add_to_task_table(task_tab)
-    for i in dtg:
-        print(i)

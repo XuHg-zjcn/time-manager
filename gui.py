@@ -9,11 +9,10 @@ import sys
 import datetime
 
 from PyQt5.QtCore import QObject, pyqtSignal
-
-from Qt_GUI.add_task_gen import Ui_Dialog
-
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,\
     QDateEdit, QTimeEdit, QComboBox
+
+from Qt_GUI.add_task_gen2 import AddTaskGenDialog
 from Qt_GUI.layout import Ui_MainWindow
 from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from commd_line.init_config import conn
@@ -197,8 +196,9 @@ if __name__ == '__main__':
     dia.setWindowTitle('add task gen')
     ui = Ui_MainWindow()
     ui.setupUi(win)
-    ud = Ui_Dialog()
+    ud = AddTaskGenDialog()
     ud.setupUi(dia)
+    ud.build()
     win.show()
     Controller(ui, app)
     ui.add_task_gen.clicked.connect(dia.show)
