@@ -26,7 +26,7 @@ class Plan(dict):
         assert 'end' in self
         self.apply_default('use', self['end'] - self['sta'])
         assert self['use'] >= 0
-        self.apply_default('state', 2)
+        self.apply_default('state', 0)
 
     def apply_default(self, key, value):
         if key not in self:
