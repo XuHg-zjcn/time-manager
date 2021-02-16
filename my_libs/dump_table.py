@@ -66,7 +66,7 @@ class DumpTable(SqlTable):
         'id' in v_d2 and v_d2.pop('id')
         'table' in v_d2 and v_d2.pop('table')
         cond_dict = cond_dict or {'id': v_d['id']}
-        assert len(self.get_conds_execute(cond_dict, 'id')) == 1
+        assert len(list(self.get_conds_execute(cond_dict, 'id'))) == 1
         self.update_conds(cond_dict, v_d2, commit)
 
     def name_auto_insert_or_update(self, obj, commit=None):
