@@ -274,13 +274,13 @@
     <item row="2" column="4">
      <widget class="QSpinBox" name="week_max">
       <property name="minimum">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="maximum">
        <number>7</number>
       </property>
       <property name="value">
-       <number>7</number>
+       <number>1</number>
       </property>
      </widget>
     </item>
@@ -296,7 +296,7 @@
        <number>1</number>
       </property>
       <property name="value">
-       <number>2100</number>
+       <number>2030</number>
       </property>
      </widget>
     </item>
@@ -358,6 +358,9 @@
      <widget class="QSpinBox" name="week_period">
       <property name="minimum">
        <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>7</number>
       </property>
      </widget>
     </item>
