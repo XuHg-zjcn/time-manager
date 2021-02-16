@@ -77,6 +77,10 @@ class AddTaskGenDialog(Ui_Dialog):
         tg = self.get_tg()
         tg.add_to_task_table(task_tab)
 
+    def remove_tasks_slot(self, b):
+        name = self.name_comb.currentText()
+        task_tab.delete({'name': name}, True)
+
     def combo_text_change_slot(self, text):
         tg = onlyone_process(tg_tab.get_conds_objs({'name': text}), def0=None)
         if tg is None:
@@ -88,8 +92,9 @@ class AddTaskGenDialog(Ui_Dialog):
         self.name_comb.addItems(texts)
 
     def build(self):
-        self.combo_init()
         self.name_comb.currentTextChanged.connect(self.combo_text_change_slot)
         self.add_to_db.clicked.connect(self.add_db_slot)
         self.delete_db.clicked.connect(self.delete_slot)
         self.list_out_tasks.clicked.connect(self.list_out_tasks_slot)
+        self.remove_tasks.clicked.connect(self.remove_tasks_slot)
+        self.combo_init()

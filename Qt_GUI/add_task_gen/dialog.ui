@@ -607,7 +607,7 @@
     <string>列出任务</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="remove_tasks">
    <property name="geometry">
     <rect>
      <x>699</x>
