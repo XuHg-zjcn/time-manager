@@ -166,10 +166,9 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.dt2d_plot.select_point.connect(self.update_table)
         self.tdb.print_doings()
         self.tdb.print_need()
-        self.year.valueChanged.connect(lambda: self.change_year())
+        self.year.valueChanged.connect(self.change_year)
 
-    def change_year(self):
-        year = self.year.value()
+    def change_year(self, year):
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
         plans = self.tdb.get_conds_plans(where_dict)

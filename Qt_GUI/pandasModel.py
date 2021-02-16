@@ -142,8 +142,8 @@ class iTableView(QTableView):
         except TypeError: pass  # error when without connect before disconnect
         try: self.pressed.disconnect()
         except TypeError: pass  # error when without connect before disconnect
-        self.activated.connect(lambda x: self.active_slot(x))
-        self.pressed.connect(lambda x: self.pressed_slot(x))
+        self.activated.connect(self.active_slot)
+        self.pressed.connect(self.pressed_slot)
         headers = self.horizontalHeader()
         headers.sectionResized.connect(self.resized_slot)
 
