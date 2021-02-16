@@ -42,10 +42,10 @@
     <item row="2" column="7">
      <widget class="QSpinBox" name="sec_max">
       <property name="maximum">
-       <number>60</number>
+       <number>59</number>
       </property>
       <property name="value">
-       <number>60</number>
+       <number>59</number>
       </property>
      </widget>
     </item>
@@ -73,6 +73,9 @@
       </property>
       <property name="minimum">
        <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>60</number>
       </property>
       <property name="value">
        <number>60</number>
@@ -123,10 +126,10 @@
     <item row="2" column="5">
      <widget class="QSpinBox" name="hour_max">
       <property name="maximum">
-       <number>24</number>
+       <number>23</number>
       </property>
       <property name="value">
-       <number>24</number>
+       <number>23</number>
       </property>
      </widget>
     </item>
@@ -186,6 +189,9 @@
      <widget class="QSpinBox" name="minu_period">
       <property name="minimum">
        <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>60</number>
       </property>
       <property name="value">
        <number>60</number>
@@ -264,7 +270,7 @@
        <number>0</number>
       </property>
       <property name="maximum">
-       <number>9999</number>
+       <number>59</number>
       </property>
       <property name="value">
        <number>0</number>
@@ -306,7 +312,7 @@
        <number>0</number>
       </property>
       <property name="maximum">
-       <number>24</number>
+       <number>23</number>
       </property>
       <property name="value">
        <number>1</number>
@@ -347,7 +353,7 @@
        <number>0</number>
       </property>
       <property name="maximum">
-       <number>9999</number>
+       <number>59</number>
       </property>
       <property name="value">
        <number>0</number>
@@ -367,10 +373,10 @@
     <item row="2" column="6">
      <widget class="QSpinBox" name="minu_max">
       <property name="maximum">
-       <number>60</number>
+       <number>59</number>
       </property>
       <property name="value">
-       <number>60</number>
+       <number>59</number>
       </property>
      </widget>
     </item>
@@ -395,6 +401,9 @@
      <widget class="QSpinBox" name="day_period">
       <property name="minimum">
        <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>31</number>
       </property>
      </widget>
     </item>

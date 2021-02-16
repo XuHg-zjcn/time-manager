@@ -13,13 +13,13 @@ task_tab = TaskTable(conn)
 # TODO: 3 spin box as a widget, direct get range obj.
 class AddTaskGenDialog(Ui_Dialog):
     def get_tg(self):
-        year = range(self.year_min.value(), self.year_max.value(), self.year_period.value())
-        mon = range(self.mon_min.value(), self.mon_max.value(), self.mon_period.value())
-        day = range(self.day_min.value(), self.day_max.value(), self.day_period.value())
-        week = range(self.week_min.value(), self.week_max.value(), self.week_period.value())
-        hour = range(self.hour_min.value(), self.hour_max.value(), self.hour_period.value())
-        minu = range(self.minu_min.value(), self.minu_max.value(), self.minu_period.value())
-        sec = range(self.sec_min.value(), self.sec_max.value(), self.sec_period.value())
+        year = range(self.year_min.value(), self.year_max.value()+1, self.year_period.value())
+        mon = range(self.mon_min.value(), self.mon_max.value()+1, self.mon_period.value())
+        day = range(self.day_min.value(), self.day_max.value()+1, self.day_period.value())
+        week = range(self.week_min.value(), self.week_max.value()+1, self.week_period.value())
+        hour = range(self.hour_min.value(), self.hour_max.value()+1, self.hour_period.value())
+        minu = range(self.minu_min.value(), self.minu_max.value()+1, self.minu_period.value())
+        sec = range(self.sec_min.value(), self.sec_max.value()+1, self.sec_period.value())
         long = datetime.timedelta(days=self.day_long.value(),
                                   hours=self.hour_long.value(),
                                   minutes=self.minu_long.value(),
@@ -36,26 +36,26 @@ class AddTaskGenDialog(Ui_Dialog):
         week = tg.week
         long = tg.long
         self.year_min.setValue(year.start)
-        self.year_max.setValue(year.stop)
+        self.year_max.setValue(year.stop-1)
         self.year_period.setValue(year.step)
         self.mon_min.setValue(mon.start)
-        self.mon_max.setValue(mon.stop)
+        self.mon_max.setValue(mon.stop-1)
         self.mon_period.setValue(mon.step)
         self.day_min.setValue(day.start)
-        self.day_max.setValue(day.stop)
+        self.day_max.setValue(day.stop-1)
         self.day_period.setValue(day.step)
+        self.week_min.setValue(week.start)
+        self.week_max.setValue(week.stop-1)
+        self.week_period.setValue(week.step)
         self.hour_min.setValue(hour.start)
-        self.hour_max.setValue(hour.stop)
+        self.hour_max.setValue(hour.stop-1)
         self.hour_period.setValue(hour.step)
         self.minu_min.setValue(minu.start)
-        self.minu_max.setValue(minu.stop)
+        self.minu_max.setValue(minu.stop-1)
         self.minu_period.setValue(minu.step)
         self.sec_min.setValue(sec.start)
-        self.sec_max.setValue(sec.stop)
+        self.sec_max.setValue(sec.stop-1)
         self.sec_period.setValue(sec.step)
-        self.week_min.setValue(week.start)
-        self.week_max.setValue(week.stop)
-        self.week_period.setValue(week.step)
         self.day_long.setValue(long//86400); long%=86400
         self.hour_long.setValue(long//3600); long%=3600
         self.minu_long.setValue(long//60); long%=60
