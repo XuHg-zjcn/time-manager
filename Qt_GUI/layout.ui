@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="PlotWidget" name="PlotWidget">
+   <widget class="DT2DWidget" name="dt2d_plot">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -260,9 +260,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
+   <class>DT2DWidget</class>
    <extends>QGraphicsView</extends>
-   <header>pyqtgraph</header>
+   <header>Qt_GUI.datetime2d</header>
   </customwidget>
   <customwidget>
    <class>iTableView</class>

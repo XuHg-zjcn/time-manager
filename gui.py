@@ -14,7 +14,6 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,\
 
 from Qt_GUI.add_task_gen2 import AddTaskGenDialog
 from Qt_GUI.layout import Ui_MainWindow
-from Qt_GUI.pyqtgraph_plot import DT2DPlot
 from commd_line.init_config import conn
 from my_libs.datetime_utils import date2ts0, time2float
 from sqlite_api.tables import CollTable
@@ -146,46 +145,44 @@ class DateTimeRange(QObject):
         return ret
 
 
-class Controller:
+class MyUi_MainWindow(Ui_MainWindow):
     """
     select data and display.
     """
 
-    def __init__(self, ui, app):
-        self.ui = ui
-        self.rang = DateTimeRange(self.ui.date_min, self.ui.date_max,
-                                  self.ui.time_min, self.ui.time_max,
-                                  self.ui.x_setting)
+    def build(self, app):
+        self.rang = DateTimeRange(self.date_min, self.date_max,
+                                  self.time_min, self.time_max,
+                                  self.x_setting)
         # set current year
         year = datetime.date.today().year
-        self.ui.year.setValue(year)
-        self.table = ui.tableView
+        self.year.setValue(year)
         self.tdb = TaskTable(conn)
         self.colls = CollTable(conn)
-        self.dt2p = DT2DPlot(ui.PlotWidget, app, self.colls)
-        self.dt2p.select_rect.connect(self.rang.set2datetime)
-        self.dt2p.select_point.connect(self.rang.set1datetime)
-        self.dt2p.select_rect.connect(self.update_table)
-        self.dt2p.select_point.connect(self.update_table)
+        self.dt2d_plot.build(app, self.colls)
+        self.dt2d_plot.select_rect.connect(self.rang.set2datetime)
+        self.dt2d_plot.select_point.connect(self.rang.set1datetime)
+        self.dt2d_plot.select_rect.connect(self.update_table)
+        self.dt2d_plot.select_point.connect(self.update_table)
         self.tdb.print_doings()
         self.tdb.print_need()
-        self.ui.year.valueChanged.connect(lambda: self.change_year())
+        self.year.valueChanged.connect(lambda: self.change_year())
 
     def change_year(self):
-        year = self.ui.year.value()
+        year = self.year.value()
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
         plans = self.tdb.get_conds_plans(where_dict)
         ivtree = plans.get_ivtree(lambda p: Plan(p))
-        self.dt2p.update_ivtree(ivtree, year)
+        self.dt2d_plot.update_ivtree(ivtree, year)
 
     def update_table(self):
         where_dict = self.rang.get_sql_where_dict()
         plans = self.tdb.get_conds_plans(where_dict)
         print(plans)
         plans = plans.str_datetime()
-        self.table.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks,
-                                sql_table=self.tdb)
+        self.tableView.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks,
+                                    sql_table=self.tdb)
 
 
 if __name__ == '__main__':
@@ -194,12 +191,12 @@ if __name__ == '__main__':
     win.setWindowTitle('time-manager Date-Time 2D Image')
     dia = QDialog()
     dia.setWindowTitle('add task gen')
-    ui = Ui_MainWindow()
+    ui = MyUi_MainWindow()
     ui.setupUi(win)
+    ui.build(app)
     ud = AddTaskGenDialog()
     ud.setupUi(dia)
     ud.build()
     win.show()
-    Controller(ui, app)
     ui.add_task_gen.clicked.connect(dia.show)
     sys.exit(app.exec_())

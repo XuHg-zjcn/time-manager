@@ -16,11 +16,11 @@ class Ui_MainWindow(object):
         MainWindow.resize(1417, 633)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        self.PlotWidget = PlotWidget(self.centralwidget)
-        self.PlotWidget.setGeometry(QtCore.QRect(0, 0, 750, 300))
-        self.PlotWidget.setMinimumSize(QtCore.QSize(750, 300))
-        self.PlotWidget.setMaximumSize(QtCore.QSize(750, 300))
-        self.PlotWidget.setObjectName("PlotWidget")
+        self.dt2d_plot = DT2DWidget(self.centralwidget)
+        self.dt2d_plot.setGeometry(QtCore.QRect(0, 0, 750, 300))
+        self.dt2d_plot.setMinimumSize(QtCore.QSize(750, 300))
+        self.dt2d_plot.setMaximumSize(QtCore.QSize(750, 300))
+        self.dt2d_plot.setObjectName("dt2d_plot")
         self.update_view = QtWidgets.QPushButton(self.centralwidget)
         self.update_view.setGeometry(QtCore.QRect(430, 340, 101, 27))
         self.update_view.setObjectName("update_view")
@@ -132,5 +132,5 @@ class Ui_MainWindow(object):
         self.time_max.setDisplayFormat(_translate("MainWindow", "hh:mm:ss"))
         self.time_min.setDisplayFormat(_translate("MainWindow", "hh:mm:ss"))
         self.add_task_gen.setText(_translate("MainWindow", "添加生成器"))
+from Qt_GUI.datetime2d import DT2DWidget
 from Qt_GUI.pandasModel import iTableView
-from pyqtgraph import PlotWidget
