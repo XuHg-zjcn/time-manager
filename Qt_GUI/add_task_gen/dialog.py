@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'add_task_gen.ui'
+# Form implementation generated from reading ui file 'dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.12.3
 #
@@ -83,8 +83,9 @@ class Ui_Dialog(object):
         self.sec_min.setObjectName("sec_min")
         self.gridLayout.addWidget(self.sec_min, 1, 7, 1, 1)
         self.week_min = QtWidgets.QSpinBox(self.gridLayoutWidget)
-        self.week_min.setMinimum(1)
+        self.week_min.setMinimum(0)
         self.week_min.setMaximum(7)
+        self.week_min.setProperty("value", 0)
         self.week_min.setObjectName("week_min")
         self.gridLayout.addWidget(self.week_min, 1, 4, 1, 1)
         self.day_min = QtWidgets.QSpinBox(self.gridLayoutWidget)

@@ -1,6 +1,6 @@
 import datetime
 
-from Qt_GUI.add_task_gen import Ui_Dialog
+from Qt_GUI.add_task_gen.dialog import Ui_Dialog
 from commd_line.init_config import conn
 from my_libs.sqltable import onlyone_process
 from sqlite_api.task_db import TaskTable

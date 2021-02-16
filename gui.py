@@ -12,7 +12,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,\
     QDateEdit, QTimeEdit, QComboBox
 
-from Qt_GUI.add_task_gen2 import AddTaskGenDialog
+from Qt_GUI.add_task_gen import AddTaskGenDialog
 from Qt_GUI.layout import Ui_MainWindow
 from commd_line.init_config import conn
 from my_libs.datetime_utils import date2ts0, time2float
