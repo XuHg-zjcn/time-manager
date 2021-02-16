@@ -185,18 +185,16 @@ class iTableView(QTableView):
     def pressed_slot(self, qmi):
         if not self.column_set:
             return
-        col = qmi.column()
         model = self.model()
-        col_name = model.headerData(col, Qt.Horizontal, role=Qt.DisplayRole)
-        if self.current_edit_widget and self.current_edit_index:
-            cew = self.current_edit_widget
-            cei = self.current_edit_index
-            col_old = cei.column()
-            name_old = model.headerData(col_old, Qt.Horizontal, role=Qt.DisplayRole)
-            value = self.column_set[name_old].on_edit_finish(qmi, cew)
+        if self.current_edit_widget and self.current_edit_index:  # has other block editing
+            widget_old = self.current_edit_widget
+            index_old = self.current_edit_index
+            column_old = index_old.column()
+            name_old = model.headerData(column_old, Qt.Horizontal, role=Qt.DisplayRole)
+            value = self.column_set[name_old].on_edit_finish(index_old, widget_old)
             if self.sql_table:
-                self.update_sql_table(cei.row(), name_old, value)
-            self.setIndexWidget(cei, None)
+                self.update_sql_table(index_old.row(), name_old, value)
+            self.setIndexWidget(index_old, None)
             self.current_edit_widget = None
             self.current_edit_index = None
 
