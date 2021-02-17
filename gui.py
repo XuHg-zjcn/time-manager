@@ -156,8 +156,6 @@ class MyUi_MainWindow(Ui_MainWindow):
                                   self.time_min, self.time_max,
                                   self.x_setting)
         # set current year
-        year = datetime.date.today().year
-        self.year.setValue(year)
         self.tdb = TaskTable(conn)
         self.colls = CollTable(conn)
         self.dt2d_plot.build(app, self.colls)
@@ -169,6 +167,8 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.tdb.print_doings()
         self.tdb.print_need()
         self.year.valueChanged.connect(self.change_year)
+        year = datetime.date.today().year
+        self.year.setValue(year)
 
     def change_year(self, year):
         self.rang.set_year0101_1231(year)
