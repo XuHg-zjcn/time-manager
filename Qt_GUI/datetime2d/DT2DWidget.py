@@ -29,6 +29,7 @@ class DT2DWidget(pg.PlotWidget):
         self.last_select = None
         self.item = None
         self.scatter = pg.ScatterPlotItem()
+        self.scatter.setZValue(10)
         self.addItem(self.scatter)
         self.vh_line = vhLine(self)
         self.invertY()
@@ -69,6 +70,7 @@ class DT2DWidget(pg.PlotWidget):
         ivt_color = ivtree.map_data(lambda p: p.get_collect_color(self.colls))
         self.removeItem(self.item)
         self.item = DateTime2DItem(ivt_color, year)
+        self.item.setZValue(0)
         self.addItem(self.item)
         self.set_xaixs(year)
         Cluster(ivtree, self.item.d11, self.scatter,
