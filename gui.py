@@ -104,11 +104,12 @@ class DateTimeRange(QObject):
         self.tm.setTime(m.time())
 
     def set_year0101_1231(self, year):
-        d0101 = datetime.datetime(year,   1,  1,  0,  0,  0)
-        d1231 = datetime.datetime(year+1, 12, 31, 23, 59, 59)
+        d0101 = datetime.datetime(year, 1,  1,  0,  0,  0)
+        d1231 = datetime.datetime(year, 12, 31, 23, 59, 59)
         self.set2datetime(d0101, d1231)
 
     def get_sql_where_dict(self):
+        # TODO: timezone
         name = self.comb.currentText()
         dm, dM, tm, tM = self.get4str()
         m, M = self.get2float()
