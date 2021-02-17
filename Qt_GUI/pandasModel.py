@@ -121,16 +121,19 @@ class iTableView(QTableView):
         self.sql_table = None
         self.dataframe = None
 
-    def setDataFrame(self, dataframe, name: str,
-                     column_set_cls=ColumnSet, sql_table :SqlTable=None):
+    def setDataFrame(self, dataframe, name:str=None,
+                     column_set_cls=ColumnSet, sql_table:SqlTable=None):
         # filter columns
-        column_set = column_table.auto_create(column_set_cls, name)
-        self.column_set = column_set
-        self.sql_table = sql_table
+        if name is not None:
+            self.column_set = column_table.auto_create(column_set_cls, name)
+        elif self.column_set is None:
+            raise ValueError('first call setDataFrame without name')
+        if sql_table is not None:
+            self.sql_table = sql_table
         self.dataframe = dataframe
         data2 = dataframe.copy()
         for col_name in data2.columns:
-            if not column_set.is_show(col_name):
+            if not self.column_set.is_show(col_name):
                 data2.pop(col_name)
         # PandasModel
         model = PandasModel(data2)
@@ -146,6 +149,9 @@ class iTableView(QTableView):
         self.pressed.connect(self.pressed_slot)
         headers = self.horizontalHeader()
         headers.sectionResized.connect(self.resized_slot)
+
+    def update_dataframe(self):
+        self.setDataFrame(self.dataframe)
 
     def on_builds(self):
         if not hasattr(self, 'column_set'):
@@ -209,5 +215,5 @@ class iTableView(QTableView):
             return
         self.dataframe[col_name][row] = value
         xid = self.dataframe['id'][row]
-        self.update()
+        self.update_dataframe()
         self.sql_table.update_conds({'id': xid}, {col_name: value})
