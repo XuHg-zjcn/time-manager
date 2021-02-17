@@ -4,14 +4,13 @@ from PyQt5 import QtCore, QtGui
 
 
 class DateTime2DItem(pg.GraphicsObject):
-    def __init__(self, func_color):
-        self.ivtree = None
-        self.year = None
-        self.picture = QtGui.QPicture()
-        self.d11 = None
-        self.max_doy = None
-        self.func_color = func_color
+    def __init__(self, ivtree, year):
         super().__init__()
+        self.ivtree = ivtree
+        self.d11 = datetime(year, 1, 1)
+        self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
+        self.picture = QtGui.QPicture()
+        self._draw_ivtree()
 
     def time2xy(self, time):
         if isinstance(time, float) or isinstance(time, int):
@@ -49,16 +48,12 @@ class DateTime2DItem(pg.GraphicsObject):
             end_sec = END[1] if doy == END[0] else 86399
             self._draw_rect(p, doy, beg_sec, end_sec, color)
 
-    def draw_ivtree(self, ivtree, year):
-        self.ivtree = ivtree
-        self.year = year
+    def _draw_ivtree(self):
         self.picture = QtGui.QPicture()
-        self.d11 = datetime(year, 1, 1)
-        self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
         p = QtGui.QPainter(self.picture)
-        for iv in sorted(ivtree):
-            color = self.func_color(iv.data)
-            ovlps = ivtree[iv.begin]
+        for iv in sorted(self.ivtree):
+            color = iv.data
+            ovlps = self.ivtree[iv.begin]
             ovlps.remove(iv)
             if ovlps:
                 first = min(ovlps, key=lambda x: x.end)

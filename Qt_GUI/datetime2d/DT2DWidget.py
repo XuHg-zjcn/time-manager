@@ -15,9 +15,8 @@ class DT2DWidget(pg.PlotWidget):
         self.app = app
         self.colls = colls
         self.last_select = None
-        self.item = DateTime2DItem(lambda p: p.get_collect_color(colls))
+        self.item = None
         self.scatter = pg.ScatterPlotItem()
-        self.addItem(self.item)
         self.addItem(self.scatter)
         self.vLine = pg.InfiniteLine(angle=90, movable=False, )
         self.hLine = pg.InfiniteLine(angle=0, movable=False, )
@@ -58,7 +57,10 @@ class DT2DWidget(pg.PlotWidget):
         self.setYRange(0, 24)
 
     def update_ivtree(self, ivtree, year):
-        self.item.draw_ivtree(ivtree, year)
+        ivt_color = ivtree.map_data(lambda p: p.get_collect_color(self.colls))
+        self.removeItem(self.item)
+        self.item = DateTime2DItem(ivt_color, year)
+        self.addItem(self.item)
         self.set_xaixs(year)
         Cluster(ivtree, self.item.d11, self.scatter,
                 func_classify=lambda p: p['rec_id'],

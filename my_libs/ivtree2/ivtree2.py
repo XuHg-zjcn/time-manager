@@ -168,3 +168,9 @@ class IvTree2(IntervalTree):
             return "IvTree2({0})".format(ivs)
 
     __str__ = __repr__
+
+    def map_data(self, func):
+        ret = IvTree2()
+        for iv in self:
+            ret[iv.begin:iv.end] = func(iv.data)
+        return ret
