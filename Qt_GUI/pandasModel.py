@@ -3,7 +3,8 @@
 from enum import Enum
 
 from PyQt5.QtCore import QAbstractTableModel, Qt
-from PyQt5.QtWidgets import QSpinBox, QWidget, QTableView
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QSpinBox, QWidget, QTableView, QMenu
 
 from my_libs.dump_table import DumpTable, DumpBaseCls
 from commd_line.init_config import conn
@@ -149,6 +150,8 @@ class iTableView(QTableView):
         self.pressed.connect(self.pressed_slot)
         headers = self.horizontalHeader()
         headers.sectionResized.connect(self.resized_slot)
+        headers.setContextMenuPolicy(Qt.CustomContextMenu)
+        headers.customContextMenuRequested.connect(self.horiz_head_right_click)
 
     def update_dataframe(self):
         self.setDataFrame(self.dataframe)
@@ -217,3 +220,20 @@ class iTableView(QTableView):
         xid = self.dataframe['id'][row]
         self.update_dataframe()
         self.sql_table.update_conds({'id': xid}, {col_name: value})
+
+    def horiz_head_right_click(self, point):  # 创建右键菜单
+        def Handler():
+            self.column_set.set_show(name, False)
+            contextMenu.close()
+            self.update_dataframe()
+            print("已隐藏", name)
+
+        contextMenu = QMenu(self)
+        self.hidden = contextMenu.addAction(u'隐藏')
+        # self.actionA = self.contextMenu.exec_(self.mapToGlobal(pos))  # 1
+        contextMenu.popup(QCursor.pos())  # 2菜单显示的位置
+        logic_index = self.horizontalHeader().logicalIndexAt(point)
+        name = self.model().headerData(logic_index, Qt.Horizontal, role=Qt.DisplayRole)
+        self.hidden.triggered.connect(Handler)
+        # self.contextMenu.move(self.pos())  # 3
+        contextMenu.show()
