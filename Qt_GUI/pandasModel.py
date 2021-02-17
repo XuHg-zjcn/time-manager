@@ -121,6 +121,12 @@ class iTableView(QTableView):
         self.column_set = None
         self.sql_table = None
         self.dataframe = None
+        self.activated.connect(self.active_slot)
+        self.pressed.connect(self.pressed_slot)
+        headers = self.horizontalHeader()
+        headers.sectionResized.connect(self.resized_slot)
+        headers.setContextMenuPolicy(Qt.CustomContextMenu)
+        headers.customContextMenuRequested.connect(self.horiz_head_right_click)
 
     def setDataFrame(self, dataframe, name:str=None,
                      column_set_cls=ColumnSet, sql_table:SqlTable=None):
@@ -142,16 +148,6 @@ class iTableView(QTableView):
         self.on_builds()
         self.set_wides()
         # connect signals, TODO: edit in TabView, write to database.
-        try: self.activated.disconnect()
-        except TypeError: pass  # error when without connect before disconnect
-        try: self.pressed.disconnect()
-        except TypeError: pass  # error when without connect before disconnect
-        self.activated.connect(self.active_slot)
-        self.pressed.connect(self.pressed_slot)
-        headers = self.horizontalHeader()
-        headers.sectionResized.connect(self.resized_slot)
-        headers.setContextMenuPolicy(Qt.CustomContextMenu)
-        headers.customContextMenuRequested.connect(self.horiz_head_right_click)
 
     def update_dataframe(self):
         self.setDataFrame(self.dataframe)
