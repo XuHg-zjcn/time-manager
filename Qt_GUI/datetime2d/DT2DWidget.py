@@ -6,6 +6,18 @@ from .Item import DateTime2DItem
 from ..cluster import Cluster
 
 
+class vhLine:
+    def __init__(self, pw):
+        self.v = pg.InfiniteLine(angle=90, movable=False, )
+        self.h = pg.InfiniteLine(angle=0, movable=False, )
+        pw.addItem(self.v)
+        pw.addItem(self.h)
+
+    def set_xy(self, point):
+        self.v.setPos(point.x())
+        self.h.setPos(point.y())
+
+
 class DT2DWidget(pg.PlotWidget):
     click = pyqtSignal(datetime)
     select_point = pyqtSignal(datetime)
@@ -18,10 +30,7 @@ class DT2DWidget(pg.PlotWidget):
         self.item = None
         self.scatter = pg.ScatterPlotItem()
         self.addItem(self.scatter)
-        self.vLine = pg.InfiniteLine(angle=90, movable=False, )
-        self.hLine = pg.InfiniteLine(angle=0, movable=False, )
-        self.addItem(self.vLine)
-        self.addItem(self.hLine)
+        self.vh_line = vhLine(self)
         self.invertY()
         self.set_yaxis(6)
         self.scene().sigMouseMoved.connect(self.mouse_move_slot)
@@ -70,8 +79,7 @@ class DT2DWidget(pg.PlotWidget):
     def mouse_move_slot(self, pos):
         if self.sceneBoundingRect().contains(pos):
             point = self.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
-            self.vLine.setPos(point.x())
-            self.hLine.setPos(point.y())
+            self.vh_line.set_xy(point)
 
     def mouse_click_slot(self, event):
         pos = event._scenePos
