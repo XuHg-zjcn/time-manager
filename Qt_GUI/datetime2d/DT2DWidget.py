@@ -68,15 +68,21 @@ class DT2DWidget(pg.PlotWidget):
 
     def update_ivtree(self, ivtree, year):
         ivt_color = ivtree.map_data(lambda p: p.get_collect_color(self.colls))
+        self.ivtree = ivtree
         self.removeItem(self.item)
         self.item = DateTime2DItem(ivt_color, year)
         self.item.setZValue(0)
         self.addItem(self.item)
         self.set_xaixs(year)
-        Cluster(ivtree, self.item.d11, self.scatter,
-                func_classify=lambda p: p['rec_id'],
-                func_textcolor=self.colls.find_txtclr)
         self.set_xy_full_range()
+
+    def start_cluster(self):
+        if not hasattr(self, 'ivtree'):
+            raise RuntimeError('start_cluster before update_ivtree')
+        clu = Cluster(self.ivtree, self.item.d11, self.scatter,
+                      func_classify=lambda p: p['rec_id'],
+                      func_textcolor=self.colls.find_txtclr)
+        clu.start()
 
     def mouse_move_slot(self, pos):
         if self.sceneBoundingRect().contains(pos):

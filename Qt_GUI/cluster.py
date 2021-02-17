@@ -35,10 +35,11 @@ class PlanList(list):
         super().append(xy)
 
 
-class Cluster:
-    def __init__(self, ivtree, d11, scatter, day_div=5,
-                 func_classify=lambda p: 0,
+class Cluster(Thread):
+    def __init__(self, ivtree, d11, scatter, day_div=5, func_classify=lambda p: 0,
                  func_textcolor=lambda x: TxtClr('name', ARGB(0, 255, 255))):
+        super().__init__()
+        self.scatter = scatter
         self.ivtree = ivtree
         self.d11 = d11
         self.day_div = day_div
@@ -47,8 +48,6 @@ class Cluster:
         self.dbt2plst = {}
         self.dbt2dbtp = {}
         self.before()
-        thr = Thread(target=self.thread, args=(scatter,))
-        thr.start()
 
     @staticmethod
     def create_label(label, angle):
@@ -74,7 +73,7 @@ class Cluster:
             txt_clr = self.func_textcolor(ctg)
             self.dbt2dbtp[ctg] = txt_clr
 
-    def thread(self, scatter):
+    def run(self):
         print('thread')
         spots = []
         for dbtype, plst in self.dbt2plst.items():
@@ -90,4 +89,4 @@ class Cluster:
                 label = self.create_label(tp.text, 0)
                 spots.append({'pos': pos, 'data': 1, 'pen':inv_color, 'brush': inv_color,
                               'symbol': label.symbol, 'size': label.scale*10})
-        scatter.setData(spots)
+        self.scatter.setData(spots)

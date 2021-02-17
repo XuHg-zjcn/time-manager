@@ -165,6 +165,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.dt2d_plot.select_point.connect(self.rang.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)
         self.dt2d_plot.select_point.connect(self.update_table)
+        self.cluster.clicked.connect(self.dt2d_plot.start_cluster)
         self.tdb.print_doings()
         self.tdb.print_need()
         self.year.valueChanged.connect(self.change_year)

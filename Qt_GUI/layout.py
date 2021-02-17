@@ -104,6 +104,9 @@ class Ui_MainWindow(object):
         self.add_task_gen = QtWidgets.QPushButton(self.centralwidget)
         self.add_task_gen.setGeometry(QtCore.QRect(430, 420, 101, 30))
         self.add_task_gen.setObjectName("add_task_gen")
+        self.cluster = QtWidgets.QPushButton(self.centralwidget)
+        self.cluster.setGeometry(QtCore.QRect(680, 310, 71, 31))
+        self.cluster.setObjectName("cluster")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1417, 34))
@@ -132,5 +135,6 @@ class Ui_MainWindow(object):
         self.time_max.setDisplayFormat(_translate("MainWindow", "hh:mm:ss"))
         self.time_min.setDisplayFormat(_translate("MainWindow", "hh:mm:ss"))
         self.add_task_gen.setText(_translate("MainWindow", "添加生成器"))
+        self.cluster.setText(_translate("MainWindow", "聚类"))
 from Qt_GUI.datetime2d import DT2DWidget
 from Qt_GUI.pandasModel import iTableView
