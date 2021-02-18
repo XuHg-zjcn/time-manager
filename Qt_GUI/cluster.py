@@ -36,11 +36,11 @@ class PlanList(list):
 
 
 class Cluster(Thread):
-    def __init__(self, ivtree, d11, scatter, day_div=5, func_classify=lambda p: 0,
+    def __init__(self, plans, d11, scatter, day_div=5, func_classify=lambda p: 0,
                  func_textcolor=lambda x: TxtClr('name', ARGB(0, 255, 255))):
         super().__init__()
         self.scatter = scatter
-        self.ivtree = ivtree
+        self.plans = plans
         self.d11 = d11
         self.day_div = day_div
         self.func_classify = func_classify
@@ -64,11 +64,11 @@ class Cluster(Thread):
         return TextSymbol(label, tr.map(symbol), 0.1 / scale)
 
     def before(self):
-        for iv in self.ivtree:
-            ctg = self.func_classify(iv.data)  # category
+        for plan in self.plans.iloc:
+            ctg = self.func_classify(plan)  # category
             if ctg not in self.dbt2plst:
                 self.dbt2plst[ctg] = PlanList(self.d11, self.day_div)
-            self.dbt2plst[ctg].append(iv.data)
+            self.dbt2plst[ctg].append(plan)
         for ctg in self.dbt2plst.keys():
             txt_clr = self.func_textcolor(ctg)
             self.dbt2dbtp[ctg] = txt_clr

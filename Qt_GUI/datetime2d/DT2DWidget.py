@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt, pyqtSignal
 
+from sqlite_api.task_db import Plans, Plan
 from .Item import DateTime2DItem
 from ..cluster import Cluster
 
@@ -26,6 +27,7 @@ class DT2DWidget(pg.PlotWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.plans = None
         self.last_select = None
         self.items = {}
         self.scatter = pg.ScatterPlotItem()
@@ -37,6 +39,7 @@ class DT2DWidget(pg.PlotWidget):
         self.scene().sigMouseMoved.connect(self.mouse_move_slot)
         self.scene().sigMouseClicked.connect(self.mouse_click_slot)
         pg.setConfigOptions(imageAxisOrder='row-major')
+        self.set_year(datetime.today().year)
 
     def build(self, app, colls):
         self.app = app      # don't move this codes
@@ -86,25 +89,27 @@ class DT2DWidget(pg.PlotWidget):
         self.setXRange(0, 366)
         self.setYRange(0, 24)
 
-    def update_ivtree(self, ivtree, year, name=None, z=0):
-        ivt_color = ivtree.map_data(lambda p: p.get_collect_color(self.colls))
-        self.ivtree = ivtree
+    def draw_plans(self, plans: Plans, year=None, name=None, z=0):
+        if name is None:
+            self.plans = plans
+        ivt_color = plans.get_ivtree(lambda p: Plan(p).get_collect_color(self.colls))
         if name in self.items:  # name normal is None or string
-            self.remove_ivtree(name)
-        self.set_year(year)
+            self.remove_plans(name)
+        if year is not None:
+            self.set_year(year)
         item_new = DateTime2DItem(ivt_color, self)
         item_new.setZValue(z)
         self.items[name] = item_new
         self.addItem(item_new)
         self.set_xy_full_range()
 
-    def remove_ivtree(self, name):
+    def remove_plans(self, name):
         self.removeItem(self.items[name])
 
     def start_cluster(self):
-        if not hasattr(self, 'ivtree'):
+        if self.plans is None:
             raise RuntimeError('start_cluster before update_ivtree')
-        clu = Cluster(self.ivtree, self.d11, self.scatter,
+        clu = Cluster(self.plans, self.d11, self.scatter,
                       func_classify=lambda p: p['rec_id'],
                       func_textcolor=self.colls.find_txtclr)
         clu.start()

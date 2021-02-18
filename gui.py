@@ -17,7 +17,7 @@ from Qt_GUI.layout import Ui_MainWindow
 from commd_line.init_config import conn
 from my_libs.datetime_utils import date2ts0, time2float
 from sqlite_api.tables import CollTable
-from sqlite_api.task_db import TaskTable, Plan, ColumnSetTasks
+from sqlite_api.task_db import TaskTable, ColumnSetTasks
 
 
 class DateTimeRange(QObject):
@@ -174,8 +174,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
         plans = self.tdb.get_conds_plans(where_dict)
-        ivtree = plans.get_ivtree(lambda p: Plan(p))
-        self.dt2d_plot.update_ivtree(ivtree, year)
+        self.dt2d_plot.draw_plans(plans, year)
 
     def update_table(self):
         where_dict = self.rang.get_sql_where_dict()
