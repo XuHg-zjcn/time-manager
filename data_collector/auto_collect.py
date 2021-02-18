@@ -4,7 +4,7 @@ import time
 import glob
 
 from my_libs.argb import ARGB
-from sqlite_api.tables import CollTable, CollLogTable
+from sqlite_api.tables import colls, logs
 
 
 class Collector:
@@ -36,16 +36,14 @@ class Collectors:
     def __init__(self, conn, tdb, commit_each=True):
         self.conn = conn
         self.tdb = tdb
-        self.colls = CollTable(conn)
-        self.logs = CollLogTable(conn)
         self.commit_each = commit_each
 
     def run_custom_path(self, coll_cls, source_path):
         cond_dict = {'name': coll_cls.name, 'start_mode': -1}
-        res = self.colls.get_conds_objs(cond_dict)
+        res = colls.get_conds_objs(cond_dict)
         if len(res) == 0:
-            self.colls.add_obj(coll_cls(source_path=''), -1)
-            res = self.colls.get_conds_objs(cond_dict)
+            colls.add_obj(coll_cls(source_path=''), -1)
+            res = colls.get_conds_objs(cond_dict)
         elif len(res) > 1:
             raise LookupError('found more than one')
         coll = res[0]
@@ -54,7 +52,7 @@ class Collectors:
 
     # TODO: check is already add in sqlite, use a table collect history
     def run_enable(self):
-        self.colls.run_conds_objs({'start_mode': 1}, num=2,
+        colls.run_conds_objs({'start_mode': 1}, num=2,
                                   f_name='try_run', paras=(self, self.tdb))
 
     def add_log(self, cid, t_min, t_max, items, commit=True):
@@ -71,7 +69,7 @@ class Collectors:
             run_i, name = lcur[0]
         else:
             raise RuntimeError('not impossible')
-        self.logs.insert([cid, run_i, current_time, t_min, t_max, items])
+        logs.insert([cid, run_i, current_time, t_min, t_max, items])
         if commit or self.commit_each:
             self.conn.commit()
         print('Collector {} {} founds'.format(name, items))
@@ -84,7 +82,7 @@ class Collectors:
                 coll_obj = defaults.input_choose_coll()()
                 start_mode = int(input('启动方式(0手动,1批量,2自动):'))
                 color = ARGB.from_str(input('颜色'))
-                self.colls.add_obj(coll_obj, start_mode)
+                colls.add_obj(coll_obj, start_mode)
             elif inp == 'b':
                 coll_cls = defaults.input_choose_coll()
                 path_glob = input('数据源路径(Glob):')

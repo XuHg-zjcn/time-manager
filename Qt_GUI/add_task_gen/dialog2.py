@@ -1,14 +1,10 @@
 import datetime
 
 from Qt_GUI.add_task_gen.dialog import Ui_Dialog
-from commd_line.init_config import conn
 from my_libs.smart_strptime import TimeDelta_str
 from my_libs.sqltable import onlyone_process
-from sqlite_api.task_db import TaskTable
-from sqlite_api.task_gen import TaskGenTable, TaskGen
-
-tg_tab = TaskGenTable(conn)
-task_tab = TaskTable(conn)
+from sqlite_api.task_db import task_tab
+from sqlite_api.task_gen import TaskGen, tg_tab
 
 
 # TODO: 3 spin box as a widget, direct get range obj.

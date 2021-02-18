@@ -1,6 +1,7 @@
 from croniter import croniter
 import pandas as pd
 
+from commd_line.init_config import conn
 from my_libs.dump_table import DumpTable, DumpBaseCls
 from sqlite_api.task_db import Plan, TaskTable, Plans
 
@@ -69,3 +70,6 @@ class TaskGenTable(DumpTable):
                   ('rec_id', 'INT'),
                   ('type_id', 'INT')]
     table_name = 'task_gen_table'
+
+
+tg_tab = TaskGenTable(conn)

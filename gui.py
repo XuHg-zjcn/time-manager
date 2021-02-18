@@ -14,10 +14,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,\
 
 from Qt_GUI.add_task_gen import AddTaskGenDialog
 from Qt_GUI.layout import Ui_MainWindow
-from commd_line.init_config import conn
 from my_libs.datetime_utils import date2ts0, time2float
-from sqlite_api.tables import CollTable
-from sqlite_api.task_db import TaskTable, ColumnSetTasks
+from sqlite_api.tables import colls
+from sqlite_api.task_db import ColumnSetTasks, tdb
 
 
 class DateTimeRange(QObject):
@@ -156,16 +155,14 @@ class MyUi_MainWindow(Ui_MainWindow):
                                   self.time_min, self.time_max,
                                   self.x_setting)
         # set current year
-        self.tdb = TaskTable(conn)
-        self.colls = CollTable(conn)
-        self.dt2d_plot.build(app, self.colls)
+        self.dt2d_plot.build(app, colls)
         self.dt2d_plot.select_rect.connect(self.rang.set2datetime)
         self.dt2d_plot.select_point.connect(self.rang.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)
         self.dt2d_plot.select_point.connect(self.update_table)
         self.cluster.clicked.connect(self.dt2d_plot.start_cluster)
-        self.tdb.print_doings()
-        self.tdb.print_need()
+        tdb.print_doings()
+        tdb.print_need()
         self.year.valueChanged.connect(self.change_year)
         year = datetime.date.today().year
         self.year.setValue(year)
@@ -173,16 +170,16 @@ class MyUi_MainWindow(Ui_MainWindow):
     def change_year(self, year):
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
-        plans = self.tdb.get_conds_plans(where_dict)
+        plans = tdb.get_conds_plans(where_dict)
         self.dt2d_plot.draw_plans(plans, year)
 
     def update_table(self):
         where_dict = self.rang.get_sql_where_dict()
-        plans = self.tdb.get_conds_plans(where_dict)
+        plans = tdb.get_conds_plans(where_dict)
         print(plans)
         plans = plans.str_datetime()
         self.tableView.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks,
-                                    sql_table=self.tdb)
+                                    sql_table=tdb)
 
 
 if __name__ == '__main__':

@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from commd_line.plot.time2d import time2d_autosize
-from sqlite_api.tables import CollTable
-from sqlite_api.task_db import Plan, TaskTable
+from sqlite_api.tables import colls
+from sqlite_api.task_db import Plan, tdb
 from commd_line.init_config import conn
 from my_libs.smart_strptime import CLI_Inputer, OutType
 from data_collector import auto_collect
 
-tdb = TaskTable(conn)
-colls = CollTable(conn)
 cti = CLI_Inputer(output_type=OutType.timestamp)
 
 ac = auto_collect.Collectors(conn, tdb)

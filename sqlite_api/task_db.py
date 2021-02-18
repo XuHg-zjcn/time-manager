@@ -7,7 +7,7 @@ import pandas as pd
 from Qt_GUI.pandasModel import ColumnSet, TableColumnSpinBox, ShowStat
 from my_libs.ivtree2 import IvTree2
 from my_libs.smart_strptime.MTshort import MTshort
-from commd_line.init_config import conf
+from commd_line.init_config import conf, conn
 from my_libs.argb import ARGB
 from my_libs.sqltable import SqlTable
 
@@ -156,3 +156,7 @@ class TaskTable(SqlTable):
         print(need_start)
         print('need stop:')
         print(need_stop)
+
+
+tdb = TaskTable(conn)
+task_tab = TaskTable(conn)

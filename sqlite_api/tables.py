@@ -2,6 +2,7 @@ import time
 from pickle import dumps
 
 from Qt_GUI.cluster import TxtClr
+from commd_line.init_config import conn
 from my_libs.argb import ARGB
 from sqlite_api.task_db import SqlTable
 from my_libs.dump_table import DumpTable
@@ -43,3 +44,7 @@ class CollLogTable(SqlTable):
                   ('t_max', 'REAL'),  # max stop time of items
                   ('items', 'INT')]   # count items of this run
     table_name = 'colls_log'
+
+
+colls = CollTable(conn)
+logs = CollLogTable(conn)
