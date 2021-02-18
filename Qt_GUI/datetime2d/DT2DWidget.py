@@ -46,6 +46,7 @@ class DT2DWidget(pg.PlotWidget):
         self.colls = colls  # to __init__, it call in pyuic5 generated code
 
     def set_year(self, year):
+        self.clear_plans()
         self.d11 = datetime(year, 1, 1)
         self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
         self.set_xaixs(year)
@@ -116,6 +117,10 @@ class DT2DWidget(pg.PlotWidget):
         remove showing plans.
         """
         self.removeItem(self.items[name])
+
+    def clear_plans(self):
+        for name in self.items:
+            self.removeItem(self.items[name])
 
     def start_cluster(self):
         if self.plans is None:
