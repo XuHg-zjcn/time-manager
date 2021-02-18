@@ -24,9 +24,8 @@ class DT2DWidget(pg.PlotWidget):
     select_point = pyqtSignal(datetime)
     select_rect = pyqtSignal(datetime, datetime)
 
-    def build(self, app, colls):
-        self.app = app
-        self.colls = colls
+    def __init__(self, parent):
+        super().__init__(parent)
         self.last_select = None
         self.item = None
         self.scatter = pg.ScatterPlotItem()
@@ -38,6 +37,10 @@ class DT2DWidget(pg.PlotWidget):
         self.scene().sigMouseMoved.connect(self.mouse_move_slot)
         self.scene().sigMouseClicked.connect(self.mouse_click_slot)
         pg.setConfigOptions(imageAxisOrder='row-major')
+
+    def build(self, app, colls):
+        self.app = app      # don't move this codes
+        self.colls = colls  # to __init__, it call in pyuic5 generated code
 
     def set_year(self, year):
         self.d11 = datetime(year, 1, 1)
