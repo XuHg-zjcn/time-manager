@@ -1,26 +1,14 @@
-from datetime import datetime, timedelta
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui
 
 
 class DateTime2DItem(pg.GraphicsObject):
-    def __init__(self, ivtree, year):
+    def __init__(self, ivtree, parent):
         super().__init__()
         self.ivtree = ivtree
-        self.d11 = datetime(year, 1, 1)
-        self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
+        self.parent = parent
         self.picture = QtGui.QPicture()
         self._draw_ivtree()
-
-    def time2xy(self, time):
-        if isinstance(time, float) or isinstance(time, int):
-            time = datetime.fromtimestamp(time)
-        dt = time - self.d11
-        return dt.days, dt.seconds + dt.microseconds/1e6
-
-    def xy2time(self, x:int, y:float):
-        # TODO: TypeError: unsupported operand type(s) for +: 'NoneType' and 'datetime.timedelta'
-        return self.d11 + timedelta(days=x, seconds=y)
 
     def _draw_rect(self, p, doy, begin, end, color):
         """
@@ -40,10 +28,11 @@ class DateTime2DItem(pg.GraphicsObject):
         p.drawRect(rect)
 
     def _draw_iv(self, p, begin, end, color):
-        BEG = self.time2xy(begin)
-        END = self.time2xy(end)
+        BEG = self.parent.time2xy(begin)
+        END = self.parent.time2xy(end)
         color = QtGui.QColor.fromRgb(*color.RGBA())
-        for doy in range(max(0, BEG[0]), min(END[0], self.max_doy)+1):
+        # filter date range into current year
+        for doy in range(max(0, BEG[0]), min(END[0], self.parent.max_doy)+1):
             beg_sec = BEG[1] if doy == BEG[0] else 0
             end_sec = END[1] if doy == END[0] else 86399
             self._draw_rect(p, doy, beg_sec, end_sec, color)

@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt, pyqtSignal
 
@@ -38,6 +39,22 @@ class DT2DWidget(pg.PlotWidget):
         self.scene().sigMouseClicked.connect(self.mouse_click_slot)
         pg.setConfigOptions(imageAxisOrder='row-major')
 
+    def set_year(self, year):
+        self.d11 = datetime(year, 1, 1)
+        self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
+        self.set_xaixs(year)
+
+    def time2xy(self, time):
+        if isinstance(time, float) or isinstance(time, int):
+            time = datetime.fromtimestamp(time)
+        dt = time - self.d11
+        return dt.days, dt.seconds + dt.microseconds/1e6
+
+    def xy2time(self, x:int, y:float):
+        # TODO: TypeError: unsupported operand type(s) for +:
+        #  'NoneType' and 'datetime.timedelta'
+        return self.d11 + timedelta(days=x, seconds=y)
+
     def set_yaxis(self, n1=6, n2=24):
         """
         :n1: ticks with text
@@ -56,7 +73,7 @@ class DT2DWidget(pg.PlotWidget):
         doys = []
         for y, m in [(year, i) for i in range(1, 13)]+[(year+1, 1)]:
             dx1 = datetime(y, m, 1)
-            doy = (dx1 - self.item.d11).days  # day_of_year
+            doy = (dx1 - self.d11).days  # day_of_year
             doys.append((doy, m))
         bottom = self.getAxis('bottom')
         bottom.setTicks([[(x, m) for x, m in doys]])
@@ -70,16 +87,16 @@ class DT2DWidget(pg.PlotWidget):
         ivt_color = ivtree.map_data(lambda p: p.get_collect_color(self.colls))
         self.ivtree = ivtree
         self.removeItem(self.item)
-        self.item = DateTime2DItem(ivt_color, year)
+        self.set_year(year)
+        self.item = DateTime2DItem(ivt_color, self)
         self.item.setZValue(0)
         self.addItem(self.item)
-        self.set_xaixs(year)
         self.set_xy_full_range()
 
     def start_cluster(self):
         if not hasattr(self, 'ivtree'):
             raise RuntimeError('start_cluster before update_ivtree')
-        clu = Cluster(self.ivtree, self.item.d11, self.scatter,
+        clu = Cluster(self.ivtree, self.d11, self.scatter,
                       func_classify=lambda p: p['rec_id'],
                       func_textcolor=self.colls.find_txtclr)
         clu.start()
@@ -95,7 +112,7 @@ class DT2DWidget(pg.PlotWidget):
         point = self.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
         doy = int(point.x())
         sec = point.y()*3600
-        dati = self.item.xy2time(doy, sec)
+        dati = self.xy2time(doy, sec)
         self.click.emit(dati)
         if modifiers == Qt.ShiftModifier and self.last_select is not None:
             self.select_rect.emit(self.last_select, dati)
