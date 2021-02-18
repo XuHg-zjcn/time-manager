@@ -92,6 +92,9 @@ class Ui_Dialog(object):
         self.long_text = QtWidgets.QLineEdit(self.formLayoutWidget_2)
         self.long_text.setObjectName("long_text")
         self.formLayout_2.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.long_text)
+        self.preview = QtWidgets.QPushButton(Dialog)
+        self.preview.setGeometry(QtCore.QRect(200, 170, 71, 30))
+        self.preview.setObjectName("preview")
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept)
@@ -116,3 +119,4 @@ class Ui_Dialog(object):
         self.stop.setDisplayFormat(_translate("Dialog", "yyyy/MM/dd hh:mm"))
         self.cron_text.setText(_translate("Dialog", "0 0 0 * * *"))
         self.long_text.setText(_translate("Dialog", "1:00:00"))
+        self.preview.setText(_translate("Dialog", "预览"))

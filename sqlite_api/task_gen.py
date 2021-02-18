@@ -1,7 +1,8 @@
 from croniter import croniter
+import pandas as pd
 
 from my_libs.dump_table import DumpTable, DumpBaseCls
-from sqlite_api.task_db import Plan, TaskTable
+from sqlite_api.task_db import Plan, TaskTable, Plans
 
 
 class CronPointGen(croniter):
@@ -48,6 +49,9 @@ class TaskGen(CronPointGen, DumpBaseCls):
                 task_table.insert(p, commit=False)
         if not task_table.commit_each:
             task_table.commit()
+
+    def get_plans(self):
+        return Plans(pd.DataFrame(self))
 
 
 class TaskGenTable(DumpTable):

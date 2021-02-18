@@ -194,7 +194,7 @@ if __name__ == '__main__':
     ui = MyUi_MainWindow()
     ui.setupUi(win)
     ui.build(app)
-    ud = AddTaskGenDialog()
+    ud = AddTaskGenDialog(ui)
     ud.setupUi(dia)
     ud.build()
     win.show()

@@ -13,6 +13,9 @@ task_tab = TaskTable(conn)
 
 # TODO: 3 spin box as a widget, direct get range obj.
 class AddTaskGenDialog(Ui_Dialog):
+    def __init__(self, parent):
+        self.parent = parent
+
     def get_tg(self):
         start = self.start.dateTime().toTime_t()
         stop = self.stop.dateTime().toTime_t()
@@ -64,6 +67,11 @@ class AddTaskGenDialog(Ui_Dialog):
             return
         self.set_tg(tg)
 
+    def preview_slot(self, b):
+        tg = self.get_tg()
+        ivtree = tg.get_plans()
+        self.parent.dt2d_plot.draw_plans(ivtree, name='preview')
+
     def combo_init(self):
         texts = tg_tab.get_conds_execute(fields='name')
         self.name_comb.addItems(texts)
@@ -74,4 +82,5 @@ class AddTaskGenDialog(Ui_Dialog):
         self.delete_db.clicked.connect(self.delete_slot)
         self.list_out_tasks.clicked.connect(self.list_out_tasks_slot)
         self.remove_tasks.clicked.connect(self.remove_tasks_slot)
+        self.preview.clicked.connect(self.preview_slot)
         self.combo_init()
