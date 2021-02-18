@@ -27,7 +27,7 @@ class DT2DWidget(pg.PlotWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.last_select = None
-        self.item = None
+        self.items = {}
         self.scatter = pg.ScatterPlotItem()
         self.scatter.setZValue(10)
         self.addItem(self.scatter)
@@ -86,15 +86,20 @@ class DT2DWidget(pg.PlotWidget):
         self.setXRange(0, 366)
         self.setYRange(0, 24)
 
-    def update_ivtree(self, ivtree, year):
+    def update_ivtree(self, ivtree, year, name=None, z=0):
         ivt_color = ivtree.map_data(lambda p: p.get_collect_color(self.colls))
         self.ivtree = ivtree
-        self.removeItem(self.item)
+        if name in self.items:  # name normal is None or string
+            self.remove_ivtree(name)
         self.set_year(year)
-        self.item = DateTime2DItem(ivt_color, self)
-        self.item.setZValue(0)
-        self.addItem(self.item)
+        item_new = DateTime2DItem(ivt_color, self)
+        item_new.setZValue(z)
+        self.items[name] = item_new
+        self.addItem(item_new)
         self.set_xy_full_range()
+
+    def remove_ivtree(self, name):
+        self.removeItem(self.items[name])
 
     def start_cluster(self):
         if not hasattr(self, 'ivtree'):
