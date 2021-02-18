@@ -1,9 +1,19 @@
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui
+from intervaltree import IntervalTree
+
+from Qt_GUI.datetime2d import DT2DWidget
 
 
 class DateTime2DItem(pg.GraphicsObject):
-    def __init__(self, ivtree, parent):
+    def __init__(self, ivtree: IntervalTree, parent: DT2DWidget):
+        """
+        @param ivtree:
+        iv.begin and iv.end are unix timestamp or datetime obj
+        iv.data are my_libs.agrb.ARGB color
+
+        @param parent: DT2DWidget obj
+        """
         super().__init__()
         self.ivtree = ivtree
         self.parent = parent

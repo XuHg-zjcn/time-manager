@@ -7,6 +7,14 @@ from sqlite_api.task_db import Plan, TaskTable, Plans
 
 class CronPointGen(croniter):
     def __init__(self, expr_format, start_time=None, stop_time=None, max_step=1000):
+        """
+        croniter with stop_time and max_step.
+
+        @param expr_format: Quartz cron time expression
+        @param start_time: datetime or unix timestamp
+        @param stop_time: unix timestamp, max time of iter
+        @param max_step: integer, max step of iter
+        """
         super().__init__(expr_format, start_time)
         self.stop_time = stop_time
         self.max_step = max_step

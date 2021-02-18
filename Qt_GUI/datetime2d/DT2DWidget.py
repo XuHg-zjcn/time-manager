@@ -90,6 +90,14 @@ class DT2DWidget(pg.PlotWidget):
         self.setYRange(0, 24)
 
     def draw_plans(self, plans: Plans, year=None, name=None, z=0):
+        """
+        draw plans datetime2d.
+        @param plans: Plans(pd.DataFrame) object
+        @param year: optional, see `set_year`
+        @param name: optional, None will default item
+        @param z: ZValue(layer) of pyqtgraph PlotItem
+        @return: None
+        """
         if name is None:
             self.plans = plans
         ivt_color = plans.get_ivtree(lambda p: Plan(p).get_collect_color(self.colls))
@@ -104,6 +112,9 @@ class DT2DWidget(pg.PlotWidget):
         self.set_xy_full_range()
 
     def remove_plans(self, name):
+        """
+        remove showing plans.
+        """
         self.removeItem(self.items[name])
 
     def start_cluster(self):
