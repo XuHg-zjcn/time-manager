@@ -1,10 +1,12 @@
 import os
+from datetime import datetime
 
 import wave
 import numpy as np
 from playsound import playsound
 
 from my_libs.my_process import ThrRunn
+from commd_line.init_config import conf
 
 pi = np.pi
 pi2 = pi*2
@@ -36,26 +38,32 @@ class WaveWrite(wave.Wave_write):
 
 
 class SoundGene(ThrRunn):
-    def __init__(self, inps=None, name=None):
+    name = None
+    gen = None
+
+    def __init__(self, inps=None, name=None, gen=None):
         super().__init__(inps)
-        if name is None:
-            name = self.__class__.__name__ + '.wav'
+        name = name or self.name or datetime.now().strftime('%Y%m%d_%H%M%S')
+        name += '.wav'
         sound_dir = './sounds'
         if not os.path.isdir(sound_dir):
             os.mkdir(sound_dir)
         self.path = os.path.join(sound_dir, name)
         if not os.path.exists(self.path):
             ww = WaveWrite(self.path)
-            self.gen(ww)
+            gen = gen or self.gen
+            if gen is None:
+                raise ValueError('invalid gen')
+            gen(ww)
             ww.close()
-
-    def gen(self, ww):
-        pass
 
     def once(self, obj):
         playsound(self.path)
 
 
 class eye_screen(SoundGene):
-    def gen(self, ww):
+    name = 'eye_screen'
+
+    @staticmethod
+    def gen(ww):
         ww.write_fx(0.5, lambda t: 0.5*np.sin(t*5*pi2)*np.sin(t*2000*pi2))
