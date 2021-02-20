@@ -1,6 +1,10 @@
 import datetime
 
+from PyQt5 import Qsci
+from apscheduler.schedulers.background import BackgroundScheduler
+
 from Qt_GUI.add_task_gen.dialog import Ui_Dialog
+from commd_line.init_config import conf
 from my_libs.smart_strptime import TimeDelta_str
 from my_libs.sqltable import onlyone_process
 from sqlite_api.task_db import task_tab
@@ -37,12 +41,31 @@ class AddTaskGenDialog(Ui_Dialog):
         self.recid_spin.setValue(tg.db_fields['rec_id'])
         self.typeid_spin.setValue(tg.db_fields['type_id'])
 
+    def add_job(self, name, tg):
+        sched = BackgroundScheduler()
+        url = 'sqlite:///' + conf['init']['db_path']
+        sched.add_jobstore('sqlalchemy', url=url)
+        # save user's code to .py file
+        text = self.editor.text()
+        with open(f'./code/{name}.py', 'w') as f:
+            f.write(text)
+        # cron expr as dict
+        expr = tg._expr_format.split(' ')
+        fields = ['second', 'minute', 'hour', 'day', 'month', 'day_of_week', 'year']
+        kwargs = dict(zip(fields, expr))
+        # add user's custom scheduler_job
+        exec(f'from user_data.code.{name} import scheduler_job\n'
+             "sched.add_job(scheduler_job, 'cron', id=name, **kwargs)")
+        sched.start()  # save job to sqlite
+        sched.shutdown()
+
     def add_db_slot(self, b):
         tg = self.get_tg()
         name = tg.db_fields['name']
         is_add = tg_tab.name_auto_insert_or_update(tg, True)
         if is_add:
             self.name_comb.addItem(name)
+        self.add_job(name, tg)
 
     def delete_slot(self, b):
         name = self.name_comb.currentText()
@@ -80,3 +103,8 @@ class AddTaskGenDialog(Ui_Dialog):
         self.remove_tasks.clicked.connect(self.remove_tasks_slot)
         self.preview.clicked.connect(self.preview_slot)
         self.combo_init()
+        lexer = Qsci.QsciLexerPython(self.editor)
+        self.editor.setLexer(lexer)
+        with open('../my_libs/default_job.py') as f:
+            default_code = f.read()
+        self.editor.setText(default_code)

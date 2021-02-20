@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>461</width>
-    <height>250</height>
+    <height>401</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>280</x>
-     <y>210</y>
+     <y>360</y>
      <width>171</width>
      <height>32</height>
     </rect>
@@ -93,7 +93,7 @@
    <property name="geometry">
     <rect>
      <x>370</x>
-     <y>170</y>
+     <y>320</y>
      <width>81</width>
      <height>30</height>
     </rect>
@@ -132,7 +132,7 @@
    <property name="geometry">
     <rect>
      <x>280</x>
-     <y>170</y>
+     <y>320</y>
      <width>81</width>
      <height>30</height>
     </rect>
@@ -232,9 +232,9 @@
   <widget class="QPushButton" name="preview">
    <property name="geometry">
     <rect>
-     <x>200</x>
-     <y>170</y>
-     <width>71</width>
+     <x>370</x>
+     <y>280</y>
+     <width>81</width>
      <height>30</height>
     </rect>
    </property>
@@ -242,7 +242,50 @@
     <string>预览</string>
    </property>
   </widget>
+  <widget class="QComboBox" name="comboBox">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>170</y>
+     <width>171</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>python code</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>shell code</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>exec command</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QsciScintilla" name="editor" native="true">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>160</y>
+     <width>261</width>
+     <height>231</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QsciScintilla</class>
+   <extends>QWidget</extends>
+   <header>PyQt5.Qsci</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
