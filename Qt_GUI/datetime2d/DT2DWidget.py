@@ -27,12 +27,13 @@ class DT2DWidget(pg.PlotWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self._swap = True
         self.plans = None
         self.last_select = None
         self.items = {}
         self.scatter = pg.ScatterPlotItem()
         self.scatter.setZValue(10)
-        self.addItem(self.scatter)
+        self.addItem2(self.scatter)
         self.vh_line = vhLine(self)
         self.invertY()
         self.set_yaxis(6)
@@ -44,6 +45,18 @@ class DT2DWidget(pg.PlotWidget):
     def build(self, app, colls):
         self.app = app      # don't move this codes
         self.colls = colls  # to __init__, it call in pyuic5 generated code
+
+    def set_swap(self, new_state):
+        self._swap = new_state
+        for item in self.listDataItems():
+            item.rotate(90)
+            item.scale(1, -1)
+
+    def addItem2(self, item):
+        if self._swap:
+            item.rotate(90)
+            item.scale(1, -1)
+        self.addItem(item)
 
     def set_year(self, year):
         self.clear_plans()
@@ -70,7 +83,7 @@ class DT2DWidget(pg.PlotWidget):
         """
         if 24 % n1 != 0 or 24 % n2 != 0:
             raise ValueError("n can't div by 24")
-        left = self.getAxis('bottom')
+        left = self.getAxis('bottom' if self._swap else 'left')
         t_text = [(i, str(i)) for i in range(0, 25, 24//n1)]
         t_no = [(i, '') for i in range(0, 25, 24//n2)]
         left.setTicks([t_text, t_no])
@@ -82,13 +95,13 @@ class DT2DWidget(pg.PlotWidget):
             dx1 = datetime(y, m, 1)
             doy = (dx1 - self.d11).days  # day_of_year
             doys.append((doy, m))
-        bottom = self.getAxis('left')
+        bottom = self.getAxis('left' if self._swap else 'bottom')
         bottom.setTicks([[(x, m) for x, m in doys]])
         bottom.setStyle(tickLength=5)
 
     def set_xy_full_range(self):
-        self.setYRange(0, 366)
-        self.setXRange(0, 24)
+        self.setXRange(0, 24 if self._swap else 366)
+        self.setYRange(0, 366 if self._swap else 24)
 
     def draw_plans(self, plans: Plans, year=None, name=None, z=0):
         """
@@ -109,7 +122,7 @@ class DT2DWidget(pg.PlotWidget):
         item_new = DateTime2DItem(ivt_color, self)
         item_new.setZValue(z)
         self.items[name] = item_new
-        self.addItem(item_new)
+        self.addItem2(item_new)
         self.set_xy_full_range()
 
     def remove_plans(self, name):
@@ -139,8 +152,11 @@ class DT2DWidget(pg.PlotWidget):
         pos = event._scenePos
         modifiers = self.app.keyboardModifiers()
         point = self.plotItem.vb.mapSceneToView(pos)  # 转换鼠标坐标
-        doy = int(point.x())
-        sec = point.y()*3600
+        x, y = point.x(), point.y()
+        if self._swap:
+            y, x = x, y
+        doy = int(x)
+        sec = y*3600
         dati = self.xy2time(doy, sec)
         self.click.emit(dati)
         if modifiers == Qt.ShiftModifier and self.last_select is not None:

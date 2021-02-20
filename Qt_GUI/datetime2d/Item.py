@@ -50,8 +50,6 @@ class DateTime2DItem(pg.GraphicsObject):
     def _draw_ivtree(self):
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
-        p.rotate(90)
-        p.scale(1, -1)
         for iv in sorted(self.ivtree):
             color = iv.data
             ovlps = self.ivtree[iv.begin]
