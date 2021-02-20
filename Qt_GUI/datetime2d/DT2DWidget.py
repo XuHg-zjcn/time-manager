@@ -70,7 +70,7 @@ class DT2DWidget(pg.PlotWidget):
         """
         if 24 % n1 != 0 or 24 % n2 != 0:
             raise ValueError("n can't div by 24")
-        left = self.getAxis('left')
+        left = self.getAxis('bottom')
         t_text = [(i, str(i)) for i in range(0, 25, 24//n1)]
         t_no = [(i, '') for i in range(0, 25, 24//n2)]
         left.setTicks([t_text, t_no])
@@ -82,13 +82,13 @@ class DT2DWidget(pg.PlotWidget):
             dx1 = datetime(y, m, 1)
             doy = (dx1 - self.d11).days  # day_of_year
             doys.append((doy, m))
-        bottom = self.getAxis('bottom')
+        bottom = self.getAxis('left')
         bottom.setTicks([[(x, m) for x, m in doys]])
         bottom.setStyle(tickLength=5)
 
     def set_xy_full_range(self):
-        self.setXRange(0, 366)
-        self.setYRange(0, 24)
+        self.setYRange(0, 366)
+        self.setXRange(0, 24)
 
     def draw_plans(self, plans: Plans, year=None, name=None, z=0):
         """
