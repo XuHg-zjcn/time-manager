@@ -1,15 +1,26 @@
 # time-manager
 
 ----------------------------
-
+## features
 force close network by time algh.  
+face detect when eye close to screen sound and gtk notify warning  
 CLI and GUI  (will add web UI)  
 plot date-time 2d in terminal UNICODE or pyqtgraph GUI.  
 sklearn cluster and show name in pyqtgraph plot  
 auto collect data from linux wtmp, chrome and firefox browser. (will add more)  
 show current running tasks on terminal  
+show tasks in QTableView  
+5 modes select tasks in datetime 2d view  
+task generator by cron expression  
+preview task generator  
 
-## improve
+
+## future works
+dt2d plot zoom into a day  
+scatter event plot  
+curve plot  
+color between two curve  
+show image into dt2d plot  
 write notice  
 calendar and clock view, week block DT2DPlot view  
 show day and festival on DT2DPlot x-axis  
