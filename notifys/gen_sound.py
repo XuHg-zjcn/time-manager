@@ -37,12 +37,11 @@ class WaveWrite(wave.Wave_write):
         self.writeframes(data)
 
 
-class SoundGene(ThrRunn):
+class SoundGene:
     name = None
     gen = None
 
-    def __init__(self, inps=None, name=None, gen=None):
-        super().__init__(inps)
+    def __init__(self, name=None, gen=None):
         name = name or self.name or datetime.now().strftime('%Y%m%d_%H%M%S')
         name += '.wav'
         sound_dir = './sounds'
@@ -61,7 +60,13 @@ class SoundGene(ThrRunn):
         playsound(self.path)
 
 
-class eye_screen(SoundGene):
+class SoundThr(SoundGene, ThrRunn):
+    def __init__(self, inps=None, name=None, gen=None):
+        SoundGene.__init__(self, name, gen)
+        ThrRunn.__init__(self, inps)
+
+
+class eye_screen(SoundThr):
     name = 'eye_screen'
 
     @staticmethod
