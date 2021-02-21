@@ -11,9 +11,8 @@ from .browser_history import BrowserHistory
 class FirefoxHistory(BrowserHistory):
     sql = 'SELECT visit_date/1000000 FROM moz_historyvisits'
     name = 'firefox history'
-    plan_name = 'firefox visit'
 
-    def __init__(self, source_path=None, plan_name=plan_name):
+    def __init__(self, name=name, source_path=None):
         if source_path is None:
             paths = glob.glob(os.path.join(os.environ['HOME'], '.mozilla/firefox/*.default-release/places.sqlite'))
             if len(paths) == 0:
@@ -23,4 +22,4 @@ class FirefoxHistory(BrowserHistory):
             else:
                 inp = input('请选择:' + '\n'.join(paths) + '\n')
                 source_path = paths[int(inp)]
-        super().__init__(source_path, plan_name)
+        super().__init__(name, source_path)

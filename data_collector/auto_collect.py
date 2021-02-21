@@ -4,39 +4,27 @@ import time
 import glob
 
 from my_libs.argb import ARGB
+from my_libs.dump_table import DumpBaseCls
 from sqlite_api.tables import colls, logs
 
 
-class Collector:
-    table_name = 'browser'
-    name = 'Collector'
-    plan_name = 'collect'
+class Collector(DumpBaseCls):
+    names_autoload = {'id', 'table', 'name', 't_max'}
 
-    def __init__(self, plan_name=plan_name):
-        self.plan_name = plan_name
-        self.cid = -1
-        self.t_max = 0
-
-    def loads_up(self, id=-1, name=name, t_max=0):
-        self.cid = id
-        self.name = name
-        self.t_max = t_max
-
-    def run(self, clog, tdb):
+    def run(self, clog):
         pass
 
-    def try_run(self, clog, tdb):
+    def try_run(self, clog):
         try:
-            self.run(clog, tdb)
+            self.run(clog)
         except sqlite3.OperationalError as e:
-            print('Collector {} skip, Error: {}'.format(self.name, e))
+            print('Collector {} skip, Error: {}'.format(self.db_fields['name'], e))
 
 
 class Collectors:
-    def __init__(self, conn, tdb, commit_each=True):
-        self.conn = conn
-        self.tdb = tdb
-        self.commit_each = commit_each
+    def __init__(self, conn, commit_each=True):
+        self.conn = conn                # don't remove para `conn`,
+        self.commit_each = commit_each  # it can mind you need operate database
 
     def run_custom_path(self, coll_cls, source_path):
         cond_dict = {'name': coll_cls.name, 'start_mode': -1}
@@ -48,12 +36,12 @@ class Collectors:
             raise LookupError('found more than one')
         coll = res[0]
         coll.source_path = source_path
-        coll.try_run(self, self.tdb)
+        coll.try_run(self)
 
     # TODO: check is already add in sqlite, use a table collect history
     def run_enable(self):
         colls.run_conds_objs({'start_mode': 1}, num=2,
-                                  f_name='try_run', paras=(self, self.tdb))
+                             f_name='try_run', paras=(self,))
 
     def add_log(self, cid, t_min, t_max, items, commit=True):
         current_time = time.time()

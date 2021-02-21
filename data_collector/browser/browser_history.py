@@ -7,20 +7,17 @@ Created on Tue Nov 17 14:37:07 2020
 import sqlite3
 
 from data_collector.auto_collect import Collector
-from sqlite_api.task_db import Plan
+from sqlite_api.task_db import Plan, tdb
 
 
 class BrowserHistory(Collector):
     sql = None
-    table_name = 'browser'
-    name = 'browser history'
-    plan_name = 'browser visit'
 
-    def __init__(self, source_path, plan_name=plan_name):
+    def __init__(self, name, source_path):
         self.source_path = source_path
-        super().__init__(plan_name)
+        super().__init__(name)
 
-    def run(self, clog, tdb):
+    def run(self, clog):
         conn = sqlite3.connect(self.source_path)
         cur = conn.cursor()
         res = cur.execute(self.sql)
@@ -29,15 +26,17 @@ class BrowserHistory(Collector):
         try:
             prev = next(res)[0]
         except StopIteration:
-            clog.add_log(self.cid, None, None, 0)
+            clog.add_log(self.db_fields['id'], None, None, 0)
             return
         t_min = prev
         last_start = prev
         for curr, in res:  # TODO: probably curr > current timestamp
             if curr - prev > 15*60:  # use t_max only for auto update
-                if prev - last_start > 15*60 and last_start >= self.t_max:
+                if prev - last_start > 15*60 and\
+                      last_start >= self.db_fields['t_max']:
                     try:
-                        plan = Plan(rec_id=self.cid, name=self.plan_name,
+                        plan = Plan(rec_id=self.db_fields['id'],
+                                    name=self.db_fields['name'],
                                     sta=last_start, end=prev)
                         tdb.insert(plan)
                     except ValueError as e:
@@ -47,4 +46,4 @@ class BrowserHistory(Collector):
                 last_start = curr
             prev = curr
         t_max = prev
-        clog.add_log(self.cid, t_min, t_max, items)
+        clog.add_log(self.db_fields['id'], t_min, t_max, items)
