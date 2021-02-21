@@ -166,6 +166,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.year.valueChanged.connect(self.change_year)
         year = datetime.date.today().year
         self.year.setValue(year)
+        self.swap_xy.stateChanged.connect(self.dt2d_plot.set_swap)
 
     def change_year(self, year):
         self.rang.set_year0101_1231(year)

@@ -108,6 +108,9 @@ class Ui_MainWindow(object):
         self.cluster = QtWidgets.QPushButton(self.centralwidget)
         self.cluster.setGeometry(QtCore.QRect(680, 310, 71, 31))
         self.cluster.setObjectName("cluster")
+        self.swap_xy = QtWidgets.QCheckBox(self.centralwidget)
+        self.swap_xy.setGeometry(QtCore.QRect(670, 350, 81, 28))
+        self.swap_xy.setObjectName("swap_xy")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1417, 34))
@@ -137,5 +140,6 @@ class Ui_MainWindow(object):
         self.time_min.setDisplayFormat(_translate("MainWindow", "hh:mm:ss"))
         self.add_task_gen.setText(_translate("MainWindow", "添加生成器"))
         self.cluster.setText(_translate("MainWindow", "聚类"))
+        self.swap_xy.setText(_translate("MainWindow", "翻转XY"))
 from Qt_GUI.datetime2d import DT2DWidget
 from Qt_GUI.pandasModel import iTableView

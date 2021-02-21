@@ -27,7 +27,7 @@ class DT2DWidget(pg.PlotWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self._swap = True
+        self._swap = False
         self.plans = None
         self.last_select = None
         self.items = {}
@@ -48,9 +48,13 @@ class DT2DWidget(pg.PlotWidget):
 
     def set_swap(self, new_state):
         self._swap = new_state
-        for item in self.listDataItems():
+        # TODO: swap xy for scatter texts
+        for item in self.items.values():
             item.rotate(90)
             item.scale(1, -1)
+        self.set_xaixs()
+        self.set_yaxis(6)
+        self.set_xy_full_range()
 
     def addItem2(self, item):
         if self._swap:
@@ -89,7 +93,9 @@ class DT2DWidget(pg.PlotWidget):
         left.setTicks([t_text, t_no])
         left.setStyle(tickLength=5)  # Positive tick outside
 
-    def set_xaixs(self, year):
+    def set_xaixs(self, year=None):
+        if year is None:
+            year = self.d11.year
         doys = []
         for y, m in [(year, i) for i in range(1, 13)]+[(year+1, 1)]:
             dx1 = datetime(y, m, 1)
