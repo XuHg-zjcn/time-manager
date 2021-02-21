@@ -35,6 +35,7 @@ class Collectors:
         elif len(res) > 1:
             raise LookupError('found more than one')
         coll = res[0]
+        coll.db_fields['t_max'] = 0
         coll.source_path = source_path
         coll.try_run(self)
 
