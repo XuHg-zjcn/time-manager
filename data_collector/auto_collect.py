@@ -41,8 +41,9 @@ class Collectors:
 
     # TODO: check is already add in sqlite, use a table collect history
     def run_enable(self):
-        colls.run_conds_objs({'start_mode': 1}, num=2,
-                             f_name='try_run', paras=(self,))
+        objs = colls.get_conds_objs({'start_mode': 1})
+        for obj in objs:
+            obj.try_run(self)
 
     def add_log(self, cid, t_min, t_max, items, commit=True):
         current_time = time.time()

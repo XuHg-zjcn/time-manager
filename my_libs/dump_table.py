@@ -33,16 +33,6 @@ class DumpTable(SqlTable):
             objs.append(obj)
         return objs
 
-    def run_conds_objs(self, cond_dict, num=0, f_name='run', paras=()):
-        objs = self.get_conds_objs(cond_dict)
-        if num == 0 and len(objs) > 1:
-            raise ValueError('num=0, but found {}>1'.format(len(objs)))
-        if num == 1 and len(objs) != 1:
-            raise ValueError('num=1, but found {}!=1'.format(len(objs)))
-        for obj in objs:
-            getattr(obj, f_name)(*paras)
-            self.plus1(obj.db_fields['id'])
-
     def add_obj(self, obj, commit=True):
         """
         don't use obj after call the func, please cal get_conds_objs,
