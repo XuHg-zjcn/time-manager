@@ -33,7 +33,7 @@ class AddTaskGenDialog(Ui_Dialog):
     def set_tg(self, tg: TaskGen):
         self.start.setDateTime(datetime.datetime.fromtimestamp(tg.start_time))
         self.stop.setDateTime(datetime.datetime.fromtimestamp(tg.stop_time))
-        self.cron_text.setText(tg._expr_format)
+        self.cron_text.setText(tg.expr)
         # ', ' can't pass check, raise Error below:
         # ValueError: multiply unused char continuous
         long_str = str(datetime.timedelta(seconds=tg.long)).replace(',', '')
@@ -51,7 +51,7 @@ class AddTaskGenDialog(Ui_Dialog):
             f.write(text)
         # cron expr as dict
         expr = tg._expr_format.split(' ')
-        fields = ['second', 'minute', 'hour', 'day', 'month', 'day_of_week', 'year']
+        fields = ['minute', 'hour', 'day', 'month', 'day_of_week', 'second']
         kwargs = dict(zip(fields, expr))
         # add user's custom scheduler_job
         exec(f'from user_data.code.{name} import scheduler_job\n'

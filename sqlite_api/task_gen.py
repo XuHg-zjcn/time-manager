@@ -16,6 +16,10 @@ class CronPointGen(croniter):
         @param stop_time: unix timestamp, max time of iter
         @param max_step: integer, max step of iter
         """
+        e = expr_format.split(' ')  # '(sec) minu hour day mon week'
+        if len(e) == 6:
+            e.append(e.pop(0))      # move second to last
+            expr_format = ' '.join(e)
         super().__init__(expr_format, start_time)
         self.stop_time = stop_time
         self.max_step = max_step
@@ -27,6 +31,15 @@ class CronPointGen(croniter):
         if ret > self.stop_time or self.count > self.max_step:
             raise StopIteration
         return ret
+
+    @property
+    def expr(self):
+        expr = self._expr_format   # 'minu hour day mon week (sec)'
+        e = expr.split(' ')
+        if len(e) == 6:
+            e.insert(0, e.pop(5))  # move second to first
+            expr = ' '.join(e)
+        return expr
 
 
 class TaskGen(CronPointGen, DumpBaseCls):
