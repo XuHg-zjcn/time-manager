@@ -1,6 +1,7 @@
 import datetime
 
 from PyQt5 import Qsci
+from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from Qt_GUI.add_task_gen.dialog import Ui_Dialog
@@ -54,9 +55,22 @@ class AddTaskGenDialog(Ui_Dialog):
         fields = ['minute', 'hour', 'day', 'month', 'day_of_week', 'second']
         kwargs = dict(zip(fields, expr))
         # add user's custom scheduler_job
+        sched.start()  # save job to sqlite
+        try:
+            sched.remove_job(name)
+        except JobLookupError:
+            pass
         exec(f'from user_data.code.{name} import scheduler_job\n'
              "sched.add_job(scheduler_job, 'cron', id=name, **kwargs)")
-        sched.start()  # save job to sqlite
+        sched.shutdown()
+
+    @staticmethod
+    def remove_job(name):
+        sched = BackgroundScheduler()
+        url = 'sqlite:///' + conf['init']['db_path']
+        sched.add_jobstore('sqlalchemy', url=url)
+        sched.start()
+        sched.remove_job(name)
         sched.shutdown()
 
     def add_db_slot(self, b):
@@ -70,6 +84,7 @@ class AddTaskGenDialog(Ui_Dialog):
     def delete_slot(self, b):
         name = self.name_comb.currentText()
         tg_tab.delete({'name': name}, True)
+        self.remove_job(name)
         self.name_comb.removeItem(self.name_comb.currentIndex())
 
     def list_out_tasks_slot(self, b):
