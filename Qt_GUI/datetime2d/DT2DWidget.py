@@ -121,11 +121,14 @@ class DT2DWidget(pg.PlotWidget):
         if name is None:
             self.plans = plans
         ivt_color = plans.get_ivtree(lambda p: Plan(p).get_collect_color(self.colls))
+        self.draw_ivtree(ivt_color, year=year, name=name, z=z)
+
+    def draw_ivtree(self, ivt_color, default_color=0x00ffff, year=None, name=None, z=0):
         if name in self.items:  # name normal is None or string
             self.remove_plans(name)
         if year is not None:
             self.set_year(year)
-        item_new = DateTime2DItem(ivt_color, self)
+        item_new = DateTime2DItem(ivt_color, self, default_color)
         item_new.setZValue(z)
         self.items[name] = item_new
         self.addItem2(item_new)

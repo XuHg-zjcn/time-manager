@@ -3,10 +3,11 @@ from PyQt5 import QtCore, QtGui
 from intervaltree import IntervalTree
 
 from Qt_GUI.datetime2d import DT2DWidget
+from my_libs.argb import ARGB
 
 
 class DateTime2DItem(pg.GraphicsObject):
-    def __init__(self, ivtree: IntervalTree, parent: DT2DWidget):
+    def __init__(self, ivtree: IntervalTree, parent: DT2DWidget, default_color: int):
         """
         @param ivtree:
         iv.begin and iv.end are unix timestamp or datetime obj
@@ -18,7 +19,9 @@ class DateTime2DItem(pg.GraphicsObject):
         self.ivtree = ivtree
         self.parent = parent
         self.picture = QtGui.QPicture()
-        self._draw_ivtree()
+        if isinstance(default_color, int):
+            default_color = ARGB.from_xrgb(default_color)
+        self._draw_ivtree(default_color)
 
     def _draw_rect(self, p, doy, begin, end, color):
         """
@@ -47,11 +50,13 @@ class DateTime2DItem(pg.GraphicsObject):
             end_sec = END[1] if doy == END[0] else 86399
             self._draw_rect(p, doy, beg_sec, end_sec, color)
 
-    def _draw_ivtree(self):
+    def _draw_ivtree(self, default_color=None):
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
         for iv in sorted(self.ivtree):
             color = iv.data
+            if color is None:
+                color = default_color
             ovlps = self.ivtree[iv.begin]
             ovlps.remove(iv)
             if ovlps:

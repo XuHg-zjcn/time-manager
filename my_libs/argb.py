@@ -81,6 +81,13 @@ class ARGB:
             return cls.__new__(cls, 255, 255, 0)  # default
 
     @classmethod
+    def from_xrgb(cls, xrgb):
+        if xrgb > 0xffffff:
+            return cls.from_argb(xrgb)
+        else:
+            return cls.from_rgb(xrgb)
+
+    @classmethod
     def _from_name(cls, x, a=0xFF):
         if len(x) == 1:
             x = dict_char2str[x]
