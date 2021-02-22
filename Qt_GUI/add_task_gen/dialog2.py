@@ -28,7 +28,8 @@ class AddTaskGenDialog(Ui_Dialog):
         name = self.name_comb.currentText()
         rec_id = self.recid_spin.value()
         type_id = self.typeid_spin.value()
-        tg = TaskGen(name, rec_id, type_id, long, cron, start, stop)
+        show = self.show_in2d.checkState() != 0
+        tg = TaskGen(name, rec_id, type_id, long, show, cron, start, stop)
         return tg
 
     def set_tg(self, tg: TaskGen):
@@ -41,6 +42,7 @@ class AddTaskGenDialog(Ui_Dialog):
         self.long_text.setText(long_str)
         self.recid_spin.setValue(tg.db_fields['rec_id'])
         self.typeid_spin.setValue(tg.db_fields['type_id'])
+        self.show_in2d.setCheckState(tg.db_fields['show']*2)
 
     def add_job(self, name, tg):
         sched = BackgroundScheduler()
@@ -101,10 +103,23 @@ class AddTaskGenDialog(Ui_Dialog):
             return
         self.set_tg(tg)
 
-    def preview_slot(self, b):
-        tg = self.get_tg()
-        ivtree = tg.get_plans()
-        self.parent.dt2d_plot.draw_plans(ivtree, name='preview')
+    def show_in2d_slot(self, b):
+        name = self.name_comb.currentText()
+        b = b != 0
+        if b and name not in self.parent.dt2d_plot.items:
+            tg = self.get_tg()
+            plans = tg.get_plans()
+            self.parent.dt2d_plot.draw_plans(plans, name=name)
+            tg_tab.update_conds({'name': name}, {'show': b})
+        if not b and name in self.parent.dt2d_plot.items:
+            self.parent.dt2d_plot.remove_plans(name)
+            tg_tab.update_conds({'name': name}, {'show': b})
+
+    def show_in2d_init(self):
+        tgs = tg_tab.get_conds_objs({'show': 1})
+        for tg in tgs:
+            plans = tg.get_plans()
+            self.parent.dt2d_plot.draw_plans(plans, name=tg.db_fields['name'])
 
     def combo_init(self):
         texts = tg_tab.get_conds_execute(fields='name')
@@ -116,8 +131,9 @@ class AddTaskGenDialog(Ui_Dialog):
         self.delete_db.clicked.connect(self.delete_slot)
         self.list_out_tasks.clicked.connect(self.list_out_tasks_slot)
         self.remove_tasks.clicked.connect(self.remove_tasks_slot)
-        self.preview.clicked.connect(self.preview_slot)
+        self.show_in2d.stateChanged.connect(self.show_in2d_slot)
         self.combo_init()
+        self.show_in2d_init()
         lexer = Qsci.QsciLexerPython(self.editor)
         self.editor.setLexer(lexer)
         with open('../my_libs/default_job.py') as f:

@@ -229,19 +229,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="preview">
-   <property name="geometry">
-    <rect>
-     <x>370</x>
-     <y>280</y>
-     <width>81</width>
-     <height>30</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>预览</string>
-   </property>
-  </widget>
   <widget class="QComboBox" name="comboBox">
    <property name="geometry">
     <rect>
@@ -275,6 +262,22 @@
      <width>261</width>
      <height>231</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="show_in2d">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>290</y>
+     <width>81</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>显示2D</string>
+   </property>
+   <property name="tristate">
+    <bool>false</bool>
    </property>
   </widget>
  </widget>
