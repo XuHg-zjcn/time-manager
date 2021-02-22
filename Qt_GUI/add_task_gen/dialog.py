@@ -103,9 +103,12 @@ class Ui_Dialog(object):
         self.editor.setGeometry(QtCore.QRect(10, 160, 261, 231))
         self.editor.setObjectName("editor")
         self.show_in2d = QtWidgets.QCheckBox(Dialog)
-        self.show_in2d.setGeometry(QtCore.QRect(370, 290, 81, 28))
+        self.show_in2d.setGeometry(QtCore.QRect(370, 280, 81, 28))
         self.show_in2d.setTristate(False)
         self.show_in2d.setObjectName("show_in2d")
+        self.button_color = QtWidgets.QPushButton(Dialog)
+        self.button_color.setGeometry(QtCore.QRect(280, 280, 81, 30))
+        self.button_color.setObjectName("button_color")
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept)
@@ -134,4 +137,5 @@ class Ui_Dialog(object):
         self.comboBox.setItemText(1, _translate("Dialog", "shell code"))
         self.comboBox.setItemText(2, _translate("Dialog", "exec command"))
         self.show_in2d.setText(_translate("Dialog", "显示2D"))
+        self.button_color.setText(_translate("Dialog", "选择颜色"))
 from PyQt5 import Qsci
