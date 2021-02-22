@@ -135,7 +135,8 @@ class DT2DWidget(pg.PlotWidget):
         """
         remove showing plans.
         """
-        self.removeItem(self.items[name])
+        print('remove dt2d', name)
+        self.removeItem(self.items.pop(name))
 
     def clear_plans(self):
         for name in self.items:
