@@ -1,5 +1,6 @@
 from croniter import croniter
 import pandas as pd
+from intervaltree import IntervalTree
 
 from commd_line.init_config import conn
 from my_libs.dump_table import DumpTable, DumpBaseCls
@@ -75,6 +76,15 @@ class TaskGen(CronPointGen, DumpBaseCls):
 
     def get_plans(self):
         return Plans(pd.DataFrame(self))
+
+    def get_ivtree(self):
+        ivt = IntervalTree()
+        cpg = CronPointGen(self.expr, self.start_time,
+                           self.stop_time, self.max_step)
+        for sta in cpg:
+            end = sta + self.long
+            ivt[sta:end] = None
+        return ivt
 
 
 class TaskGenTable(DumpTable):

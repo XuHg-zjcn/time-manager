@@ -108,18 +108,19 @@ class AddTaskGenDialog(Ui_Dialog):
         b = b != 0
         if b and name not in self.parent.dt2d_plot.items:
             tg = self.get_tg()
-            plans = tg.get_plans()
-            self.parent.dt2d_plot.draw_plans(plans, name=name)
+            ivt = tg.get_ivtree()
+            self.parent.dt2d_plot.draw_ivtree(ivt, name=name)
             tg_tab.update_conds({'name': name}, {'show': b})
         if not b and name in self.parent.dt2d_plot.items:
             self.parent.dt2d_plot.remove_plans(name)
             tg_tab.update_conds({'name': name}, {'show': b})
 
     def show_in2d_init(self):
-        tgs = tg_tab.get_conds_objs({'show': 1})
+        tgs = tg_tab.get_conds_objs({'show': 1})  # select showing TaskGen
         for tg in tgs:
-            plans = tg.get_plans()
-            self.parent.dt2d_plot.draw_plans(plans, name=tg.db_fields['name'])
+            ivt = tg.get_ivtree()
+            name = tg.db_fields['name']
+            self.parent.dt2d_plot.draw_ivtree(ivt, name=name)
 
     def combo_init(self):
         texts = tg_tab.get_conds_execute(fields='name')
