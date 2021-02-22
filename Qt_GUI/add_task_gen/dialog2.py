@@ -1,6 +1,7 @@
 import datetime
 
 from PyQt5 import Qsci
+from PyQt5.QtWidgets import QColorDialog
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -29,7 +30,10 @@ class AddTaskGenDialog(Ui_Dialog):
         rec_id = self.recid_spin.value()
         type_id = self.typeid_spin.value()
         show = self.show_in2d.checkState() != 0
-        tg = TaskGen(name, rec_id, type_id, long, show, cron, start, stop)
+        style = self.button_color.styleSheet()
+        rgb = int(style[-7:-1], base=16)
+        tg = TaskGen(name, rec_id, type_id, long,
+                     show, rgb, cron, start, stop)
         return tg
 
     def set_tg(self, tg: TaskGen):
@@ -43,6 +47,8 @@ class AddTaskGenDialog(Ui_Dialog):
         self.recid_spin.setValue(tg.db_fields['rec_id'])
         self.typeid_spin.setValue(tg.db_fields['type_id'])
         self.show_in2d.setCheckState(tg.db_fields['show']*2)
+        rgb = tg.db_fields['color']
+        self.button_color.setStyleSheet(f'QWidget {{background-color:#{rgb:06x}}}')
 
     def add_job(self, name, tg):
         sched = BackgroundScheduler()
@@ -109,7 +115,8 @@ class AddTaskGenDialog(Ui_Dialog):
         if b and name not in self.parent.dt2d_plot.items:
             tg = self.get_tg()
             ivt = tg.get_ivtree()
-            self.parent.dt2d_plot.draw_ivtree(ivt, name=name)
+            rgb = tg.db_fields['color']
+            self.parent.dt2d_plot.draw_ivtree(ivt, default_color=rgb, name=name)
             tg_tab.update_conds({'name': name}, {'show': b})
         if not b and name in self.parent.dt2d_plot.items:
             self.parent.dt2d_plot.remove_plans(name)
@@ -120,13 +127,25 @@ class AddTaskGenDialog(Ui_Dialog):
         for tg in tgs:
             ivt = tg.get_ivtree()
             name = tg.db_fields['name']
-            self.parent.dt2d_plot.draw_ivtree(ivt, name=name)
+            rgb = tg.db_fields['color']
+            self.parent.dt2d_plot.draw_ivtree(ivt, default_color=rgb, name=name)
 
     def combo_init(self):
         texts = tg_tab.get_conds_execute(fields='name')
         self.name_comb.addItems(texts)
 
+    def button_color_slot(self, b):
+        name = self.name_comb.currentText()
+        col = QColorDialog.getColor()
+        rgb = col.rgb() % 0x01000000
+        tg_tab.update_conds({'name': name}, {'color': rgb}, commit=True)
+        self.button_color.setStyleSheet(f'QWidget {{background-color:{col.name()}}}')
+        if name in self.parent.dt2d_plot.items:
+            self.parent.dt2d_plot.remove_plans(name)
+            self.show_in2d_slot(True)
+
     def build(self):
+        self.button_color.setStyleSheet('QWidget {background-color:#00ffff}')
         self.name_comb.currentTextChanged.connect(self.combo_text_change_slot)
         self.add_to_db.clicked.connect(self.add_db_slot)
         self.delete_db.clicked.connect(self.delete_slot)
@@ -140,3 +159,4 @@ class AddTaskGenDialog(Ui_Dialog):
         with open('../my_libs/default_job.py') as f:
             default_code = f.read()
         self.editor.setText(default_code)
+        self.button_color.clicked.connect(self.button_color_slot)

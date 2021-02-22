@@ -44,15 +44,16 @@ class CronPointGen(croniter):
 
 
 class TaskGen(CronPointGen, DumpBaseCls):
-    names_autoload = {'id', 'table', 'name', 'rec_id', 'type_id', 'show'}
+    names_autoload = {'id', 'table', 'name', 'rec_id', 'type_id', 'show', 'color'}
 
     def __init__(self, name='tg', rec_id=-1, type_id=-1,
-                 long=3600.0, show=True, *args, **kwargs):
+                 long=3600.0, show=True, color=0x00ffff, *args, **kwargs):
         CronPointGen.__init__(self, *args, **kwargs)
         DumpBaseCls.__init__(self, name)
         self.db_fields['rec_id'] = rec_id
         self.db_fields['type_id'] = type_id
         self.db_fields['show'] = show
+        self.db_fields['color'] = color
         self.long = long
 
     def __next__(self):
@@ -93,7 +94,8 @@ class TaskGenTable(DumpTable):
                   ('runs', 'INT'),
                   ('rec_id', 'INT'),
                   ('type_id', 'INT'),
-                  ('show', 'BOOL')]
+                  ('show', 'BOOL'),
+                  ('color', 'INT')]
     table_name = 'task_gen_table'
 
 
