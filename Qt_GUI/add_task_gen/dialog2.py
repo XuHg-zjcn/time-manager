@@ -50,6 +50,11 @@ class AddTaskGenDialog(Ui_Dialog):
         rgb = tg.db_fields['color']
         self.button_color.setStyleSheet(f'QWidget {{background-color:#{rgb:06x}}}')
 
+    def show_job_code(self, name):
+        with open(f'./code/{name}.py', 'r') as f:
+            text = f.read()
+        self.editor.setText(text)
+
     def add_job(self, name, tg):
         sched = BackgroundScheduler()
         url = 'sqlite:///' + conf['init']['db_path']
@@ -108,6 +113,7 @@ class AddTaskGenDialog(Ui_Dialog):
         if tg is None:
             return
         self.set_tg(tg)
+        self.show_job_code(text)
 
     def show_in2d_slot(self, b):
         name = self.name_comb.currentText()
@@ -152,11 +158,11 @@ class AddTaskGenDialog(Ui_Dialog):
         self.list_out_tasks.clicked.connect(self.list_out_tasks_slot)
         self.remove_tasks.clicked.connect(self.remove_tasks_slot)
         self.show_in2d.stateChanged.connect(self.show_in2d_slot)
-        self.combo_init()
-        self.show_in2d_init()
         lexer = Qsci.QsciLexerPython(self.editor)
         self.editor.setLexer(lexer)
         with open('../my_libs/default_job.py') as f:
             default_code = f.read()
         self.editor.setText(default_code)
+        self.combo_init()
+        self.show_in2d_init()
         self.button_color.clicked.connect(self.button_color_slot)
