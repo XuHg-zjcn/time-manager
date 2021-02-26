@@ -21,7 +21,7 @@ scatter event plot
 curve plot  
 color between two curve  
 show image into dt2d plot  
-write notice  
+write notice, commit each day  
 calendar and clock view, week block DT2DPlot view  
 show day and festival on DT2DPlot x-axis  
 use event instead task browser collector, generate task in other module  
