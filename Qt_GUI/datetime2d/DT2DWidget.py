@@ -4,7 +4,7 @@ import pyqtgraph as pg
 from PyQt5.QtCore import Qt, pyqtSignal
 
 from sqlite_api.task_db import Plans, Plan
-from .Item import DateTime2DItem
+from .IntervalsItem import DateTime2DItem
 from ..cluster import Cluster
 
 
