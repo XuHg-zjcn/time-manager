@@ -1,10 +1,13 @@
+import time
 from datetime import datetime, timedelta
 
 import pyqtgraph as pg
+import pandas as pd
 from PyQt5.QtCore import Qt, pyqtSignal
 
 from sqlite_api.task_db import Plans, Plan
 from .IntervalsItem import DateTime2DItem
+from .PointsItem import PointsItem
 from ..cluster import Cluster
 
 
@@ -41,6 +44,10 @@ class DT2DWidget(pg.PlotWidget):
         self.scene().sigMouseClicked.connect(self.mouse_click_slot)
         pg.setConfigOptions(imageAxisOrder='row-major')
         self.set_year(datetime.today().year)
+        points = PointsItem(self)
+        df = pd.DataFrame({'timestamp': [time.time(), time.time()+1000]})
+        points.setDataFrame(df)
+        self.addItem(points)
 
     def build(self, app, colls):
         self.app = app      # don't move this codes
