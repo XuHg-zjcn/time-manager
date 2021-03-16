@@ -32,9 +32,7 @@ class DateTime2DItem(pg.GraphicsObject):
         """
         if begin == end:
             return
-        assert 0 <= begin < end < 86400
-        begin /= 3600
-        end /= 3600
+        assert 0 <= begin < end <= 24
         p.setPen(pg.mkPen(color))
         p.setBrush(pg.mkBrush(color))
         rect = QtCore.QRectF(doy+0.1, begin, 0.8, end-begin)
@@ -47,7 +45,7 @@ class DateTime2DItem(pg.GraphicsObject):
         # filter date range into current year
         for doy in range(max(0, BEG[0]), min(END[0], self.parent.max_doy)+1):
             beg_sec = BEG[1] if doy == BEG[0] else 0
-            end_sec = END[1] if doy == END[0] else 86399
+            end_sec = END[1] if doy == END[0] else 24
             self._draw_rect(p, doy, beg_sec, end_sec, color)
 
     def _draw_ivtree(self, default_color=None):

@@ -68,16 +68,16 @@ class DT2DWidget(pg.PlotWidget):
         self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
         self.set_xaixs(year)
 
-    def time2xy(self, time):
-        if isinstance(time, float) or isinstance(time, int):
-            time = datetime.fromtimestamp(time)
-        dt = time - self.d11
-        return dt.days, dt.seconds + dt.microseconds/1e6
+    def time2xy(self, ts):
+        if isinstance(ts, float) or isinstance(ts, int):
+            ts = datetime.fromtimestamp(ts)
+        dt = ts - self.d11
+        return dt.days, (dt.seconds + dt.microseconds/1e6)/3600
 
     def xy2time(self, x:int, y:float):
         # TODO: TypeError: unsupported operand type(s) for +:
         #  'NoneType' and 'datetime.timedelta'
-        return self.d11 + timedelta(days=x, seconds=y)
+        return self.d11 + timedelta(days=x, hours=y)
 
     def set_yaxis(self, n1=6, n2=24):
         """
@@ -165,9 +165,7 @@ class DT2DWidget(pg.PlotWidget):
         x, y = point.x(), point.y()
         if self._swap:
             y, x = x, y
-        doy = int(x)
-        sec = y*3600
-        dati = self.xy2time(doy, sec)
+        dati = self.xy2time(int(x), y)
         self.click.emit(dati)
         if modifiers == Qt.ShiftModifier and self.last_select is not None:
             self.select_rect.emit(self.last_select, dati)
