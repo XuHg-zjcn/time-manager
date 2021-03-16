@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 import pandas as pd
 
-from Qt_GUI.pandasModel import ColumnSet, TableColumnSpinBox, ShowStat
+from Qt_GUI.tabview import ColumnSet, TableColumnSpinBox, ShowStat
 from my_libs.ivtree2 import IvTree2
 from my_libs.smart_strptime.MTshort import MTshort
 from commd_line.init_config import conf, conn

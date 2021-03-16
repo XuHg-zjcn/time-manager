@@ -74,7 +74,7 @@ class DumpTable(SqlTable):
         cur.execute('UPDATE {} SET runs=runs+1, t_last=? WHERE id=?'\
                     .format(self.table_name), (time.time(), did))
 
-    def auto_create(self, a_cls, name, commit=True):
+    def auto_create(self, name, a_cls=None, commit=True):
         objs = self.get_conds_objs({'name': name})
         if len(objs) == 0:
             obj = a_cls(name=name)
