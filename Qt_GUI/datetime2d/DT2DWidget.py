@@ -70,7 +70,7 @@ class DT2DWidget(pg.PlotWidget):
         self.addItem(item)
 
     def set_year(self, year):
-        self.clear_plans()
+        self.clear_items()
         self.d11 = datetime(year, 1, 1)
         self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
         self.set_xaixs(year)
@@ -145,7 +145,7 @@ class DT2DWidget(pg.PlotWidget):
         print('remove dt2d', name)
         self.removeItem(self.items.pop(name))
 
-    def clear_plans(self):
+    def clear_items(self):
         for name in self.items:
             self.removeItem(self.items[name])
 
