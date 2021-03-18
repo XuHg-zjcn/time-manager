@@ -34,9 +34,6 @@ class DT2DWidget(pg.PlotWidget):
         self.plans = None
         self.last_select = None
         self.items = {}
-        self.scatter = pg.ScatterPlotItem()
-        self.scatter.setZValue(10)
-        self.addItem2(self.scatter)
         self.vh_line = vhLine(self)
         self.invertY()
         self.set_yaxis(6)
@@ -47,7 +44,7 @@ class DT2DWidget(pg.PlotWidget):
         points = PointsItem(self)
         df = pd.DataFrame({'timestamp': [time.time(), time.time()+1000]})
         points.setDataFrame(df)
-        self.addItem(points)
+        self.addItem2('points', points)
 
     def build(self, app, colls):
         self.app = app      # don't move this codes
@@ -63,7 +60,10 @@ class DT2DWidget(pg.PlotWidget):
         self.set_yaxis(6)
         self.set_xy_full_range()
 
-    def addItem2(self, item):
+    def addItem2(self, name, item):
+        if name in self.items:  # remove same name item if exist
+            self.remove_item(name)
+        self.items[name] = item
         if self._swap:
             item.rotate(90)
             item.scale(1, -1)
@@ -132,12 +132,9 @@ class DT2DWidget(pg.PlotWidget):
         self.draw_ivtree(ivt_color, name=name, z=z)
 
     def draw_ivtree(self, ivt_color, default_color=0x00ffff, name=None, z=0):
-        if name in self.items:  # name normal is None or string
-            self.remove_plans(name)
         item_new = DateTime2DItem(ivt_color, self, default_color)
         item_new.setZValue(z)
-        self.items[name] = item_new
-        self.addItem2(item_new)
+        self.addItem2(name, item_new)
         self.set_xy_full_range()
 
     def remove_item(self, name):
@@ -147,13 +144,17 @@ class DT2DWidget(pg.PlotWidget):
         self.removeItem(self.items.pop(name))
 
     def clear_items(self):
-        for name in self.items:
-            self.removeItem(self.items[name])
+        for item in self.items.values():
+            self.removeItem(item)
+        self.items.clear()
 
     def start_cluster(self):
         if self.plans is None:
             raise RuntimeError('start_cluster before update_ivtree')
-        clu = Cluster(self.plans, self.d11, self.scatter,
+        scatter = pg.ScatterPlotItem()
+        scatter.setZValue(10)
+        self.addItem2('scatter', scatter)
+        clu = Cluster(self.plans, self.d11, scatter,
                       func_classify=lambda p: p['rec_id'],
                       func_textcolor=self.colls.find_txtclr)
         clu.start()
