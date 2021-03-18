@@ -10,11 +10,13 @@ import datetime
 import time
 
 import pandas as pd
+import pyqtgraph as pg
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,\
     QDateEdit, QTimeEdit, QComboBox
 
 from Qt_GUI.add_task_gen import AddTaskGenDialog
+from Qt_GUI.cluster import Cluster
 from Qt_GUI.datetime2d.PointsItem import PointsItem
 from Qt_GUI.layout import Ui_MainWindow
 from my_libs.datetime_utils import date2ts0, time2float
@@ -152,18 +154,20 @@ class MyUi_MainWindow(Ui_MainWindow):
     """
     select data and display.
     """
+    def __init__(self):
+        self.plans = None
 
     def build(self, app):
         self.rang = DateTimeRange(self.date_min, self.date_max,
                                   self.time_min, self.time_max,
                                   self.x_setting)
         # set current year
-        self.dt2d_plot.build(app, colls)
+        self.dt2d_plot.build(app)
         self.dt2d_plot.select_rect.connect(self.rang.set2datetime)
         self.dt2d_plot.select_point.connect(self.rang.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)
         self.dt2d_plot.select_point.connect(self.update_table)
-        self.cluster.clicked.connect(self.dt2d_plot.start_cluster)
+        self.cluster.clicked.connect(self.start_cluster)
         tdb.print_doings()
         tdb.print_need()
         self.year.valueChanged.connect(self.change_year)
@@ -180,6 +184,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
         plans = tdb.get_conds_plans(where_dict)
+        self.plans = plans
         self.dt2d_plot.set_year(year)
         ivt_color = plans.get_ivtree(lambda p: Plan(p).get_collect_color(colls))
         self.dt2d_plot.draw_ivtree(ivt_color)
@@ -191,6 +196,17 @@ class MyUi_MainWindow(Ui_MainWindow):
         plans = plans.str_datetime()
         self.tableView.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks,
                                     sql_table=tdb)
+
+    def start_cluster(self):
+        if self.plans is None:
+            raise RuntimeError('start_cluster before update_ivtree')
+        scatter = pg.ScatterPlotItem()
+        scatter.setZValue(10)
+        self.dt2d_plot.addItem2('scatter', scatter)
+        clu = Cluster(self.plans, self.dt2d_plot.d11, scatter,
+                      func_classify=lambda p: p['rec_id'],
+                      func_textcolor=colls.find_txtclr)
+        clu.start()
 
 
 if __name__ == '__main__':

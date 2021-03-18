@@ -4,7 +4,6 @@ import pyqtgraph as pg
 from PyQt5.QtCore import Qt, pyqtSignal
 
 from .IntervalsItem import DateTime2DItem
-from ..cluster import Cluster
 
 
 class vhLine:
@@ -38,9 +37,8 @@ class DT2DWidget(pg.PlotWidget):
         pg.setConfigOptions(imageAxisOrder='row-major')
         self.set_year()
 
-    def build(self, app, colls):
+    def build(self, app):
         self.app = app      # don't move this codes
-        self.colls = colls  # to __init__, it call in pyuic5 generated code
 
     def set_swap(self, new_state):
         self._swap = new_state
@@ -134,17 +132,6 @@ class DT2DWidget(pg.PlotWidget):
         for item in self.items.values():
             self.removeItem(item)
         self.items.clear()
-
-    def start_cluster(self):
-        if self.plans is None:
-            raise RuntimeError('start_cluster before update_ivtree')
-        scatter = pg.ScatterPlotItem()
-        scatter.setZValue(10)
-        self.addItem2('scatter', scatter)
-        clu = Cluster(self.plans, self.d11, scatter,
-                      func_classify=lambda p: p['rec_id'],
-                      func_textcolor=self.colls.find_txtclr)
-        clu.start()
 
     def mouse_move_slot(self, pos):
         if self.sceneBoundingRect().contains(pos):
