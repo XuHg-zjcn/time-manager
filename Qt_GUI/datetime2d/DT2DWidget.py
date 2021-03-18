@@ -43,7 +43,7 @@ class DT2DWidget(pg.PlotWidget):
         self.scene().sigMouseMoved.connect(self.mouse_move_slot)
         self.scene().sigMouseClicked.connect(self.mouse_click_slot)
         pg.setConfigOptions(imageAxisOrder='row-major')
-        self.set_year(datetime.today().year)
+        self.set_year()
         points = PointsItem(self)
         df = pd.DataFrame({'timestamp': [time.time(), time.time()+1000]})
         points.setDataFrame(df)
@@ -69,7 +69,9 @@ class DT2DWidget(pg.PlotWidget):
             item.scale(1, -1)
         self.addItem(item)
 
-    def set_year(self, year):
+    def set_year(self, year=None):
+        if year is None:
+            year = datetime.today().year
         self.clear_items()
         self.d11 = datetime(year, 1, 1)
         self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
