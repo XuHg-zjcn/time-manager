@@ -172,7 +172,8 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
         plans = tdb.get_conds_plans(where_dict)
-        self.dt2d_plot.draw_plans(plans, year)
+        self.dt2d_plot.set_year(year)
+        self.dt2d_plot.draw_plans(plans)
 
     def update_table(self):
         where_dict = self.rang.get_sql_where_dict()

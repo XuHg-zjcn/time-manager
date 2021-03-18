@@ -116,11 +116,10 @@ class DT2DWidget(pg.PlotWidget):
         self.setXRange(0, 24 if self._swap else 366)
         self.setYRange(0, 366 if self._swap else 24)
 
-    def draw_plans(self, plans: Plans, year=None, name=None, z=0):
+    def draw_plans(self, plans: Plans, name=None, z=0):
         """
         draw plans datetime2d.
         @param plans: Plans(pd.DataFrame) object
-        @param year: optional, see `set_year`
         @param name: optional, None will default item
         @param z: ZValue(layer) of pyqtgraph PlotItem
         @return: None
@@ -128,13 +127,11 @@ class DT2DWidget(pg.PlotWidget):
         if name is None:
             self.plans = plans
         ivt_color = plans.get_ivtree(lambda p: Plan(p).get_collect_color(self.colls))
-        self.draw_ivtree(ivt_color, year=year, name=name, z=z)
+        self.draw_ivtree(ivt_color, name=name, z=z)
 
-    def draw_ivtree(self, ivt_color, default_color=0x00ffff, year=None, name=None, z=0):
+    def draw_ivtree(self, ivt_color, default_color=0x00ffff, name=None, z=0):
         if name in self.items:  # name normal is None or string
             self.remove_plans(name)
-        if year is not None:
-            self.set_year(year)
         item_new = DateTime2DItem(ivt_color, self, default_color)
         item_new.setZValue(z)
         self.items[name] = item_new
