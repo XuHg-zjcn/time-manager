@@ -5,7 +5,6 @@ import pyqtgraph as pg
 import pandas as pd
 from PyQt5.QtCore import Qt, pyqtSignal
 
-from sqlite_api.task_db import Plans, Plan
 from .IntervalsItem import DateTime2DItem
 from .PointsItem import PointsItem
 from ..cluster import Cluster
@@ -118,20 +117,15 @@ class DT2DWidget(pg.PlotWidget):
         self.setXRange(0, 24 if self._swap else 366)
         self.setYRange(0, 366 if self._swap else 24)
 
-    def draw_plans(self, plans: Plans, name=None, z=0):
+    def draw_ivtree(self, ivt_color, default_color=0x00ffff, name=None, z=0):
         """
-        draw plans datetime2d.
-        @param plans: Plans(pd.DataFrame) object
+        draw ivtree datetime2d.
+        @param ivt_color:     see DateTime2DItem.__init__
+        @param default_color: see DateTime2DItem.__init__
         @param name: optional, None will default item
         @param z: ZValue(layer) of pyqtgraph PlotItem
         @return: None
         """
-        if name is None:
-            self.plans = plans
-        ivt_color = plans.get_ivtree(lambda p: Plan(p).get_collect_color(self.colls))
-        self.draw_ivtree(ivt_color, name=name, z=z)
-
-    def draw_ivtree(self, ivt_color, default_color=0x00ffff, name=None, z=0):
         item_new = DateTime2DItem(ivt_color, self, default_color)
         item_new.setZValue(z)
         self.addItem2(name, item_new)
