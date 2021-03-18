@@ -71,7 +71,6 @@ class DateTime2DItem(pg.GraphicsObject):
             else:
                 self._draw_iv(p, iv.begin, iv.end, color)
         p.end()
-        print('draw_ivtree')
 
     def paint(self, p, *args):
         p.drawPicture(0, 0, self.picture)

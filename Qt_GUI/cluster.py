@@ -74,7 +74,7 @@ class Cluster(Thread):
             self.dbt2dbtp[ctg] = txt_clr
 
     def run(self):
-        print('thread')
+        print('Cluster thread start')
         spots = []
         for dbtype, plst in self.dbt2plst.items():
             tp = self.dbt2dbtp[dbtype]
