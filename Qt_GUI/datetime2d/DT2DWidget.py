@@ -138,7 +138,7 @@ class DT2DWidget(pg.PlotWidget):
         self.addItem2(item_new)
         self.set_xy_full_range()
 
-    def remove_plans(self, name):
+    def remove_item(self, name):
         """
         remove showing plans.
         """

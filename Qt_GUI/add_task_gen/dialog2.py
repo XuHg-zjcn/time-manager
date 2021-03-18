@@ -125,7 +125,7 @@ class AddTaskGenDialog(Ui_Dialog):
             self.parent.dt2d_plot.draw_ivtree(ivt, default_color=rgb, name=name)
             tg_tab.update_conds({'name': name}, {'show': b})
         if not b and name in self.parent.dt2d_plot.items:
-            self.parent.dt2d_plot.remove_plans(name)
+            self.parent.dt2d_plot.remove_item(name)
             tg_tab.update_conds({'name': name}, {'show': b})
 
     def show_in2d_init(self):
@@ -147,7 +147,7 @@ class AddTaskGenDialog(Ui_Dialog):
         tg_tab.update_conds({'name': name}, {'color': rgb}, commit=True)
         self.button_color.setStyleSheet(f'QWidget {{background-color:{col.name()}}}')
         if name in self.parent.dt2d_plot.items:
-            self.parent.dt2d_plot.remove_plans(name)
+            self.parent.dt2d_plot.remove_item(name)
             self.show_in2d_slot(True)
 
     def build(self):
