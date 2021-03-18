@@ -7,12 +7,15 @@ Created on Mon Dec  7 13:53:35 2020
 """
 import sys
 import datetime
+import time
 
+import pandas as pd
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog,\
     QDateEdit, QTimeEdit, QComboBox
 
 from Qt_GUI.add_task_gen import AddTaskGenDialog
+from Qt_GUI.datetime2d.PointsItem import PointsItem
 from Qt_GUI.layout import Ui_MainWindow
 from my_libs.datetime_utils import date2ts0, time2float
 from sqlite_api.tables import colls
@@ -167,6 +170,11 @@ class MyUi_MainWindow(Ui_MainWindow):
         year = datetime.date.today().year
         self.year.setValue(year)
         self.swap_xy.stateChanged.connect(self.dt2d_plot.set_swap)
+
+        points = PointsItem(self.dt2d_plot)  # PointsItem test
+        df = pd.DataFrame({'timestamp': [time.time(), time.time()+1000]})
+        points.setDataFrame(df)
+        self.dt2d_plot.addItem2('points', points)
 
     def change_year(self, year):
         self.rang.set_year0101_1231(year)
