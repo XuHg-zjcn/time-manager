@@ -45,7 +45,6 @@ class DT2DWidget(pg.PlotWidget):
 
     def set_swap(self, new_state):
         self._swap = new_state
-        # TODO: swap xy for scatter texts
         for item in self.items.values():
             item.rotate(90)
             item.scale(1, -1)
@@ -63,6 +62,11 @@ class DT2DWidget(pg.PlotWidget):
         self.addItem(item)
 
     def set_year(self, year=None):
+        """
+        set XAxis, clear all items in PlotWidget
+        @param year:
+        @return: None
+        """
         if year is None:
             year = datetime.today().year
         self.clear_items()

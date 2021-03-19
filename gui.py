@@ -181,10 +181,16 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.dt2d_plot.addItem2('points', points)
 
     def change_year(self, year):
+        """
+        QSpinBox year valueChanged slot.
+        set DT2DWidget year, select plans from Sqlite and draw.
+        @param year: int (0-9999)
+        @return: None
+        """
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
         plans = tdb.get_conds_plans(where_dict)
-        self.plans = plans
+        self.plans = plans  # TODO: don't use Plan(p), direct get_collect_color
         self.dt2d_plot.set_year(year)
         ivt_color = plans.get_ivtree(lambda p: Plan(p).get_collect_color(colls))
         self.dt2d_plot.draw_ivtree(ivt_color)

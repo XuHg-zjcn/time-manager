@@ -61,7 +61,7 @@ class iTableView(TableViewWithColumnSet):
     def update_sql_table(self, row: int, col_name: str, value):
         if 'id' not in self.dataframe or not self.sql_table:
             return
-        self.dataframe[col_name][row] = value
+        self.dataframe[col_name][row] = value  # TODO: SettingWithCopyWarning
         xid = self.dataframe['id'][row]
         self.update_dataframe()
         self.sql_table.update_conds({'id': xid}, {col_name: value})
