@@ -162,7 +162,7 @@ class MyUi_MainWindow(Ui_MainWindow):
                                   self.time_min, self.time_max,
                                   self.x_setting)
         # set current year
-        self.dt2d_plot.build(app)
+        self.dt2d_plot.build(app, self)
         self.dt2d_plot.select_rect.connect(self.rang.set2datetime)
         self.dt2d_plot.select_point.connect(self.rang.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)

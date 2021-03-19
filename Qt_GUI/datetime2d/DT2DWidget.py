@@ -23,22 +23,25 @@ class DT2DWidget(pg.PlotWidget):
     select_point = pyqtSignal(datetime)
     select_rect = pyqtSignal(datetime, datetime)
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, cw):
+        super().__init__(cw)
         self._swap = False
         self.plans = None
         self.last_select = None
-        self.items = {}
+        self.items = None
         self.vh_line = vhLine(self)
         self.invertY()
         self.set_yaxis(6)
         self.scene().sigMouseMoved.connect(self.mouse_move_slot)
         self.scene().sigMouseClicked.connect(self.mouse_click_slot)
         pg.setConfigOptions(imageAxisOrder='row-major')
-        self.set_year()
 
-    def build(self, app):
+    def build(self, app, parent):
         self.app = app      # don't move this codes
+        self.parent = parent
+        self.items = parent.plotitem_tab
+        self.items.setHorizontalHeaderLabels(['类型', '名称', '子条目', '其他'])
+        self.set_year()
 
     def set_swap(self, new_state):
         self._swap = new_state
