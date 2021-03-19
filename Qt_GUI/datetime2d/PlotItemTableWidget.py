@@ -21,7 +21,6 @@ class PlotItemTableWidget(QTableWidget):
         add item to TableWidget, and save to dict.
         @param name: name of item, `None` for default item
         @param obj: item object, can get by __getitem__
-        @return: None
         """
         sType = obj.__class__.__name__
         if name in self.Dict:             # key already exists
@@ -65,7 +64,6 @@ class PlotItemTableWidget(QTableWidget):
     def clear(self):
         """
         clear Dict, not clear QTableWidget
-        @return: None
         """
         self.Dict.clear()
 
@@ -73,7 +71,6 @@ class PlotItemTableWidget(QTableWidget):
         """
         getattr in self.Dict
         @param item: attr name
-        @return:
         """
         if hasattr(self.Dict, item):
             return getattr(self.Dict, item)

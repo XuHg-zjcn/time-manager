@@ -186,7 +186,6 @@ class MyUi_MainWindow(Ui_MainWindow):
         QSpinBox year valueChanged slot.
         set DT2DWidget year, select plans from Sqlite and draw.
         @param year: int (0-9999)
-        @return: None
         """
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
@@ -205,6 +204,7 @@ class MyUi_MainWindow(Ui_MainWindow):
                                     sql_table=tdb)
 
     def start_cluster(self):
+        """start sklearn MeanShift Cluster in a thread, more see cluster.py"""
         if self.plans is None:
             raise RuntimeError('start_cluster before update_ivtree')
         scatter = pg.ScatterPlotItem()

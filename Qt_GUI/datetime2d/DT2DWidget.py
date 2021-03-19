@@ -46,6 +46,10 @@ class DT2DWidget(pg.PlotWidget):
         self.items.setHorizontalHeaderLabels(['类型', '名称', '子条目', '其他'])
 
     def set_swap(self, new_state):
+        """
+        swap axes, and transpose
+        @param new_state: bool, True for swap
+        """
         self._swap = new_state
         for item in self.items.values():
             item.rotate(90)
@@ -65,9 +69,8 @@ class DT2DWidget(pg.PlotWidget):
 
     def set_year(self, year=None):
         """
-        set XAxis, clear all items in PlotWidget
-        @param year:
-        @return: None
+        clear all items in the Widget, set XAxis with leap year.
+        @param year: 0-9999, default is current year.
         """
         if year is None:
             year = datetime.today().year
@@ -89,8 +92,8 @@ class DT2DWidget(pg.PlotWidget):
 
     def set_YAxis(self, n1=6, n2=24):
         """
-        :n1: ticks with text
-        :n2: all ticks
+        @param n1: ticks with text
+        @param n2: all ticks
         n1<n2
         """
         if 24 % n1 != 0 or 24 % n2 != 0:
@@ -102,6 +105,7 @@ class DT2DWidget(pg.PlotWidget):
         left.setStyle(tickLength=5)  # Positive tick outside
 
     def set_XAxis(self, year=None):
+        """set XAxis with leap year."""
         if year is None:
             year = self.d11.year
         doys = []
@@ -114,6 +118,7 @@ class DT2DWidget(pg.PlotWidget):
         bottom.setStyle(tickLength=5)
 
     def set_XY_full_range(self):
+        """set XAxis and YAxis to full range, with axes swap state."""
         self.setXRange(0, 24 if self._swap else 366)
         self.setYRange(0, 366 if self._swap else 24)
 
@@ -124,7 +129,6 @@ class DT2DWidget(pg.PlotWidget):
         @param default_color: see DateTime2DItem.__init__
         @param name: optional, None will default item
         @param z: ZValue(layer) of pyqtgraph PlotItem
-        @return: None
         """
         item_new = DateTime2DItem(ivt_color, self, default_color)
         item_new.setZValue(z)
@@ -133,11 +137,13 @@ class DT2DWidget(pg.PlotWidget):
 
     def remove_item(self, name):
         """
-        remove showing plans.
+        remove showing item.
+        @param name: name of item
         """
         self.removeItem(self.items.pop(name))
 
     def clear_items(self):
+        """clear all items in the Widget."""
         for item in self.items.values():
             self.removeItem(item)
         self.items.clear()

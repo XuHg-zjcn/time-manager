@@ -103,10 +103,8 @@ class TableViewWithColumnSet(QTableView):
     def SetColumnSet(self, name, column_set_cls=None):
         """
         find or create ColumnSet in sqlite table 'column_set_table'
-
         @param name: name in column_table
         @param column_set_cls: if can't find in column_table, auto create
-        @return: None
         """
         if name is not None:
             self.column_set = column_table.auto_create(name, column_set_cls)
@@ -116,8 +114,6 @@ class TableViewWithColumnSet(QTableView):
     def on_builds(self):
         """
         call on_build function in ColumnSet for each table cell.
-
-        @return: None
         """
         if self.column_set is None:
             return
@@ -134,8 +130,6 @@ class TableViewWithColumnSet(QTableView):
     def init_wides(self):
         """
         load column wides in ColumnSet.
-
-        @return: None
         """
         if not self.column_set:
             return
@@ -148,9 +142,7 @@ class TableViewWithColumnSet(QTableView):
     def active_slot(self, qmi):
         """
         Qt signal slot, double click slot, edit this cell.
-
         @param qmi: QModelIndex of cell
-        @return: None
         """
         if not self.column_set:
             return
@@ -167,9 +159,7 @@ class TableViewWithColumnSet(QTableView):
     def pressed_slot(self, qmi):
         """
         Qt signal slot, single click, finish current editing cell(maybe isn't `qmi`).
-
         @param qmi: QModelIndex of cell, unused
-        @return: None
         """
         if not self.column_set:
             return
