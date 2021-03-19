@@ -155,6 +155,7 @@ class MyUi_MainWindow(Ui_MainWindow):
     select data and display.
     """
     def __init__(self):
+        self.rang = None
         self.plans = None
 
     def build(self, app):
