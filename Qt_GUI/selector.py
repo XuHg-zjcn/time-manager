@@ -11,11 +11,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_Form(QtWidgets.QWidget):
-    def setupUi(self, Form):
-        Form.setObjectName("Form")
-        Form.resize(429, 234)
-        self.layoutWidget = QtWidgets.QWidget(Form)
+class Ui_Selector(object):
+    def setupUi(self, Selector):
+        Selector.setObjectName("Selector")
+        Selector.resize(429, 234)
+        self.layoutWidget = QtWidgets.QWidget(Selector)
         self.layoutWidget.setGeometry(QtCore.QRect(0, 0, 427, 232))
         self.layoutWidget.setObjectName("layoutWidget")
         self.gridLayout = QtWidgets.QGridLayout(self.layoutWidget)
@@ -102,22 +102,22 @@ class Ui_Form(QtWidgets.QWidget):
         self.add_task_gen.setObjectName("add_task_gen")
         self.gridLayout.addWidget(self.add_task_gen, 5, 3, 1, 1)
 
-        self.retranslateUi(Form)
-        QtCore.QMetaObject.connectSlotsByName(Form)
+        self.retranslateUi(Selector)
+        QtCore.QMetaObject.connectSlotsByName(Selector)
 
-    def retranslateUi(self, Form):
+    def retranslateUi(self, Selector):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "Form"))
-        self.is_use_re.setText(_translate("Form", "正则"))
-        self.label_6.setText(_translate("Form", "时长"))
-        self.label_2.setText(_translate("Form", "最小"))
-        self.label_5.setText(_translate("Form", "时间"))
-        self.label.setText(_translate("Form", "名称"))
-        self.label_4.setText(_translate("Form", "日期"))
-        self.is_include_sub.setText(_translate("Form", "含子任务"))
-        self.label_7.setText(_translate("Form", "状态"))
-        self.label_3.setText(_translate("Form", "最大"))
-        self.time_max.setDisplayFormat(_translate("Form", "hh:mm:ss"))
-        self.time_min.setDisplayFormat(_translate("Form", "hh:mm:ss"))
-        self.update_view.setText(_translate("Form", "更新"))
-        self.add_task_gen.setText(_translate("Form", "添加生成器"))
+        Selector.setWindowTitle(_translate("Selector", "Form"))
+        self.is_use_re.setText(_translate("Selector", "正则"))
+        self.label_6.setText(_translate("Selector", "时长"))
+        self.label_2.setText(_translate("Selector", "最小"))
+        self.label_5.setText(_translate("Selector", "时间"))
+        self.label.setText(_translate("Selector", "名称"))
+        self.label_4.setText(_translate("Selector", "日期"))
+        self.is_include_sub.setText(_translate("Selector", "含子任务"))
+        self.label_7.setText(_translate("Selector", "状态"))
+        self.label_3.setText(_translate("Selector", "最大"))
+        self.time_max.setDisplayFormat(_translate("Selector", "hh:mm:ss"))
+        self.time_min.setDisplayFormat(_translate("Selector", "hh:mm:ss"))
+        self.update_view.setText(_translate("Selector", "更新"))
+        self.add_task_gen.setText(_translate("Selector", "添加生成器"))

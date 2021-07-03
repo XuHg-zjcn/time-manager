@@ -89,7 +89,7 @@
     <column/>
     <column/>
    </widget>
-   <widget class="Ui_Form" name="selector" native="true">
+   <widget class="Selector2" name="selector" native="true">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -129,9 +129,9 @@
    <header>Qt_GUI.datetime2d.PlotItemTableWidget</header>
   </customwidget>
   <customwidget>
-   <class>Ui_Form</class>
+   <class>Selector2</class>
    <extends>QWidget</extends>
-   <header>Qt_GUI.selector</header>
+   <header>Qt_GUI.selector2</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

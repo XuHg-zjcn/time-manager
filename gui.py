@@ -13,7 +13,7 @@ import time
 import pandas as pd
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
-from Qt_GUI.datetime_range import DateTimeRange
+from Qt_GUI.selector2 import Selector2
 
 from Qt_GUI.add_task_gen import AddTaskGenDialog
 from Qt_GUI.datetime2d.PointsItem import PointsItem
@@ -26,17 +26,14 @@ class MyUi_MainWindow(Ui_MainWindow):
     """
     select data and display.
     """
-    def __init__(self):
-        self.rang = None
-
     def build(self, app):
         self.selector.setupUi(self.selector)
-        self.rang = DateTimeRange()
+        self.selector.build()
         self.dp = DataPlot(cdt, self.dt2d_plot, 'coll_data')
         # set current year
         self.dt2d_plot.build(app, self)
-        self.dt2d_plot.select_rect.connect(self.rang.set2datetime)
-        self.dt2d_plot.select_point.connect(self.rang.set1datetime)
+        self.dt2d_plot.select_rect.connect(self.selector.set2datetime)
+        self.dt2d_plot.select_point.connect(self.selector.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)
         self.dt2d_plot.select_point.connect(self.update_table)
         tdb.print_doings()
@@ -58,18 +55,17 @@ class MyUi_MainWindow(Ui_MainWindow):
         @param year: int (0-9999)
         """
         self.dt2d_plot.set_year(year)
-        self.rang.set_year0101_1231(year)
-        where_dict = self.rang.get_sql_where_dict()
+        self.selector.set_year0101_1231(year)
+        where_dict = self.selector.get_sql_where_dict()
         self.dp.update(where_dict)
 
     def update_table(self):
-        where_dict = self.rang.get_sql_where_dict()
+        where_dict = self.selector.get_sql_where_dict()
         plans = tdb.get_conds_plans(where_dict)
         print(plans)
         plans = plans.str_datetime()
         self.tableView.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks,
                                     sql_table=tdb)
-
 
 
 if __name__ == '__main__':

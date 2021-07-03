@@ -4,9 +4,10 @@ from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 
 from my_libs.datetime_utils import date2ts0, time2float
+from Qt_GUI.selector import Ui_Selector
 
 
-class DateTimeRange(QtWidgets.QWidget):
+class Selector2(Ui_Selector, QtWidgets.QWidget):
     change = QtCore.pyqtSignal()
     settings = ['2D包含',  # a< Ds<De <b && {(c< Ts<Te <d) if (Ds==De) else (c=0,d=24)}
                 '2D重叠',  # (Ts<=d && c<=Te) if Ds==De, else omitted
@@ -14,59 +15,33 @@ class DateTimeRange(QtWidgets.QWidget):
                 '1D重叠',  # [(a,c), (b,d)] overlaps [sta, end]
                 '点选择']  # sta < (a,c) < end
 
-    def __init__(self):
-        super().__init__()
-        self.layoutWidget = QtWidgets.QWidget(self)
-        self.layoutWidget.setGeometry(QtCore.QRect(0, 310, 427, 232))
-        self.layoutWidget.setObjectName("layoutWidget")
-        self.gridLayout = QtWidgets.QGridLayout(self.layoutWidget)
-        self.gridLayout.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout.setObjectName("gridLayout")
+    def __init__(self, *args, **kwargs):
+        QtWidgets.QWidget.__init__(self, *args, **kwargs)
+        Ui_Selector.__init__(self)
 
-        self.dm = QtWidgets.QDateEdit(self.layoutWidget)
-        self.dm.setDateTime(QtCore.QDateTime(QtCore.QDate(2000, 12, 11), QtCore.QTime(0, 0, 0)))
-        self.gridLayout.addWidget(self.dm, 1, 1, 1, 1)
-        self.dm.setObjectName("date_min")
-
-        self.dM = QtWidgets.QDateEdit(self.layoutWidget)
-        self.dM.setDateTime(QtCore.QDateTime(QtCore.QDate(2000, 12, 11), QtCore.QTime(0, 0, 0)))
-        self.gridLayout.addWidget(self.dM, 1, 2, 1, 1)
-        self.dM.setObjectName("date_max")
-
-        self.tm = QtWidgets.QTimeEdit(self.layoutWidget)
-        self.gridLayout.addWidget(self.tm, 2, 1, 1, 1)
-        self.tm.setObjectName("time_min")
-
-        self.tM = QtWidgets.QTimeEdit(self.layoutWidget)
-        self.gridLayout.addWidget(self.tM, 2, 2, 1, 1)
-        self.tM.setObjectName("time_max")
-
-        self.comb = QtWidgets.QComboBox(self.layoutWidget)
-        self.comb.setObjectName("state")
-        self.gridLayout.addWidget(self.comb, 5, 1, 1, 1)
-
-        self.dm.dateChanged.connect(self.change.emit)
-        self.dM.dateChanged.connect(self.change.emit)
-        self.tm.timeChanged.connect(self.change.emit)
-        self.tM.timeChanged.connect(self.change.emit)
-        self.comb.currentIndexChanged.connect(self.change.emit)
-        self.comb.clear()
-        self.comb.addItems(self.settings)
-        self.comb.currentIndexChanged.connect(self.comb_slot)
+    def build(self):
+        self.date_min.dateChanged.connect(self.change.emit)
+        self.date_max.dateChanged.connect(self.change.emit)
+        self.time_min.timeChanged.connect(self.change.emit)
+        self.time_max.timeChanged.connect(self.change.emit)
+        self.x_setting.currentIndexChanged.connect(self.change.emit)
+        self.x_setting.clear()
+        self.x_setting.addItems(self.settings)
+        self.x_setting.currentIndexChanged.connect(self.comb_slot)
         self.default4dt_comb_index = 0
 
     def comb_slot(self, index):
         is_enable = index != 4
-        self.dM.setEnabled(is_enable)
-        self.tM.setEnabled(is_enable)
+        self.date_max.setEnabled(is_enable)
+        self.time_max.setEnabled(is_enable)
         if is_enable:
             self.default4dt_comb_index = index
 
     def get4py(self):
-        dm_ = self.dm.date().toPyDate()
-        dM_ = self.dM.date().toPyDate()
-        tm_ = self.tm.time().toPyTime()
-        tM_ = self.tM.time().toPyTime()
+        dm_ = self.date_min.date().toPyDate()
+        dM_ = self.date_max.date().toPyDate()
+        tm_ = self.time_min.time().toPyTime()
+        tM_ = self.time_max.time().toPyTime()
         return dm_, dM_, tm_, tM_
 
     def get2py(self):
@@ -88,10 +63,10 @@ class DateTimeRange(QtWidgets.QWidget):
         return dmf, dMf, tmf, tMf
 
     def get4str(self):
-        dm_ = self.dm.date().toString('yyyy-MM-dd')
-        dM_ = self.dM.date().toString('yyyy-MM-dd')
-        tm_ = self.tm.time().toString('hh:mm:ss')
-        tM_ = self.tM.time().toString('hh:mm:ss')
+        dm_ = self.date_min.date().toString('yyyy-MM-dd')
+        dM_ = self.date_max.date().toString('yyyy-MM-dd')
+        tm_ = self.time_min.time().toString('hh:mm:ss')
+        tM_ = self.time_max.time().toString('hh:mm:ss')
         return dm_, dM_, tm_, tM_
 
     def set2datetime(self, m, M):
@@ -99,17 +74,17 @@ class DateTimeRange(QtWidgets.QWidget):
         d2 = M.date()
         t1 = m.time()
         t2 = M.time()
-        self.dm.setDate(min(d1, d2))
-        self.dM.setDate(max(d1, d2))
-        self.tm.setTime(min(t1, t2))
-        self.tM.setTime(max(t1, t2))
-        if self.comb.currentIndex() == 4:
-            self.comb.setCurrentIndex(self.default4dt_comb_index)
+        self.date_min.setDate(min(d1, d2))
+        self.date_max.setDate(max(d1, d2))
+        self.time_min.setTime(min(t1, t2))
+        self.time_max.setTime(max(t1, t2))
+        if self.x_setting.currentIndex() == 4:
+            self.x_setting.setCurrentIndex(self.default4dt_comb_index)
 
     def set1datetime(self, m):
-        self.comb.setCurrentIndex(4)
-        self.dm.setDate(m.date())
-        self.tm.setTime(m.time())
+        self.x_setting.setCurrentIndex(4)
+        self.date_min.setDate(m.date())
+        self.time_min.setTime(m.time())
 
     def set_year0101_1231(self, year):
         d0101 = datetime.datetime(year, 1,  1,  0,  0,  0)
@@ -118,7 +93,7 @@ class DateTimeRange(QtWidgets.QWidget):
 
     def get_sql_where_dict(self):
         # TODO: timezone
-        name = self.comb.currentText()
+        name = self.x_setting.currentText()
         dm, dM, tm, tM = self.get4str()
         m, M = self.get2float()
         if name == '2D包含':

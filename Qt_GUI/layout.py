@@ -36,7 +36,7 @@ class Ui_MainWindow(object):
         self.plotitem_tab.setColumnCount(4)
         self.plotitem_tab.setObjectName("plotitem_tab")
         self.plotitem_tab.setRowCount(0)
-        self.selector = Ui_Form(self.centralwidget)
+        self.selector = Selector2(self.centralwidget)
         self.selector.setGeometry(QtCore.QRect(0, 310, 411, 241))
         self.selector.setObjectName("selector")
         MainWindow.setCentralWidget(self.centralwidget)
@@ -59,4 +59,4 @@ class Ui_MainWindow(object):
 from Qt_GUI.datetime2d import DT2DWidget
 from Qt_GUI.datetime2d.PlotItemTableWidget import PlotItemTableWidget
 from Qt_GUI.pandasModel import iTableView
-from Qt_GUI.selector import Ui_Form
+from Qt_GUI.selector2 import Selector2
