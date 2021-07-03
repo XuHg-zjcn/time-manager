@@ -30,9 +30,8 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.rang = None
 
     def build(self, app):
-        self.rang = DateTimeRange(self.date_min, self.date_max,
-                                  self.time_min, self.time_max,
-                                  self.x_setting)
+        self.selector.setupUi(self.selector)
+        self.rang = DateTimeRange()
         self.dp = DataPlot(cdt, self.dt2d_plot, 'coll_data')
         # set current year
         self.dt2d_plot.build(app, self)
@@ -42,9 +41,9 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.dt2d_plot.select_point.connect(self.update_table)
         tdb.print_doings()
         tdb.print_need()
-        self.year.valueChanged.connect(self.change_year)
+        self.selector.year.valueChanged.connect(self.change_year)
         year = datetime.date.today().year
-        self.year.setValue(year)
+        self.selector.year.setValue(year)
         self.swap_xy.stateChanged.connect(self.dt2d_plot.set_swap)
 
         points = PointsItem(self.dt2d_plot)  # PointsItem test
@@ -86,5 +85,5 @@ if __name__ == '__main__':
     ud.setupUi(dia)
     ud.build()
     win.show()
-    ui.add_task_gen.clicked.connect(dia.show)
+    ui.selector.add_task_gen.clicked.connect(dia.show)
     sys.exit(app.exec_())

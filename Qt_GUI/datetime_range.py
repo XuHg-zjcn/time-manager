@@ -1,34 +1,55 @@
 import datetime
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtWidgets import QWidget, QDateEdit, QTimeEdit, QComboBox
+from PyQt5 import QtCore
+from PyQt5 import QtWidgets
 
 from my_libs.datetime_utils import date2ts0, time2float
 
 
-class DateTimeRange(QWidget):
-    change = pyqtSignal()
+class DateTimeRange(QtWidgets.QWidget):
+    change = QtCore.pyqtSignal()
     settings = ['2D包含',  # a< Ds<De <b && {(c< Ts<Te <d) if (Ds==De) else (c=0,d=24)}
                 '2D重叠',  # (Ts<=d && c<=Te) if Ds==De, else omitted
                 '1D包含',  # (a,c) <= sta <= end <= (b,d)'
                 '1D重叠',  # [(a,c), (b,d)] overlaps [sta, end]
                 '点选择']  # sta < (a,c) < end
 
-    def __init__(self, dm: QDateEdit, dM: QDateEdit,
-                       tm: QTimeEdit, tM: QTimeEdit,
-                       comb: QComboBox):
+    def __init__(self):
         super().__init__()
-        self.dm = dm
-        self.dM = dM
-        self.tm = tm
-        self.tM = tM
-        self.comb = comb
-        dm.dateChanged.connect(self.change.emit)
-        dM.dateChanged.connect(self.change.emit)
-        tm.timeChanged.connect(self.change.emit)
-        tM.timeChanged.connect(self.change.emit)
-        comb.currentIndexChanged.connect(self.change.emit)
+        self.layoutWidget = QtWidgets.QWidget(self)
+        self.layoutWidget.setGeometry(QtCore.QRect(0, 310, 427, 232))
+        self.layoutWidget.setObjectName("layoutWidget")
+        self.gridLayout = QtWidgets.QGridLayout(self.layoutWidget)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setObjectName("gridLayout")
+
+        self.dm = QtWidgets.QDateEdit(self.layoutWidget)
+        self.dm.setDateTime(QtCore.QDateTime(QtCore.QDate(2000, 12, 11), QtCore.QTime(0, 0, 0)))
+        self.gridLayout.addWidget(self.dm, 1, 1, 1, 1)
+        self.dm.setObjectName("date_min")
+
+        self.dM = QtWidgets.QDateEdit(self.layoutWidget)
+        self.dM.setDateTime(QtCore.QDateTime(QtCore.QDate(2000, 12, 11), QtCore.QTime(0, 0, 0)))
+        self.gridLayout.addWidget(self.dM, 1, 2, 1, 1)
+        self.dM.setObjectName("date_max")
+
+        self.tm = QtWidgets.QTimeEdit(self.layoutWidget)
+        self.gridLayout.addWidget(self.tm, 2, 1, 1, 1)
+        self.tm.setObjectName("time_min")
+
+        self.tM = QtWidgets.QTimeEdit(self.layoutWidget)
+        self.gridLayout.addWidget(self.tM, 2, 2, 1, 1)
+        self.tM.setObjectName("time_max")
+
+        self.comb = QtWidgets.QComboBox(self.layoutWidget)
+        self.comb.setObjectName("state")
+        self.gridLayout.addWidget(self.comb, 5, 1, 1, 1)
+
+        self.dm.dateChanged.connect(self.change.emit)
+        self.dM.dateChanged.connect(self.change.emit)
+        self.tm.timeChanged.connect(self.change.emit)
+        self.tM.timeChanged.connect(self.change.emit)
+        self.comb.currentIndexChanged.connect(self.change.emit)
         self.comb.clear()
         self.comb.addItems(self.settings)
         self.comb.currentIndexChanged.connect(self.comb_slot)
