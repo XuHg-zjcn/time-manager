@@ -137,6 +137,10 @@ class ColumnSetTasks(ColumnSet):
 
 
 class TaskTable(SqlTable):
+    """
+    用于保存用户输入的计划任务（带有名称，输入时间，预定时间等等）
+    计划使用neo4j
+    """
     name2dtype = [('rec_id', 'INT'),
                   ('type_id', 'INT'),
                   ('name', 'TEXT'),

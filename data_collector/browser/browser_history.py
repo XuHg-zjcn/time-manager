@@ -7,7 +7,7 @@ Created on Tue Nov 17 14:37:07 2020
 import sqlite3
 
 from data_collector.auto_collect import Collector
-from sqlite_api.task_db import Plan, tdb
+from sqlite_api.collect_data import cdt
 
 
 class BrowserHistory(Collector):
@@ -35,10 +35,8 @@ class BrowserHistory(Collector):
                 if prev - last_start > 15*60 and\
                       last_start >= self.db_fields['t_max']:
                     try:
-                        plan = Plan(rec_id=self.db_fields['id'],
-                                    name=self.db_fields['name'],
-                                    sta=last_start, end=prev)
-                        tdb.insert(plan)
+                        cdt.insert({'rec_id':self.db_fields['id'],
+                                    'sta':last_start, 'end':prev})
                     except ValueError as e:
                         print(e)
                     else:
