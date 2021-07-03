@@ -5,6 +5,7 @@ Created on Mon Dec  7 13:53:35 2020
 
 @author: xrj
 """
+from Qt_GUI.data_getter.data_plot import DataPlot
 import sys
 import datetime
 import time
@@ -22,6 +23,7 @@ from Qt_GUI.layout import Ui_MainWindow
 from my_libs.datetime_utils import date2ts0, time2float
 from sqlite_api.tables import colls
 from sqlite_api.task_db import ColumnSetTasks, tdb, Plan
+from sqlite_api.collect_data import cdt
 
 
 class DateTimeRange(QObject):
@@ -156,19 +158,18 @@ class MyUi_MainWindow(Ui_MainWindow):
     """
     def __init__(self):
         self.rang = None
-        self.plans = None
 
     def build(self, app):
         self.rang = DateTimeRange(self.date_min, self.date_max,
                                   self.time_min, self.time_max,
                                   self.x_setting)
+        self.dp = DataPlot(cdt, self.dt2d_plot, 'coll_data')
         # set current year
         self.dt2d_plot.build(app, self)
         self.dt2d_plot.select_rect.connect(self.rang.set2datetime)
         self.dt2d_plot.select_point.connect(self.rang.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)
         self.dt2d_plot.select_point.connect(self.update_table)
-        self.cluster.clicked.connect(self.start_cluster)
         tdb.print_doings()
         tdb.print_need()
         self.year.valueChanged.connect(self.change_year)
@@ -187,13 +188,10 @@ class MyUi_MainWindow(Ui_MainWindow):
         set DT2DWidget year, select plans from Sqlite and draw.
         @param year: int (0-9999)
         """
+        self.dt2d_plot.set_year(year)
         self.rang.set_year0101_1231(year)
         where_dict = self.rang.get_sql_where_dict()
-        plans = tdb.get_conds_plans(where_dict)
-        self.plans = plans  # TODO: don't use Plan(p), direct get_collect_color
-        self.dt2d_plot.set_year(year)
-        ivt_color = plans.get_ivtree(lambda p: Plan(p).get_collect_color(colls))
-        self.dt2d_plot.draw_ivtree(ivt_color)
+        self.dp.update(where_dict)
 
     def update_table(self):
         where_dict = self.rang.get_sql_where_dict()
@@ -203,17 +201,6 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.tableView.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks,
                                     sql_table=tdb)
 
-    def start_cluster(self):
-        """start sklearn MeanShift Cluster in a thread, more see cluster.py"""
-        if self.plans is None:
-            raise RuntimeError('start_cluster before update_ivtree')
-        scatter = pg.ScatterPlotItem()
-        scatter.setZValue(10)
-        self.dt2d_plot.addItem2('scatter', scatter)
-        clu = Cluster(self.plans, self.dt2d_plot.d11, scatter,
-                      func_classify=lambda p: p['rec_id'],
-                      func_textcolor=colls.find_txtclr)
-        clu.start()
 
 
 if __name__ == '__main__':

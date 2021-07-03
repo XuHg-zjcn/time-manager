@@ -139,6 +139,9 @@ class SqlTable:
         :para cond_dict: {'field1':value,
                           'field2':(min, max),
                           'field3':('<', value), ...}
+        :para fields: str single field,
+                      list multiply fields,
+                      None get all fields of table. 
         """
         fields_str = self._fields2sql(fields)
         where_str, paras = self._conds2where(cond_dict)
@@ -172,6 +175,10 @@ class SqlTable:
         return dict(zip(fields, c1))
 
     def get_conds_dataframe(self, cond_dict=None, fields=None):
+        """
+        get data conds as dataframe, example:
+        get_conds_dataframe(cond_dict={'name':'UserName'}, fields=['submit_time', 'price'])
+        """
         sql, paras = self.conds_sql(cond_dict, fields)
         return pd.read_sql_query(sql, self.conn, params=paras)
 
