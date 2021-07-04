@@ -33,6 +33,5 @@ class PlotItemTableWidget(DictTableWidget):
                 row = rows.pop()
             item = menu.addAction(u"删除")
             name = self.item(row, 1).data(0)
-            print('删除', name)
             item.triggered.connect(lambda x: self.dele.emit(name))
         action = menu.exec_(self.mapToGlobal(pos))

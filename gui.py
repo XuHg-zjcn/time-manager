@@ -37,6 +37,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.dt2d_plot.select_point.connect(self.selector.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)
         self.dt2d_plot.select_point.connect(self.update_table)
+        self.plotitem_tab.dele.connect(lambda x: self.dt2d_plot.remove_item(x))
         tdb.print_doings()
         tdb.print_need()
         self.selector.year.valueChanged.connect(self.change_year)
