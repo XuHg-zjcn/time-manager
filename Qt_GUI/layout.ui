@@ -99,6 +99,19 @@
      </rect>
     </property>
    </widget>
+   <widget class="QPushButton" name="sta_ipython">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>310</y>
+      <width>121</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>启动IPython</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

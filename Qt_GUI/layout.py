@@ -39,6 +39,9 @@ class Ui_MainWindow(object):
         self.selector = Selector2(self.centralwidget)
         self.selector.setGeometry(QtCore.QRect(0, 310, 411, 241))
         self.selector.setObjectName("selector")
+        self.sta_ipython = QtWidgets.QPushButton(self.centralwidget)
+        self.sta_ipython.setGeometry(QtCore.QRect(430, 310, 121, 30))
+        self.sta_ipython.setObjectName("sta_ipython")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1417, 34))
@@ -56,6 +59,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.cluster.setText(_translate("MainWindow", "聚类"))
         self.swap_xy.setText(_translate("MainWindow", "翻转XY"))
+        self.sta_ipython.setText(_translate("MainWindow", "启动IPython"))
 from Qt_GUI.datetime2d import DT2DWidget
 from Qt_GUI.datetime2d.PlotItemTableWidget import PlotItemTableWidget
 from Qt_GUI.pandasModel import iTableView

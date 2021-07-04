@@ -14,6 +14,7 @@ import pandas as pd
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from Qt_GUI.selector2 import Selector2
+import IPython
 
 from Qt_GUI.add_task_gen import AddTaskGenDialog
 from Qt_GUI.datetime2d.PointsItem import PointsItem
@@ -38,6 +39,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.dt2d_plot.select_rect.connect(self.update_table)
         self.dt2d_plot.select_point.connect(self.update_table)
         self.plotitem_tab.dele.connect(lambda x: self.dt2d_plot.remove_item(x))
+        self.sta_ipython.clicked.connect(lambda :IPython.embed(colors='Neutral'))
         tdb.print_doings()
         tdb.print_need()
         self.selector.year.valueChanged.connect(self.change_year)
