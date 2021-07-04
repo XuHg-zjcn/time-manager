@@ -32,7 +32,7 @@ class DT2DWidget(pg.PlotWidget):
         self.items = None        # PlotItemTableWidget
         self.vh_line = vhLine(self)
         self.d11 = None
-        self.max_doy = None
+        self.max_doy = None      # leap year: 366
         self.invertY()           # original point in top-left corner
         self.set_YAxis(6)
         self.scene().sigMouseMoved.connect(self._mouse_move_slot)
@@ -82,7 +82,12 @@ class DT2DWidget(pg.PlotWidget):
         if isinstance(ts, float) or isinstance(ts, int):
             ts = datetime.fromtimestamp(ts)
         dt = ts - self.d11
-        return dt.days, (dt.seconds + dt.microseconds/1e6)/3600
+        x = dt.days
+        if x >= self.max_doy:
+            return self.max_doy-1, 24
+        else:
+            y = (dt.seconds + dt.microseconds/1e6)/3600
+            return x, y
 
     def xy2time(self, x:int, y:float):
         # TODO: TypeError: unsupported operand type(s) for +:
@@ -129,7 +134,7 @@ class DT2DWidget(pg.PlotWidget):
         @param name: optional, None will default item
         @param z: ZValue(layer) of pyqtgraph PlotItem
         """
-        item_new = DateTime2DItem(ivt_color, self, default_color)
+        item_new = DateTime2DItem(ivt_color, self.time2xy, default_color)
         item_new.setZValue(z)
         self.addItem2(name, item_new)
         self.set_XY_full_range()
