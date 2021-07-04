@@ -16,9 +16,11 @@ class PointsItem(pg.ScatterPlotItem):
             xy = self.parent.time2xy(ts)
             pos.append(xy)
         if 'color' in data:
-            color = []
-            for clr in data['color']:
-                color.append(QtGui.QColor.fromRgb(clr))
+            color = map(lambda clr: QtGui.QColor.fromRgb(clr), data['color'])
         else:
             color = QtGui.QColor.fromRgb(0x00ffff)
         super().setData(pos=pos, pen=color, brush=color)
+
+    def setTimestampList(self, data, *args, **kwargs):
+        pos = map(lambda ts: self.parent.time2xy(ts), data)
+        super().setData(pos=pos, args=args, kwargs=kwargs)
