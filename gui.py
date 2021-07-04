@@ -29,6 +29,7 @@ class MyUi_MainWindow(Ui_MainWindow):
     def build(self, app):
         self.selector.setupUi(self.selector)
         self.selector.build()
+        self.plotitem_tab.build()
         self.dp = DataPlot(cdt, self.dt2d_plot, 'coll_data')
         # set current year
         self.dt2d_plot.build(app, self)

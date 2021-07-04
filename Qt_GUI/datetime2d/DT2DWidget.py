@@ -43,7 +43,6 @@ class DT2DWidget(pg.PlotWidget):
         self._app = app          # used for detect shift key
         self.parent = parent
         self.items = parent.plotitem_tab
-        self.items.setHorizontalHeaderLabels(['类型', '名称', '子条目', '其他'])
 
     def set_swap(self, new_state):
         """
