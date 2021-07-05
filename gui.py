@@ -5,6 +5,7 @@ Created on Mon Dec  7 13:53:35 2020
 
 @author: xrj
 """
+from Qt_GUI.add_plot2 import AddPlot2
 from Qt_GUI.data_getter.data_plot import DataPlot
 import sys
 import datetime
@@ -32,6 +33,21 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.selector.build()
         self.plotitem_tab.build()
         self.dp = DataPlot(cdt, self.dt2d_plot, 'coll_data')
+
+        dia1 = QDialog()
+        dia1.setWindowTitle('add task gen')
+        ud = AddTaskGenDialog(ui)
+        ud.setupUi(dia1)
+        ud.build()
+        self.selector.add_task_gen.clicked.connect(lambda x: dia1.show())
+
+        dia2 = QDialog()
+        dia2.setWindowTitle('add plot item')
+        ap = AddPlot2()
+        ap.setupUi(dia2)
+        ap.build()
+        self.plotitem_tab.addreq.connect(lambda : dia2.show())
+
         # set current year
         self.dt2d_plot.build(app, self)
         self.dt2d_plot.select_rect.connect(self.selector.set2datetime)
@@ -76,14 +92,8 @@ if __name__ == '__main__':
     app = QApplication([])
     win = QMainWindow()
     win.setWindowTitle('time-manager Date-Time 2D Image')
-    dia = QDialog()
-    dia.setWindowTitle('add task gen')
     ui = MyUi_MainWindow()
     ui.setupUi(win)
     ui.build(app)
-    ud = AddTaskGenDialog(ui)
-    ud.setupUi(dia)
-    ud.build()
     win.show()
-    ui.selector.add_task_gen.clicked.connect(dia.show)
     sys.exit(app.exec_())
