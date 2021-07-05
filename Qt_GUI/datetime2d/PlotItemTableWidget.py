@@ -22,7 +22,7 @@ class PlotItemTableWidget(DictTableWidget):
         indexes = self.selectedIndexes()
         if len(indexes) == 0:
             item = menu.addAction(u"添加")
-            item.triggered.connect(self.addreq)
+            item.triggered.connect(self.addreq.emit)
         else:
             rows = set()
             for i in indexes:
