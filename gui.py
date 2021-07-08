@@ -45,7 +45,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         dia2.setWindowTitle('add plot item')
         ap = AddPlot2()
         ap.setupUi(dia2)
-        ap.build()
+        ap.build(self)
         self.plotitem_tab.addreq.connect(lambda : dia2.show())
 
         # set current year

@@ -12,12 +12,13 @@ ptab = PlotTable(conn)
 
 # TODO: apply button, run func
 class AddPlot2(Ui_Dialog):
-    def build(self):
+    def build(self, win):
         self.buttonBox.accepted.connect(lambda : self.on_accepted())
         self.combo_name.editTextChanged.connect(self.on_name_change)
         self.combo_func.editTextChanged.connect(self.on_func_change)
         self.load_all_names()
         self.load_all_funcs()
+        self.win = win
 
     def on_accepted(self):
         name = self.combo_name.currentText()
@@ -25,6 +26,13 @@ class AddPlot2(Ui_Dialog):
         param = self.combo_param.currentText()
         color = self.lineEdit_color.text()
         color = int(color, base=16)
+        iid = ptab.get_conds_onlyone({'name':name}, 'id', def0=None)
+        if iid is None:
+            ptab.insert({'name': name, 'func': func, 'param': param, 'color': color}, commit=True)
+        else:
+            ptab.update_conds({'id': iid}, {'func': func, 'param': param, 'color': color}, commit=True)
+
+
         found = False
         for modname, module in [('ops2', ops2), ('ops1', ops1)]:
             if hasattr(module, func):
@@ -33,12 +41,10 @@ class AddPlot2(Ui_Dialog):
                 break
         if not found:
             raise LookupError('func name not found')
-        exec(f'{func}({param})')
-        iid = ptab.get_conds_onlyone({'name':name}, 'id', def0=None)
-        if iid is None:
-            ptab.insert({'name': name, 'func': func, 'param': param, 'color': color}, commit=True)
-        else:
-            ptab.update_conds({'id': iid}, {'func': func, 'param': param, 'color': color}, commit=True)
+        if param:
+            param = ', '+param
+        code = f'{func}(self.win, name, color{param})'
+        exec(code)
 
     def on_func_change(self):
         func = self.combo_func.currentText()
