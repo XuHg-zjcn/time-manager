@@ -25,6 +25,15 @@ class AddPlot2(Ui_Dialog):
         param = self.combo_param.currentText()
         color = self.lineEdit_color.text()
         color = int(color, base=16)
+        found = False
+        for modname, module in [('ops2', ops2), ('ops1', ops1)]:
+            if hasattr(module, func):
+                func = f'{modname}.{func}'
+                found = True
+                break
+        if not found:
+            raise LookupError('func name not found')
+        exec(f'{func}({param})')
         iid = ptab.get_conds_onlyone({'name':name}, 'id', def0=None)
         if iid is None:
             ptab.insert({'name': name, 'func': func, 'param': param, 'color': color}, commit=True)
@@ -57,6 +66,6 @@ class AddPlot2(Ui_Dialog):
         dops2 = dir(ops2)
         dops2 = filter(lambda x:x[:2] != '__' and callable(getattr(ops2, x)), dops2)
         dops2 = list(dops2)
-        dops = dops1 + dops2
+        dops = set(dops1 + dops2)
         self.combo_func.clear()
         self.combo_func.addItems(dops)
