@@ -1,6 +1,7 @@
 from my_libs.sqltable import SqlTable
 from .add_plot import Ui_Dialog
-import user_data.code.addplot_ops as ops
+import user_data.code.addplot_ops as ops1
+import Qt_GUI.addplot_ops as ops2
 from commd_line.init_config import conn
 
 class PlotTable(SqlTable):
@@ -50,8 +51,12 @@ class AddPlot2(Ui_Dialog):
         self.combo_name.addItems(names)
 
     def load_all_funcs(self):
-        dops = dir(ops)
-        dops = filter(lambda x:x[:2] != '__' and callable(getattr(ops, x)), dops)
-        dops = list(dops)
+        dops1 = dir(ops1)
+        dops1 = filter(lambda x:x[:2] != '__' and callable(getattr(ops1, x)), dops1)
+        dops1 = list(dops1)
+        dops2 = dir(ops2)
+        dops2 = filter(lambda x:x[:2] != '__' and callable(getattr(ops2, x)), dops2)
+        dops2 = list(dops2)
+        dops = dops1 + dops2
         self.combo_func.clear()
         self.combo_func.addItems(dops)
