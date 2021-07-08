@@ -1,3 +1,4 @@
+from Qt_GUI.datetime2d.PointsItem import PointsItem
 from datetime import datetime, timedelta
 
 import pyqtgraph as pg
@@ -138,6 +139,11 @@ class DT2DWidget(pg.PlotWidget):
         item_new.setZValue(z)
         self.addItem2(name, item_new)
         self.set_XY_full_range()
+
+    def draw_points(self, lst, color=0x00ff00, name='points'):
+        item_new = PointsItem(self)
+        item_new.setTimestampList(lst, pen=color, brush=color)
+        self.addItem2(name, item_new)
 
     def remove_item(self, name):
         """
