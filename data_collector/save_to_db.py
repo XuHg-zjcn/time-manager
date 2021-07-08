@@ -1,16 +1,15 @@
 #!/bin/python
 from .wtmp import wtmp_iter
-from sqlite_api.task_db import Plan, PlanTime, tdb
+from sqlite_api.collect_data import cdt
 from commd_line.init_config import conn
 
 # TODO: save collector obj in CollTable
-for i in wtmp_iter():
-    print(i)
+for sta, end, xtype in wtmp_iter():
+    print(sta, end, xtype)
     try:
-        plan = Plan(PlanTime(i[0], i[1]), i[2]+2, 'computer_running')
-        tdb.add_aitem(plan)
+        cdt.insert({'rec_id':12345, 'type_id':0, 'sta':sta, 'end':end, 'num':xtype})
     except ValueError as e:
         print(e)
-tdb.commit()
+cdt.commit()
 conn.close()
-print(tdb.conn)
+print(cdt.conn)
