@@ -21,6 +21,7 @@ class Collector(DumpBaseCls):
             print('Collector {} skip, Error: {}'.format(self.db_fields['name'], e))
 
 
+# TODO: op collect table via class
 class Collectors:
     def __init__(self, conn, commit_each=True):
         self.conn = conn                # don't remove para `conn`,
