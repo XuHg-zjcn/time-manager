@@ -15,6 +15,9 @@ class GitLog(Collector):
         repo = Repo(self.path)
         logs = repo.head.log()
         for log in logs:
+            lst = list(tpd.get_conds_execute({'rec_id':self.db_fields['id'], 'num':log.newhexsha}))
+            if lst:
+                continue
             spt = log.message.find(':')
             if spt < 0:
                 spt = 0
