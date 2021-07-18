@@ -2,12 +2,16 @@ import sqlite3
 from my_libs.sqltable import SqlTable
 from intervaltree.intervaltree import IntervalTree
 from sqlite_api.collect_data import cdt
+from sqlite_api.timepoint_db import tpd
 
 def PlotCollData(win, name, color, conds={}):
-    cdt.get_conds_execute(conds, ['sta', 'end'])
     df = cdt.get_conds_execute(conds, ['sta', 'end'])
     ivt = IntervalTree.from_tuples(df)
     win.dt2d_plot.draw_ivtree(ivt, default_color=color, name=name)
+
+def PlotPoints(win, name, color, conds={}):
+    df = tpd.get_conds_execute(conds, 'time')
+    win.dt2d_plot.draw_points(df, color=color, name=name)
 
 def PlotDBInterval(win, name, color,
                    db_path, table_name, sta_name, end_name,
