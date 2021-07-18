@@ -32,7 +32,7 @@ class BrowserHistory(Collector):
         for curr, in res:  # TODO: probably curr > current timestamp
             if curr - prev > 15*60:  # use t_max only for auto update
                 if prev - last_start > 15*60 and\
-                      last_start >= self.db_fields['t_max']:
+                      (self.db_fields['t_max'] is None or last_start >= self.db_fields['t_max']):
                     try:
                         cdt.insert({'rec_id':self.db_fields['id'],
                                     'sta':last_start, 'end':prev})

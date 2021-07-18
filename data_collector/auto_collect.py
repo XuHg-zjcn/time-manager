@@ -56,8 +56,9 @@ class Collectors:
     def add_log(self, cid, t_min, t_max, items, commit=True):
         current_time = time.time()
         cur = self.conn.cursor()
-        cur.execute('UPDATE collectors SET runs=runs+1, items=items+?,'
-                    't_max=max(t_max,?), t_last=? WHERE id=?', (items, t_max, current_time, cid))
+        cur.execute('UPDATE collectors SET runs=runs+1, items=items+:its,'
+                    't_max=max(ifnull(t_max,:tm2), ifnull(:tm2,t_max)), t_last=:ts WHERE id=:id',
+                    {'its':items, 'tm2':t_max, 'ts':current_time, 'id':cid})
         cur.execute('SELECT runs, name FROM collectors WHERE id=?', (cid,))
         lcur = list(cur)
         if len(lcur) == 0:
