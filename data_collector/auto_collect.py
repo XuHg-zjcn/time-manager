@@ -11,14 +11,16 @@ from sqlite_api.tables import colls, logs
 class Collector(DumpBaseCls):
     names_autoload = {'id', 'table', 'name', 't_max'}
 
-    def run(self, clog):
-        pass
+    def run(self):
+        #    t_min, t_max, items
+        return None, None, 0
 
-    def try_run(self, clog):
+    def try_run(self):
         try:
-            self.run(clog)
+            return self.run()
         except sqlite3.OperationalError as e:
             print('Collector {} skip, Error: {}'.format(self.db_fields['name'], e))
+            return None, None, 0
 
 
 # TODO: op collect table via class
@@ -26,6 +28,11 @@ class Collectors:
     def __init__(self, conn, commit_each=True):
         self.conn = conn                # don't remove para `conn`,
         self.commit_each = commit_each  # it can mind you need operate database
+
+    def run_obj(self, obj):
+        t_min, t_max, items = obj.try_run()
+        cid = obj.db_fields['id']
+        self.add_log(cid, t_min, t_max, items, commit=True)
 
     def run_custom_path(self, coll_cls, source_path):
         cond_dict = {'name': coll_cls.name, 'start_mode': -1}
@@ -38,13 +45,13 @@ class Collectors:
         coll = res[0]
         coll.db_fields['t_max'] = 0
         coll.source_path = source_path
-        coll.try_run(self)
+        self.run_obj(coll)
 
     # TODO: check is already add in sqlite, use a table collect history
     def run_enable(self):
         objs = colls.get_conds_objs({'start_mode': 1})
         for obj in objs:
-            obj.try_run(self)
+            self.run_obj(obj)
 
     def add_log(self, cid, t_min, t_max, items, commit=True):
         current_time = time.time()

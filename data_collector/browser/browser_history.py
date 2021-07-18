@@ -17,7 +17,7 @@ class BrowserHistory(Collector):
         self.source_path = source_path
         super().__init__(name)
 
-    def run(self, clog):
+    def run(self):
         conn = sqlite3.connect(self.source_path)
         cur = conn.cursor()
         res = cur.execute(self.sql)
@@ -26,8 +26,7 @@ class BrowserHistory(Collector):
         try:
             prev = next(res)[0]
         except StopIteration:
-            clog.add_log(self.db_fields['id'], None, None, 0)
-            return
+            return None, None, 0
         t_min = prev
         last_start = prev
         for curr, in res:  # TODO: probably curr > current timestamp
@@ -44,4 +43,4 @@ class BrowserHistory(Collector):
                 last_start = curr
             prev = curr
         t_max = prev
-        clog.add_log(self.db_fields['id'], t_min, t_max, items)
+        return t_min, t_max, items
