@@ -3,6 +3,7 @@ from .add_plot import Ui_Dialog
 import user_data.code.addplot_ops as ops1
 import Qt_GUI.addplot_ops as ops2
 from commd_line.init_config import conn
+from my_libs.args import str2akrgs
 
 class PlotTable(SqlTable):
     name2dtype = [('name', 'TEXT'),
@@ -40,19 +41,16 @@ class AddPlot2(Ui_Dialog):
             ptab.update_conds({'id': iid}, {'func': func, 'param': param, 'color': color, 'show':True}, commit=True)
         self.run_code(name, func, param, color)
 
-    def run_code(self, name, func, param, color):
-        found = False
+    def run_code(self, name, fname, param, color):
+        func = None
         for modname, module in [('ops2', ops2), ('ops1', ops1)]:
-            if hasattr(module, func):
-                func = f'{modname}.{func}'
-                found = True
+            if hasattr(module, fname):
+                func = getattr(module, fname)
                 break
-        if not found:
+        if func is None:
             raise LookupError('func name not found')
-        if param:
-            param = ', '+param
-        code = f'{func}(self.win, name, color{param})'
-        exec(code)
+        args, kwargs = str2akrgs(param)
+        func(self.win, name, color, *args, **kwargs)
 
     def on_func_change(self):
         func = self.combo_func.currentText()
