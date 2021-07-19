@@ -102,9 +102,12 @@ class MyUi_MainWindow(Ui_MainWindow):
 
     def clear_items(self):
         """clear all items in the Widget."""
+        # don't edit to remove item by `self.remove_item()`, else raise this error:
+        # RuntimeError: dictionary changed size during iteration
         for item in self.plotitem_tab.values():
             self.dt2d_plot.removeItem(item)
         self.plotitem_tab.clear()
+        ptab.update_conds(None, {'show':False})
 
     def draw_ivtree(self, ivt_color, default_color=0x00ffff, name=None, z=0):
         """

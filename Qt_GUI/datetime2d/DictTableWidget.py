@@ -67,6 +67,8 @@ class DictTableWidget(QTableWidget):
         """
         clear Dict, not clear QTableWidget
         """
+        for i in range(len(self.Dict)):
+            self.removeRow(i)
         self.Dict.clear()
 
     def __getattr__(self, item):
