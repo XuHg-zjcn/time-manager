@@ -21,7 +21,7 @@ from Qt_GUI.plotitems.PointsItem import PointsItem
 from Qt_GUI.layout import Ui_MainWindow
 from sqlite_api.task_db import ColumnSetTasks, tdb
 from sqlite_api.collect_data import cdt
-
+from Qt_GUI.add_plot2 import ptab
 from Qt_GUI.plotitems.IntervalsItem import DateTime2DItem
 
 
@@ -51,7 +51,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.dt2d_plot.select_point.connect(self.selector.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)
         self.dt2d_plot.select_point.connect(self.update_table)
-        self.plotitem_tab.dele.connect(lambda x: self.dt2d_plot.remove_item(x))
+        self.plotitem_tab.dele.connect(lambda x: self.remove_item(x))
         self.sta_ipython.clicked.connect(lambda :IPython.embed(colors='Neutral'))
         tdb.print_doings()
         tdb.print_need()
@@ -97,7 +97,8 @@ class MyUi_MainWindow(Ui_MainWindow):
         remove showing item.
         @param name: name of item
         """
-        self.removeItem(self.plotitem_tab.pop(name))
+        self.dt2d_plot.removeItem(self.plotitem_tab.pop(name))
+        ptab.update_conds({'name':name}, {'show':False})
 
     def clear_items(self):
         """clear all items in the Widget."""
