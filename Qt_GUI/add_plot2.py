@@ -52,10 +52,7 @@ class AddPlot2(Ui_Dialog):
         if param:
             param = ', '+param
         code = f'{func}(self.win, name, color{param})'
-        try:
-            exec(code)
-        except Exception as e:
-            print('exec faild', e)
+        exec(code)
 
     def on_func_change(self):
         func = self.combo_func.currentText()

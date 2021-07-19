@@ -120,7 +120,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         item_new = DateTime2DItem(ivt_color, default_color)
         item_new.setZValue(z)
         self.addItem(name, item_new)
-        self.set_XY_full_range()
+        #self.set_XY_full_range()
 
     def draw_points(self, lst, color=0x00ff00, name='points', *args, **kwargs):
         item_new = PointsItem()
@@ -129,6 +129,7 @@ class MyUi_MainWindow(Ui_MainWindow):
 
     def draw_points_label(self, lst, labels, color=0x00ff00, name='points_lable', *args, **kwargs):
         item_new = PointsItem()
+        item_new.setMaskColor(color=color)
         item_new.setTsLabel(lst, labels, *args, **kwargs)
         self.addItem(name, item_new)
 

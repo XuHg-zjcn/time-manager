@@ -17,6 +17,7 @@ class DateTime2DItem(pg.GraphicsObject):
         self.picture = QtGui.QPicture()
         if isinstance(default_color, int):
             default_color = ARGB.from_xrgb(default_color)
+        self.default_color = default_color
 
     def _draw_rect(self, p, doy, begin, end, color):
         """
@@ -44,6 +45,7 @@ class DateTime2DItem(pg.GraphicsObject):
             self._draw_rect(p, doy, beg_sec, end_sec, color)
 
     def update_xy(self, time2xy, default_color=None):
+        default_color = default_color or self.default_color
         self.time2xy = time2xy
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)

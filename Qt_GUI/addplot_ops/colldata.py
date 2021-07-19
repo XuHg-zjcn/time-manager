@@ -8,7 +8,7 @@ from sqlite_api.timepoint_db import tpd
 def PlotCollData(win, name, color, conds={}):
     df = cdt.get_conds_execute(conds, ['sta', 'end'])
     ivt = IntervalTree.from_tuples(df)
-    win.dt2d_plot.draw_ivtree(ivt, default_color=color, name=name)
+    win.draw_ivtree(ivt, default_color=color, name=name)
 
 def PlotPoints(win, name, color, conds={}):
     df = tpd.get_conds_execute(conds, ['time', 'desc'])

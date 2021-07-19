@@ -29,6 +29,11 @@ class PointsItem(pg.ScatterPlotItem):
         self.labels = labels
         self.setHover(tip=lambda x,y,data:data)
 
+    def setMaskColor(self, sym='o', pen=None, brush=None, color=0x00ff00):
+        pen = pen or color
+        brush = brush or color
+        super().setData(symbol=sym, pen=pen, brush=brush)
+
     def update_xy(self, time2xy):
         pos = map(lambda ts: time2xy(ts), self.ts_lst)
         super().setData(pos=pos, data=self.labels)
