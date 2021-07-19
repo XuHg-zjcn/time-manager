@@ -20,8 +20,8 @@ class AddPlot2(Ui_Dialog):
         self.buttonBox.accepted.connect(lambda : self.on_accepted())
         self.combo_name.editTextChanged.connect(self.on_name_change)
         self.combo_func.editTextChanged.connect(self.on_func_change)
-        self.load_all_names()
         self.load_all_funcs()
+        self.load_all_names()
         self.win = win
         exec = ptab.get_conds_execute({'show':True}, fields=['name', 'func', 'param', 'color'])
         for args in exec:
