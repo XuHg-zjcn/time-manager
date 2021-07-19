@@ -21,6 +21,22 @@ class PointsItem(pg.ScatterPlotItem):
             color = QtGui.QColor.fromRgb(0x00ffff)
         super().setData(pos=pos, pen=color, brush=color)
 
-    def setTimestampList(self, data, *args, **kwargs):
-        pos = map(lambda ts: self.parent.time2xy(ts), data)
-        super().setData(pos=pos, args=args, kwargs=kwargs)
+    def setTimestampList(self, ts_lst, *args, **kwargs):
+        pos = map(lambda ts: self.parent.time2xy(ts), ts_lst)
+        super().setData(pos=pos, *args, **kwargs)
+
+    def setTsLabel(self, ts_lst, labels,
+                   hoverSymbol='+', hoverSize=10, hoverPen=None, hoverBrush=None,
+                   *args, **kwargs):
+        """
+        悬停时显示标签
+        """
+        pos = map(lambda ts: self.parent.time2xy(ts), ts_lst)
+        hover_color = QtGui.QColor(255, 127, 0)
+        if hoverPen is None:
+            hoverPen = hover_color
+        if hoverBrush is None:
+            hoverBrush = hover_color
+        super().setData(pos=pos, data=labels, hoverable=True, tip=lambda x,y,data:data,
+                        hoverSymbol='+', hoverSize=hoverSize,
+                        hoverPen=hoverPen, hoverBrush=hoverBrush, *args, **kwargs)

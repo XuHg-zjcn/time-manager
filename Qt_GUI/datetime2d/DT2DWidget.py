@@ -140,9 +140,14 @@ class DT2DWidget(pg.PlotWidget):
         self.addItem2(name, item_new)
         self.set_XY_full_range()
 
-    def draw_points(self, lst, color=0x00ff00, name='points'):
+    def draw_points(self, lst, color=0x00ff00, name='points', *args, **kwargs):
         item_new = PointsItem(self)
-        item_new.setTimestampList(lst, pen=color, brush=color)
+        item_new.setTimestampList(lst, pen=color, brush=color, *args, **kwargs)
+        self.addItem2(name, item_new)
+
+    def draw_points_label(self, lst, labels, color=0x00ff00, name='points_lable', *args, **kwargs):
+        item_new = PointsItem(self)
+        item_new.setTsLabel(lst, labels, *args, **kwargs)
         self.addItem2(name, item_new)
 
     def remove_item(self, name):

@@ -4,14 +4,20 @@ from intervaltree.intervaltree import IntervalTree
 from sqlite_api.collect_data import cdt
 from sqlite_api.timepoint_db import tpd
 
+# 包含数据库操作，请不要移入图形库文件
 def PlotCollData(win, name, color, conds={}):
     df = cdt.get_conds_execute(conds, ['sta', 'end'])
     ivt = IntervalTree.from_tuples(df)
     win.dt2d_plot.draw_ivtree(ivt, default_color=color, name=name)
 
 def PlotPoints(win, name, color, conds={}):
-    df = tpd.get_conds_execute(conds, 'time')
-    win.dt2d_plot.draw_points(df, color=color, name=name)
+    df = tpd.get_conds_execute(conds, ['time', 'desc'])
+    tsxx = []
+    desc = []
+    for t, d in df:
+        tsxx.append(t)
+        desc.append(d)
+    win.dt2d_plot.draw_points_label(tsxx, desc, color=color, name=name)
 
 def PlotDBInterval(win, name, color,
                    db_path, table_name, sta_name, end_name,
