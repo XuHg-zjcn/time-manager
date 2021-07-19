@@ -2,11 +2,9 @@ import pyqtgraph as pg
 import pandas as pd
 from PyQt5 import QtGui
 
-from Qt_GUI.datetime2d import DT2DWidget
-
 
 class PointsItem(pg.ScatterPlotItem):
-    def __init__(self, parent: DT2DWidget, *args, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         self.parent = parent
         super().__init__(*args, **kwargs)
 

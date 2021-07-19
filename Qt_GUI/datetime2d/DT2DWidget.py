@@ -1,10 +1,10 @@
-from Qt_GUI.datetime2d.PointsItem import PointsItem
+from Qt_GUI.plotitems.PointsItem import PointsItem
 from datetime import datetime, timedelta
 
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt, pyqtSignal
 
-from .IntervalsItem import DateTime2DItem
+from Qt_GUI.plotitems.IntervalsItem import DateTime2DItem
 
 
 class vhLine:

@@ -6,7 +6,6 @@ Created on Mon Dec  7 13:53:35 2020
 @author: xrj
 """
 from Qt_GUI.add_plot2 import AddPlot2
-from Qt_GUI.data_getter.data_plot import DataPlot
 import sys
 import datetime
 import time
@@ -18,7 +17,7 @@ from Qt_GUI.selector2 import Selector2
 import IPython
 
 from Qt_GUI.add_task_gen import AddTaskGenDialog
-from Qt_GUI.datetime2d.PointsItem import PointsItem
+from Qt_GUI.plotitems.PointsItem import PointsItem
 from Qt_GUI.layout import Ui_MainWindow
 from sqlite_api.task_db import ColumnSetTasks, tdb
 from sqlite_api.collect_data import cdt
@@ -32,7 +31,6 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.selector.setupUi(self.selector)
         self.selector.build()
         self.plotitem_tab.build()
-        self.dp = DataPlot(cdt, self.dt2d_plot, 'coll_data')
 
         dia1 = QDialog()
         dia1.setWindowTitle('add task gen')
@@ -76,8 +74,6 @@ class MyUi_MainWindow(Ui_MainWindow):
         """
         self.dt2d_plot.set_year(year)
         self.selector.set_year0101_1231(year)
-        where_dict = self.selector.get_sql_where_dict()
-        self.dp.update(where_dict)
 
     def update_table(self):
         where_dict = self.selector.get_sql_where_dict()
