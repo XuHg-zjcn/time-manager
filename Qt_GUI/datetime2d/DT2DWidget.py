@@ -54,8 +54,7 @@ class DT2DWidget(pg.PlotWidget):
 
     def addItem2(self, item):
         if self._swap:
-            item.rotate(90)
-            item.scale(1, -1)
+            item.swap_xy()
         self.addItem(item)
 
     def set_year(self, year=None):

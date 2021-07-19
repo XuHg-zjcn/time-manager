@@ -3,9 +3,10 @@ from PyQt5 import QtCore, QtGui
 from intervaltree import IntervalTree
 
 from my_libs.argb import ARGB
+from .BasePlotItem import BasePlotItem
 
 
-class DateTime2DItem(pg.GraphicsObject):
+class DateTime2DItem(BasePlotItem):
     def __init__(self, ivtree: IntervalTree, default_color: int):
         """
         @param ivtree:

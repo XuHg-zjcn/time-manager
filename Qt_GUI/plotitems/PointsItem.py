@@ -1,9 +1,10 @@
 import pyqtgraph as pg
 import pandas as pd
 from PyQt5 import QtGui
+from .BasePlotItem import BasePlotItem
 
 
-class PointsItem(pg.ScatterPlotItem):
+class PointsItem(pg.ScatterPlotItem, BasePlotItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ts_lst = []

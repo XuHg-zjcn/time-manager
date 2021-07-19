@@ -58,7 +58,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.selector.year.valueChanged.connect(self.change_year)
         year = datetime.date.today().year
         self.selector.year.setValue(year)
-        self.swap_xy.stateChanged.connect(self.dt2d_plot.set_swap)
+        self.swap_xy.stateChanged.connect(self.set_swap)
 
         points = PointsItem()  # PointsItem test
         points.setTimestampList([time.time(), time.time()+1000])
@@ -67,6 +67,11 @@ class MyUi_MainWindow(Ui_MainWindow):
         ap = AddPlot2()
         ap.setupUi(dia2)
         ap.build(self)
+
+    def set_swap(self, new_state):
+        self.dt2d_plot.set_swap(new_state)
+        for item in self.plotitem_tab.values():
+            item.set_swap()
 
     def change_year(self, year):
         """
