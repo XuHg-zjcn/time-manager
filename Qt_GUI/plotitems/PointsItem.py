@@ -26,11 +26,14 @@ class PointsItem(pg.ScatterPlotItem, BasePlotItem):
         """
         悬停时显示标签
         """
-        self.setTimestampList(ts_lst, *args, **kwargs)
+        self.setTimestampList(ts_lst)
         self.labels = labels
         self.setHover(tip=lambda x,y,data:data)
 
     def setMaskColor(self, sym='o', pen=None, brush=None, color=0x00ff00):
+        if isinstance(color, int):
+            color = QtGui.QColor.fromRgb(color)
+        print(color)
         pen = pen or color
         brush = brush or color
         super().setData(symbol=sym, pen=pen, brush=brush)
