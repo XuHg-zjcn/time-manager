@@ -27,7 +27,6 @@ class DT2DWidget(pg.PlotWidget):
     def __init__(self, cw):
         super().__init__(cw)
         self._app = None
-        self.parent = None
         self._swap = False       # swap XY axes
         self.last_select = None  # datetime obj, by last mouse click pos position
         self.items = None        # PlotItemTableWidget
@@ -40,10 +39,8 @@ class DT2DWidget(pg.PlotWidget):
         self.scene().sigMouseClicked.connect(self._mouse_click_slot)
         pg.setConfigOptions(imageAxisOrder='row-major')
 
-    def build(self, app, parent):
+    def build(self, app):
         self._app = app          # used for detect shift key
-        self.parent = parent
-        self.items = parent.plotitem_tab
 
     def set_swap(self, new_state):
         """
@@ -51,17 +48,11 @@ class DT2DWidget(pg.PlotWidget):
         @param new_state: bool, True for swap
         """
         self._swap = new_state
-        for item in self.items.values():
-            item.rotate(90)
-            item.scale(1, -1)
         self.set_XAxis()
         self.set_YAxis(6)
         self.set_XY_full_range()
 
-    def addItem2(self, name, item):
-        if name in self.items:   # remove same name item if exist
-            self.remove_item(name)
-        self.items[name] = item
+    def addItem2(self, item):
         if self._swap:
             item.rotate(90)
             item.scale(1, -1)
@@ -74,7 +65,6 @@ class DT2DWidget(pg.PlotWidget):
         """
         if year is None:
             year = datetime.today().year
-        self.clear_items()
         self.d11 = datetime(year, 1, 1)
         self.max_doy = (datetime(year+1, 1, 1) - self.d11).days
         self.set_XAxis(year)
@@ -126,42 +116,6 @@ class DT2DWidget(pg.PlotWidget):
         """set XAxis and YAxis to full range, with axes swap state."""
         self.setXRange(0, 24 if self._swap else 366)
         self.setYRange(0, 366 if self._swap else 24)
-
-    def draw_ivtree(self, ivt_color, default_color=0x00ffff, name=None, z=0):
-        """
-        draw ivtree datetime2d.
-        @param ivt_color:     see DateTime2DItem.__init__
-        @param default_color: see DateTime2DItem.__init__
-        @param name: optional, None will default item
-        @param z: ZValue(layer) of pyqtgraph PlotItem
-        """
-        item_new = DateTime2DItem(ivt_color, self.time2xy, default_color)
-        item_new.setZValue(z)
-        self.addItem2(name, item_new)
-        self.set_XY_full_range()
-
-    def draw_points(self, lst, color=0x00ff00, name='points', *args, **kwargs):
-        item_new = PointsItem(self)
-        item_new.setTimestampList(lst, pen=color, brush=color, *args, **kwargs)
-        self.addItem2(name, item_new)
-
-    def draw_points_label(self, lst, labels, color=0x00ff00, name='points_lable', *args, **kwargs):
-        item_new = PointsItem(self)
-        item_new.setTsLabel(lst, labels, *args, **kwargs)
-        self.addItem2(name, item_new)
-
-    def remove_item(self, name):
-        """
-        remove showing item.
-        @param name: name of item
-        """
-        self.removeItem(self.items.pop(name))
-
-    def clear_items(self):
-        """clear all items in the Widget."""
-        for item in self.items.values():
-            self.removeItem(item)
-        self.items.clear()
 
     def _mouse_move_slot(self, pos):
         if self.sceneBoundingRect().contains(pos):

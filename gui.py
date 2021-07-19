@@ -22,6 +22,8 @@ from Qt_GUI.layout import Ui_MainWindow
 from sqlite_api.task_db import ColumnSetTasks, tdb
 from sqlite_api.collect_data import cdt
 
+from Qt_GUI.plotitems.IntervalsItem import DateTime2DItem
+
 
 class MyUi_MainWindow(Ui_MainWindow):
     """
@@ -47,7 +49,7 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.plotitem_tab.addreq.connect(lambda : dia2.show())
 
         # set current year
-        self.dt2d_plot.build(app, self)
+        self.dt2d_plot.build(app)
         self.dt2d_plot.select_rect.connect(self.selector.set2datetime)
         self.dt2d_plot.select_point.connect(self.selector.set1datetime)
         self.dt2d_plot.select_rect.connect(self.update_table)
@@ -61,10 +63,9 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.selector.year.setValue(year)
         self.swap_xy.stateChanged.connect(self.dt2d_plot.set_swap)
 
-        points = PointsItem(self.dt2d_plot)  # PointsItem test
-        df = pd.DataFrame({'timestamp': [time.time(), time.time()+1000]})
-        points.setDataFrame(df)
-        self.dt2d_plot.addItem2('points', points)
+        points = PointsItem()  # PointsItem test
+        points.setTimestampList([time.time(), time.time()+1000])
+        self.addItem('points', points)
 
     def change_year(self, year):
         """
@@ -83,6 +84,48 @@ class MyUi_MainWindow(Ui_MainWindow):
         self.tableView.setDataFrame(plans, 'tasks', column_set_cls=ColumnSetTasks,
                                     sql_table=tdb)
 
+    def addItem(self, name, item):
+        if name in self.plotitem_tab:   # remove same name item if exist
+            self.remove_item(name)
+        item.update_xy(self.dt2d_plot.time2xy)
+        self.plotitem_tab[name] = item
+        self.dt2d_plot.addItem(item)
+
+    def remove_item(self, name):
+        """
+        remove showing item.
+        @param name: name of item
+        """
+        self.removeItem(self.plotitem_tab.pop(name))
+
+    def clear_items(self):
+        """clear all items in the Widget."""
+        for item in self.plotitem_tab.values():
+            self.dt2d_plot.removeItem(item)
+        self.plotitem_tab.clear()
+
+    def draw_ivtree(self, ivt_color, default_color=0x00ffff, name=None, z=0):
+        """
+        draw ivtree datetime2d.
+        @param ivt_color:     see DateTime2DItem.__init__
+        @param default_color: see DateTime2DItem.__init__
+        @param name: optional, None will default item
+        @param z: ZValue(layer) of pyqtgraph PlotItem
+        """
+        item_new = DateTime2DItem(ivt_color, default_color)
+        item_new.setZValue(z)
+        self.addItem(name, item_new)
+        self.set_XY_full_range()
+
+    def draw_points(self, lst, color=0x00ff00, name='points', *args, **kwargs):
+        item_new = PointsItem()
+        item_new.setTimestampList(lst, pen=color, brush=color, *args, **kwargs)
+        self.addItem(name, item_new)
+
+    def draw_points_label(self, lst, labels, color=0x00ff00, name='points_lable', *args, **kwargs):
+        item_new = PointsItem()
+        item_new.setTsLabel(lst, labels, *args, **kwargs)
+        self.addItem(name, item_new)
 
 if __name__ == '__main__':
     app = QApplication([])

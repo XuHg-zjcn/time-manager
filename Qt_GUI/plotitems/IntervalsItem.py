@@ -6,21 +6,17 @@ from my_libs.argb import ARGB
 
 
 class DateTime2DItem(pg.GraphicsObject):
-    def __init__(self, ivtree: IntervalTree, time2xy, default_color: int):
+    def __init__(self, ivtree: IntervalTree, default_color: int):
         """
         @param ivtree:
         iv.begin and iv.end are unix timestamp or datetime obj
         iv.data are my_libs.agrb.ARGB color
-
-        @param parent: DT2DWidget obj
         """
         super().__init__()
         self.ivtree = ivtree
-        self.time2xy = time2xy
         self.picture = QtGui.QPicture()
         if isinstance(default_color, int):
             default_color = ARGB.from_xrgb(default_color)
-        self._draw_ivtree(default_color)
 
     def _draw_rect(self, p, doy, begin, end, color):
         """
@@ -47,7 +43,8 @@ class DateTime2DItem(pg.GraphicsObject):
             end_sec = END[1] if doy == END[0] else 24
             self._draw_rect(p, doy, beg_sec, end_sec, color)
 
-    def _draw_ivtree(self, default_color=None):
+    def update_xy(self, time2xy, default_color=None):
+        self.time2xy = time2xy
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
         for iv in sorted(self.ivtree):

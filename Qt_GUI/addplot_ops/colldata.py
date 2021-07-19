@@ -17,7 +17,7 @@ def PlotPoints(win, name, color, conds={}):
     for t, d in df:
         tsxx.append(t)
         desc.append(d)
-    win.dt2d_plot.draw_points_label(tsxx, desc, color=color, name=name)
+    win.draw_points_label(tsxx, desc, color=color, name=name)
 
 def PlotDBInterval(win, name, color,
                    db_path, table_name, sta_name, end_name,
@@ -27,7 +27,7 @@ def PlotDBInterval(win, name, color,
     cur = conn.cursor()
     df = cur.execute(f"SELECT k*{sta_name}+b, k*{end_name}+b FROM {table_name} WHERE {where_str}")
     ivt = IntervalTree.from_tuples(df)
-    win.dt2d_plot.draw_ivtree(ivt, default_color=color, name=name)
+    win.draw_ivtree(ivt, default_color=color, name=name)
 
 def PlotDBPoints(win, name, color,
                  db_path, table_name, col_name,
@@ -38,4 +38,4 @@ def PlotDBPoints(win, name, color,
     sql = f"SELECT {k}*{col_name}+{b} FROM {table_name} {where_str}"
     exec = cur.execute(sql, params)
     lst = map(lambda x:x[0], exec)
-    win.dt2d_plot.draw_points(lst, color=color)
+    win.draw_points(lst, color=color)

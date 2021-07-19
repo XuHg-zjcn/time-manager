@@ -4,37 +4,31 @@ from PyQt5 import QtGui
 
 
 class PointsItem(pg.ScatterPlotItem):
-    def __init__(self, parent, *args, **kwargs):
-        self.parent = parent
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.ts_lst = []
+        self.labels = None
 
-    def setDataFrame(self, data: pd.DataFrame):
-        pos = []
-        for ts in data['timestamp']:
-            xy = self.parent.time2xy(ts)
-            pos.append(xy)
-        if 'color' in data:
-            color = map(lambda clr: QtGui.QColor.fromRgb(clr), data['color'])
-        else:
-            color = QtGui.QColor.fromRgb(0x00ffff)
-        super().setData(pos=pos, pen=color, brush=color)
+    def setTimestampList(self, ts_lst):
+        self.ts_lst = ts_lst
 
-    def setTimestampList(self, ts_lst, *args, **kwargs):
-        pos = map(lambda ts: self.parent.time2xy(ts), ts_lst)
-        super().setData(pos=pos, *args, **kwargs)
+    def setHover(self, hoverable=True, tip=None,
+                 hoverSymbol='+', hoverSize=10, hoverPen=None, hoverBrush=None):
+        hover_color = QtGui.QColor(255, 127, 0)
+        hoverPen = hoverPen or hover_color
+        hoverBrush = hoverBrush or hover_color
+        self.setData(hoverable=True, tip=tip,
+                     hoverSymbol='+', hoverSize=hoverSize,
+                     hoverPen=hoverPen, hoverBrush=hoverBrush)
 
-    def setTsLabel(self, ts_lst, labels,
-                   hoverSymbol='+', hoverSize=10, hoverPen=None, hoverBrush=None,
-                   *args, **kwargs):
+    def setTsLabel(self, ts_lst, labels, *args, **kwargs):
         """
         悬停时显示标签
         """
-        pos = map(lambda ts: self.parent.time2xy(ts), ts_lst)
-        hover_color = QtGui.QColor(255, 127, 0)
-        if hoverPen is None:
-            hoverPen = hover_color
-        if hoverBrush is None:
-            hoverBrush = hover_color
-        super().setData(pos=pos, data=labels, hoverable=True, tip=lambda x,y,data:data,
-                        hoverSymbol='+', hoverSize=hoverSize,
-                        hoverPen=hoverPen, hoverBrush=hoverBrush, *args, **kwargs)
+        self.setTimestampList(ts_lst, *args, **kwargs)
+        self.labels = labels
+        self.setHover(tip=lambda x,y,data:data)
+
+    def update_xy(self, time2xy):
+        pos = map(lambda ts: time2xy(ts), self.ts_lst)
+        super().setData(pos=pos, data=self.labels)
