@@ -5,7 +5,11 @@ import Qt_GUI.addplot_ops as ops2
 from commd_line.init_config import conn
 
 class PlotTable(SqlTable):
-    name2dtype = [('name', 'TEXT'), ('func', 'TEXT'), ('param', 'TEXT'), ('color', 'INT')]
+    name2dtype = [('name', 'TEXT'),
+                  ('func', 'TEXT'),
+                  ('param', 'TEXT'),
+                  ('color', 'INT'),
+                  ('show', 'BOOL')]
     table_name = 'plot_table'
 
 ptab = PlotTable(conn)
@@ -19,6 +23,9 @@ class AddPlot2(Ui_Dialog):
         self.load_all_names()
         self.load_all_funcs()
         self.win = win
+        exec = ptab.get_conds_execute({'show':True}, fields=['name', 'func', 'param', 'color'])
+        for args in exec:
+            self.run_code(*args)
 
     def on_accepted(self):
         name = self.combo_name.currentText()
@@ -28,11 +35,12 @@ class AddPlot2(Ui_Dialog):
         color = int(color, base=16)
         iid = ptab.get_conds_onlyone({'name':name}, 'id', def0=None)
         if iid is None:
-            ptab.insert({'name': name, 'func': func, 'param': param, 'color': color}, commit=True)
+            ptab.insert({'name': name, 'func': func, 'param': param, 'color': color, 'show':True}, commit=True)
         else:
-            ptab.update_conds({'id': iid}, {'func': func, 'param': param, 'color': color}, commit=True)
+            ptab.update_conds({'id': iid}, {'func': func, 'param': param, 'color': color, 'show':True}, commit=True)
+        self.run_code(name, func, param, color)
 
-
+    def run_code(self, name, func, param, color):
         found = False
         for modname, module in [('ops2', ops2), ('ops1', ops1)]:
             if hasattr(module, func):
@@ -44,7 +52,10 @@ class AddPlot2(Ui_Dialog):
         if param:
             param = ', '+param
         code = f'{func}(self.win, name, color{param})'
-        exec(code)
+        try:
+            exec(code)
+        except Exception as e:
+            print('exec faild', e)
 
     def on_func_change(self):
         func = self.combo_func.currentText()
